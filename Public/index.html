@@ -33,10 +33,34 @@
         }
         #splashScreen.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
         #splashScreen .splash-logo { font-size: 5em; animation: pulse 1.5s infinite; }
-        #splashScreen .splash-name { color: white; font-size: 2.5em; font-weight: 700; margin-top: 10px; letter-spacing: 2px; }
-        #splashScreen .splash-sub { color: rgba(255,255,255,0.7); font-size: 1em; margin-top: 5px; }
-        #splashScreen .splash-loader { margin-top: 30px; width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
-        #splashScreen .splash-loader .splash-progress { height: 100%; background: white; border-radius: 2px; width: 0%; animation: loadProgress 2s ease-in-out forwards; }
+        #splashScreen .splash-name { 
+            color: white; 
+            font-size: 2.5em; 
+            font-weight: 700; 
+            margin-top: 10px; 
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        #splashScreen .splash-sub { 
+            color: rgba(255,255,255,0.7); 
+            font-size: 1em; 
+            margin-top: 5px; 
+        }
+        #splashScreen .splash-loader { 
+            margin-top: 30px; 
+            width: 200px; 
+            height: 4px; 
+            background: rgba(255,255,255,0.2); 
+            border-radius: 2px; 
+            overflow: hidden; 
+        }
+        #splashScreen .splash-loader .splash-progress { 
+            height: 100%; 
+            background: white; 
+            border-radius: 2px; 
+            width: 0%; 
+            animation: loadProgress 2s ease-in-out forwards; 
+        }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
 
@@ -54,14 +78,40 @@
         .restaurant-name { font-size: 1.3em; font-weight: 700; color: #e74c3c; }
         .restaurant-name span { font-weight: 300; color: #2d3436; }
         .top-actions { display: flex; gap: 10px; align-items: center; }
-        .top-actions a { text-decoration: none; color: #2d3436; font-weight: 600; font-size: 0.85em; padding: 5px 12px; border-radius: 20px; transition: all 0.3s; cursor: pointer; }
+        .top-actions a { 
+            text-decoration: none; 
+            color: #2d3436; 
+            font-weight: 600; 
+            font-size: 0.85em; 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            transition: all 0.3s; 
+            cursor: pointer; 
+        }
         .top-actions a:hover { background: #f1f2f6; }
-        .deals-btn { background: #e74c3c !important; color: white !important; padding: 6px 16px !important; border-radius: 25px !important; cursor: pointer; }
+        .deals-btn { 
+            background: #e74c3c !important; 
+            color: white !important; 
+            padding: 6px 16px !important; 
+            border-radius: 25px !important; 
+            cursor: pointer; 
+        }
         .deals-btn:hover { background: #c0392b !important; transform: scale(1.02); }
-        .admin-link-btn { background: #2d3436 !important; color: white !important; padding: 6px 16px !important; border-radius: 25px !important; cursor: pointer; text-decoration: none !important; }
-        .admin-link-btn:hover { background: #1a1a2e !important; }
+        /* ⭐ REMOVED ADMIN BUTTON FROM CUSTOMER PANEL ⭐ */
         .cart-icon { position: relative; font-size: 1.2em; cursor: pointer; }
-        .cart-badge { position: absolute; top: -8px; right: -10px; background: #e74c3c; color: white; font-size: 0.6em; font-weight: 700; padding: 2px 8px; border-radius: 50%; min-width: 20px; text-align: center; }
+        .cart-badge { 
+            position: absolute; 
+            top: -8px; 
+            right: -10px; 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 0.6em; 
+            font-weight: 700; 
+            padding: 2px 8px; 
+            border-radius: 50%; 
+            min-width: 20px; 
+            text-align: center; 
+        }
 
         /* Main Layout */
         .main-container { display: flex; flex: 1; overflow: hidden; }
@@ -104,7 +154,15 @@
         }
         .menu-area::-webkit-scrollbar { width: 5px; }
         .menu-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
-        .section-title { font-size: 1em; font-weight: 700; color: #2d3436; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #e74c3c; display: inline-block; }
+        .section-title { 
+            font-size: 1em; 
+            font-weight: 700; 
+            color: #2d3436; 
+            margin-bottom: 12px; 
+            padding-bottom: 6px; 
+            border-bottom: 2px solid #e74c3c; 
+            display: inline-block; 
+        }
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
         .menu-item-card {
             background: white;
@@ -122,12 +180,32 @@
         .menu-item-card .item-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
         .menu-item-card .item-category { font-size: 0.65em; color: #b2bec3; margin-bottom: 6px; }
         .item-actions { display: flex; gap: 4px; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
-        .btn-quick { background: #e74c3c; color: white; border: none; padding: 4px 12px; border-radius: 20px; font-size: 0.65em; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-quick { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 0.65em; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
         .btn-quick:hover { background: #c0392b; transform: scale(1.05); }
-        .btn-cart { background: #f1f2f6; color: #2d3436; border: none; padding: 4px 12px; border-radius: 20px; font-size: 0.65em; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-cart { 
+            background: #f1f2f6; 
+            color: #2d3436; 
+            border: none; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 0.65em; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
         .btn-cart:hover { background: #dfe6e9; transform: scale(1.05); }
 
-        /* Bottom Navigation */
+        /* Bottom Navigation - REMOVED ADMIN BUTTON */
         .bottom-nav {
             background: white;
             display: flex;
@@ -157,7 +235,19 @@
         .nav-item .nav-icon { font-size: 1.3em; margin-bottom: 1px; }
         .nav-item.active { color: #e74c3c; }
         .nav-item:hover { color: #e74c3c; background: #fdf2f2; }
-        .nav-item .nav-badge { position: absolute; top: -2px; right: 2px; background: #e74c3c; color: white; font-size: 0.6em; font-weight: 700; padding: 1px 7px; border-radius: 50%; min-width: 18px; text-align: center; }
+        .nav-item .nav-badge { 
+            position: absolute; 
+            top: -2px; 
+            right: 2px; 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 0.6em; 
+            font-weight: 700; 
+            padding: 1px 7px; 
+            border-radius: 50%; 
+            min-width: 18px; 
+            text-align: center; 
+        }
 
         /* Popups */
         .popup-overlay {
@@ -187,7 +277,17 @@
             position: relative;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        .popup-close { position: absolute; top: 10px; right: 14px; font-size: 1.4em; cursor: pointer; color: #b2bec3; transition: all 0.3s; background: none; border: none; }
+        .popup-close { 
+            position: absolute; 
+            top: 10px; 
+            right: 14px; 
+            font-size: 1.4em; 
+            cursor: pointer; 
+            color: #b2bec3; 
+            transition: all 0.3s; 
+            background: none; 
+            border: none; 
+        }
         .popup-close:hover { color: #e74c3c; transform: rotate(90deg); }
         .popup-title { font-size: 1.3em; font-weight: 700; color: #2d3436; margin-bottom: 4px; }
         .popup-subtitle { color: #636e72; margin-bottom: 15px; font-size: 0.85em; }
@@ -205,7 +305,17 @@
         .deal-item .deal-name { font-weight: 600; color: #2d3436; }
         .deal-item .deal-desc { font-size: 0.75em; color: #636e72; }
         .deal-item .deal-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
-        .deal-buy-btn { background: #e74c3c; color: white; border: none; padding: 5px 16px; border-radius: 20px; font-weight: 600; font-size: 0.8em; cursor: pointer; transition: all 0.3s; }
+        .deal-buy-btn { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 5px 16px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            font-size: 0.8em; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
         .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
 
         /* Order Form */
@@ -224,9 +334,29 @@
             border-color: #e74c3c;
         }
         .order-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .order-submit-btn { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 12px; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+        .order-submit-btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: #27ae60; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 1em; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
         .order-submit-btn:hover { background: #1e8449; transform: scale(1.02); }
-        .order-total-display { text-align: center; font-size: 1.2em; font-weight: 700; color: #e74c3c; padding: 10px; background: #fdf2f2; border-radius: 10px; margin-bottom: 15px; }
+        .order-total-display { 
+            text-align: center; 
+            font-size: 1.2em; 
+            font-weight: 700; 
+            color: #e74c3c; 
+            padding: 10px; 
+            background: #fdf2f2; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+        }
 
         /* Toast */
         .toast {
@@ -253,28 +383,6 @@
         .status-ready { background: #e8f8f0; color: #27ae60; }
         .status-delivered { background: #e8f8f0; color: #27ae60; }
         .status-cancelled { background: #fdf2f2; color: #e74c3c; }
-
-        .toggle-switch {
-            width: 50px;
-            height: 28px;
-            border-radius: 14px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s;
-            flex-shrink: 0;
-        }
-        .toggle-switch .toggle-dot {
-            width: 22px;
-            height: 22px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            transition: all 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .toggle-switch.active .toggle-dot { left: 25px; }
 
         @media (max-width: 600px) {
             .sidebar { width: 75px; }
@@ -311,7 +419,7 @@
     <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="splash-logo">🍔</div>
-        <div class="splash-name">DineFlow</div>
+        <div class="splash-name" id="splashName">DineFlow</div>
         <div class="splash-sub">Restaurant Ordering System</div>
         <div class="splash-loader"><div class="splash-progress"></div></div>
     </div>
@@ -321,7 +429,7 @@
         <div class="restaurant-name" id="restaurantName">🍔 Dine<span>Flow</span></div>
         <div class="top-actions">
             <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
-            <a class="admin-link-btn" href="/admin">👑 Admin</a>
+            <!-- ⭐ REMOVED ADMIN BUTTON ⭐ -->
             <span class="cart-icon" onclick="showPanel('orders')">
                 🛒
                 <span class="cart-badge" id="cartCount">0</span>
@@ -433,17 +541,29 @@
         const loginRequiredPopup = document.getElementById('loginRequiredPopup');
         const cartBadge = document.getElementById('cartCount');
         const restaurantNameEl = document.getElementById('restaurantName');
+        const splashNameEl = document.getElementById('splashName');
 
         // ============================================================
         // SPLASH SCREEN
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
+            // Load restaurant name first for splash screen
+            fetch('/api/restaurant-name?t=' + Date.now())
+                .then(r => r.json())
+                .then(data => {
+                    restaurantName = data.name || 'DineFlow';
+                    updateRestaurantNameDisplay();
+                    updateSplashName();
+                })
+                .catch(() => {});
+
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('hide');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
                 }, 600);
             }, 2000);
+            
             loadAllData();
         });
 
@@ -464,8 +584,26 @@
                 .then(data => {
                     restaurantName = data.name || 'DineFlow';
                     updateRestaurantNameDisplay();
+                    updateSplashName();
                 })
                 .catch(() => {});
+        }
+
+        function updateRestaurantNameDisplay() {
+            if (restaurantNameEl) {
+                const parts = restaurantName.split(' ');
+                if (parts.length > 1) {
+                    restaurantNameEl.innerHTML = `${parts[0]} <span>${parts.slice(1).join(' ')}</span>`;
+                } else {
+                    restaurantNameEl.textContent = restaurantName;
+                }
+            }
+        }
+
+        function updateSplashName() {
+            if (splashNameEl) {
+                splashNameEl.textContent = restaurantName;
+            }
         }
 
         function loadMenu() {
@@ -512,17 +650,6 @@
                 .catch(() => { isLoggedIn = false; });
         }
 
-        function updateRestaurantNameDisplay() {
-            if (restaurantNameEl) {
-                const parts = restaurantName.split(' ');
-                if (parts.length > 1) {
-                    restaurantNameEl.innerHTML = `${parts[0]} <span>${parts.slice(1).join(' ')}</span>`;
-                } else {
-                    restaurantNameEl.textContent = restaurantName;
-                }
-            }
-        }
-
         // ============================================================
         // RENDER CATEGORIES
         // ============================================================
@@ -545,7 +672,7 @@
         }
 
         // ============================================================
-        // RENDER MENU - UPDATED FOR MULTIPLE ICONS
+        // RENDER MENU
         // ============================================================
         function renderMenu() {
             let filtered = menuItems;
@@ -698,7 +825,7 @@
         }
 
         // ============================================================
-        // DEALS - UPDATED FOR MULTIPLE ICONS
+        // DEALS - FIXED TO SHOW PROPERLY
         // ============================================================
         function openDeals() {
             loadDeals();
@@ -718,19 +845,19 @@
             }
             deals.forEach(deal => {
                 const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
+                const div = document.createElement('div');
+                div.className = 'deal-item';
                 div.innerHTML = `
-                    <div class="deal-item">
-                        <div class="deal-info">
-                            <div class="deal-icons">${icons}</div>
-                            <div class="deal-name">${deal.name}</div>
-                            <div class="deal-desc">${deal.desc || ''}</div>
-                            <div style="font-size:0.75em; color:#b2bec3;">
-                                ${deal.original ? `<del>$${deal.original.toFixed(2)}</del>` : ''}
-                                <span style="color:#e74c3c; font-weight:700;"> $${deal.price.toFixed(2)}</span>
-                            </div>
+                    <div class="deal-info">
+                        <div class="deal-icons">${icons}</div>
+                        <div class="deal-name">${deal.name}</div>
+                        <div class="deal-desc">${deal.desc || ''}</div>
+                        <div style="font-size:0.75em; color:#b2bec3;">
+                            ${deal.original ? `<del>$${deal.original.toFixed(2)}</del>` : ''}
+                            <span style="color:#e74c3c; font-weight:700;"> $${deal.price.toFixed(2)}</span>
                         </div>
-                        <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
                     </div>
+                    <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
                 `;
                 dealsList.appendChild(div);
             });
@@ -1050,6 +1177,72 @@
             document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
             document.querySelector('.restaurant-name span').style.color = '#ffffff';
         }
+
+        // Function to toggle dark mode (for the toggle in settings)
+        function toggleCustomerDarkMode() {
+            const toggle = document.querySelector('.toggle-switch');
+            if (toggle) {
+                toggle.classList.toggle('active');
+                const isDark = toggle.classList.contains('active');
+                
+                if (isDark) {
+                    document.body.style.background = '#1a1a2e';
+                    document.body.style.color = '#ffffff';
+                    document.querySelector('.top-header').style.background = '#16213e';
+                    document.querySelector('.top-header').style.color = '#ffffff';
+                    document.querySelector('.sidebar').style.background = '#16213e';
+                    document.querySelector('.sidebar').style.borderRight = '1px solid #2d2d44';
+                    document.querySelector('.bottom-nav').style.background = '#16213e';
+                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
+                    document.querySelector('.restaurant-name span').style.color = '#ffffff';
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.style.background = '#f8f9fa';
+                    document.body.style.color = '#2d3436';
+                    document.querySelector('.top-header').style.background = 'white';
+                    document.querySelector('.top-header').style.color = '#2d3436';
+                    document.querySelector('.sidebar').style.background = 'white';
+                    document.querySelector('.sidebar').style.borderRight = '1px solid #eee';
+                    document.querySelector('.bottom-nav').style.background = 'white';
+                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #eee';
+                    document.querySelector('.restaurant-name span').style.color = '#2d3436';
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+        }
+
+        // Override the onclick for the toggle switch
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.toggle-switch') && !e.target.closest('.toggle-switch').getAttribute('onclick')) {
+                const toggle = e.target.closest('.toggle-switch');
+                toggle.classList.toggle('active');
+                const isDark = toggle.classList.contains('active');
+                
+                if (isDark) {
+                    document.body.style.background = '#1a1a2e';
+                    document.body.style.color = '#ffffff';
+                    document.querySelector('.top-header').style.background = '#16213e';
+                    document.querySelector('.top-header').style.color = '#ffffff';
+                    document.querySelector('.sidebar').style.background = '#16213e';
+                    document.querySelector('.sidebar').style.borderRight = '1px solid #2d2d44';
+                    document.querySelector('.bottom-nav').style.background = '#16213e';
+                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
+                    document.querySelector('.restaurant-name span').style.color = '#ffffff';
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.style.background = '#f8f9fa';
+                    document.body.style.color = '#2d3436';
+                    document.querySelector('.top-header').style.background = 'white';
+                    document.querySelector('.top-header').style.color = '#2d3436';
+                    document.querySelector('.sidebar').style.background = 'white';
+                    document.querySelector('.sidebar').style.borderRight = '1px solid #eee';
+                    document.querySelector('.bottom-nav').style.background = 'white';
+                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #eee';
+                    document.querySelector('.restaurant-name span').style.color = '#2d3436';
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+        });
     </script>
 </body>
 </html>
