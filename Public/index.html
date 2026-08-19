@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>DineFlow - Customer</title>
+    <title>DineFlow - Restaurant</title>
     <style>
         * {
             margin: 0;
@@ -72,21 +72,12 @@
             animation: loadProgress 2s ease-in-out forwards;
         }
         @keyframes pulse {
-            0%,
-            100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         @keyframes loadProgress {
-            0% {
-                width: 0%;
-            }
-            100% {
-                width: 100%;
-            }
+            0% { width: 0%; }
+            100% { width: 100%; }
         }
 
         /* Top Header */
@@ -396,14 +387,8 @@
             display: flex;
         }
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
         .popup-content {
             background: white;
@@ -505,10 +490,6 @@
             outline: none;
             border-color: #e74c3c;
         }
-        .order-form textarea {
-            min-height: 60px;
-            resize: vertical;
-        }
         .order-form .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -561,30 +542,12 @@
         }
 
         /* Order Status */
-        .status-pending {
-            background: #fdf2f2;
-            color: #e74c3c;
-        }
-        .status-confirmed {
-            background: #e8f4fd;
-            color: #3498db;
-        }
-        .status-preparing {
-            background: #fef9e7;
-            color: #f39c12;
-        }
-        .status-ready {
-            background: #e8f8f0;
-            color: #27ae60;
-        }
-        .status-delivered {
-            background: #e8f8f0;
-            color: #27ae60;
-        }
-        .status-cancelled {
-            background: #fdf2f2;
-            color: #e74c3c;
-        }
+        .status-pending { background: #fdf2f2; color: #e74c3c; }
+        .status-confirmed { background: #e8f4fd; color: #3498db; }
+        .status-preparing { background: #fef9e7; color: #f39c12; }
+        .status-ready { background: #e8f8f0; color: #27ae60; }
+        .status-delivered { background: #e8f8f0; color: #27ae60; }
+        .status-cancelled { background: #fdf2f2; color: #e74c3c; }
 
         /* Toggle Switch */
         .toggle-switch {
@@ -612,85 +575,34 @@
         }
 
         @media (max-width: 600px) {
-            .sidebar {
-                width: 75px;
-            }
-            .category-item .cat-icon {
-                font-size: 1.2em;
-            }
-            .category-item .cat-name {
-                font-size: 0.55em;
-            }
-            .menu-grid {
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-                gap: 8px;
-            }
-            .menu-item-card .item-icon {
-                font-size: 2em;
-            }
-            .top-header {
-                padding: 8px 12px;
-            }
-            .restaurant-name {
-                font-size: 1.1em;
-            }
-            .top-actions a {
-                font-size: 0.75em;
-                padding: 4px 10px;
-            }
-            .order-form .form-row {
-                grid-template-columns: 1fr;
-            }
-            .popup-content {
-                padding: 18px 14px;
-                margin: 10px;
-            }
-            .bottom-nav .nav-item {
-                font-size: 0.55em;
-                padding: 3px 8px;
-            }
-            .bottom-nav .nav-item .nav-icon {
-                font-size: 1.1em;
-            }
+            .sidebar { width: 75px; }
+            .category-item .cat-icon { font-size: 1.2em; }
+            .category-item .cat-name { font-size: 0.55em; }
+            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+            .menu-item-card .item-icon { font-size: 2em; }
+            .top-header { padding: 8px 12px; }
+            .restaurant-name { font-size: 1.1em; }
+            .top-actions a { font-size: 0.75em; padding: 4px 10px; }
+            .order-form .form-row { grid-template-columns: 1fr; }
+            .popup-content { padding: 18px 14px; margin: 10px; }
+            .bottom-nav .nav-item { font-size: 0.55em; padding: 3px 8px; }
+            .bottom-nav .nav-item .nav-icon { font-size: 1.1em; }
         }
+
         @media (max-width: 400px) {
-            .sidebar {
-                width: 60px;
-            }
-            .category-item {
-                padding: 8px 4px;
-            }
-            .category-item .cat-icon {
-                font-size: 1em;
-            }
-            .category-item .cat-name {
-                font-size: 0.5em;
-            }
-            .menu-grid {
-                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            }
-            .menu-item-card .item-icon {
-                font-size: 1.6em;
-            }
-            .menu-item-card .item-name {
-                font-size: 0.75em;
-            }
-            .btn-quick,
-            .btn-cart {
-                font-size: 0.55em;
-                padding: 3px 8px;
-            }
+            .sidebar { width: 60px; }
+            .category-item { padding: 8px 4px; }
+            .category-item .cat-icon { font-size: 1em; }
+            .category-item .cat-name { font-size: 0.5em; }
+            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+            .menu-item-card .item-icon { font-size: 1.6em; }
+            .menu-item-card .item-name { font-size: 0.75em; }
+            .btn-quick, .btn-cart { font-size: 0.55em; padding: 3px 8px; }
         }
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 10px;
-        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -860,14 +772,6 @@
                     deals = data;
                 });
 
-            // Load restaurant name
-            fetch('/api/restaurant-name')
-                .then(r => r.json())
-                .then(data => {
-                    restaurantName = data.name;
-                    updateRestaurantName();
-                });
-
             // Check auth status
             fetch('/api/user/profile')
                 .then(r => r.json())
@@ -889,17 +793,6 @@
                     updateOrderBadge();
                 })
                 .catch(() => {});
-        }
-
-        function updateRestaurantName() {
-            if (restaurantNameEl) {
-                const parts = restaurantName.split(' ');
-                if (parts.length > 1) {
-                    restaurantNameEl.innerHTML = `${parts[0]} <span>${parts.slice(1).join(' ')}</span>`;
-                } else {
-                    restaurantNameEl.textContent = restaurantName;
-                }
-            }
         }
 
         // ============================================================
@@ -1040,7 +933,6 @@
                 if (data.message) {
                     closeOrderPopup();
                     showToast('✅ Order placed successfully!');
-                    // Reload orders
                     fetch('/api/orders/myorders')
                         .then(r => r.json())
                         .then(data => {
@@ -1048,7 +940,6 @@
                             updateOrderBadge();
                             showPanel('orders');
                         });
-                    // Remove from cart
                     const itemIds = items.map(i => i.id);
                     cart = cart.filter(i => !itemIds.includes(i.id));
                     updateCartBadge();
@@ -1368,7 +1259,6 @@
                 localStorage.setItem('theme', 'light');
             }
 
-            // Re-render current panel
             const activeNav = document.querySelector('.nav-item.active');
             if (activeNav) {
                 const panel = activeNav.dataset.panel;
