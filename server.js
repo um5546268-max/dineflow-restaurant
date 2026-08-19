@@ -78,9 +78,15 @@ passport.deserializeUser((id, done) => {
     done(null, user);
 });
 
-// ⭐ GOOGLE AUTH ROUTES ⭐
+// ============================================
+// ⭐ GOOGLE AUTH ROUTES - SCOPE IS HERE ⭐
+// ============================================
 app.get('/auth/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],   // ⭐ THIS IS THE SCOPE!
+        accessType: 'offline',
+        prompt: 'select_account'
+    })
 );
 
 app.get('/callback',
@@ -150,7 +156,7 @@ app.post('/api/orders', (req, res) => {
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
-// ⭐ SERVE HTML PAGES ⭐
+// Serve HTML Pages
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
@@ -166,6 +172,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
+    console.log(`🔑 Google Auth: http://localhost:${PORT}/auth/google`);
     console.log(`🔑 Callback: http://localhost:${PORT}/callback`);
     console.log('========================================');
     console.log('✅ Server is ready!');
