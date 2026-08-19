@@ -60,8 +60,6 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// ⭐ IMPORTANT: Serve static files from Public folder
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // ============================================
@@ -136,9 +134,10 @@ passport.deserializeUser(function(id, done) {
 });
 
 // ============================================
-// GOOGLE AUTH ROUTES
+// ⭐ GOOGLE AUTH ROUTES ⭐
 // ============================================
 
+// Step 1: Start Google login
 app.get('/auth/google',
     passport.authenticate('google', { 
         scope: ['profile', 'email'],
@@ -146,6 +145,7 @@ app.get('/auth/google',
     })
 );
 
+// Step 2: Google redirects here after login - THIS WAS MISSING!
 app.get('/callback',
     passport.authenticate('google', { 
         failureRedirect: '/login-failed',
@@ -389,15 +389,13 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ⭐ SERVE HTML PAGES - FIXED ⭐
+// ⭐ SERVE HTML PAGES ⭐
 // ============================================
 
-// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
-// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
