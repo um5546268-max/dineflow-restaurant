@@ -9,17 +9,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ============================================
-// MIDDLEWARE
-// ============================================
+// Middleware
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'Public')));
 
-// ============================================
-// SESSION
-// ============================================
+// Session
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dineflow-super-secret-key-2026',
     resave: false,
@@ -34,9 +30,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ============================================
-// USERS DATABASE
-// ============================================
+// Users
 const users = [];
 let orders = [];
 let menuItems = [
@@ -54,9 +48,7 @@ let menuItems = [
     { id: 12, name: 'Iced Tea', price: 3.99, category: 'drinks', icon: '🧋' }
 ];
 
-// ============================================
-// GOOGLE OAUTH STRATEGY
-// ============================================
+// Google OAuth
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -86,65 +78,37 @@ passport.deserializeUser((id, done) => {
     done(null, user);
 });
 
-// ============================================
-// ⭐ GOOGLE AUTH ROUTES - THE CALLBACK ROUTE IS HERE ⭐
-// ============================================
-
-// 1. Start Google login
+// ⭐ GOOGLE AUTH ROUTES ⭐
 app.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
-// 2. ⭐ THIS IS THE CALLBACK ROUTE - GOOGLE REDIRECTS HERE ⭐
 app.get('/callback',
     passport.authenticate('google', { failureRedirect: '/login-failed' }),
     function(req, res) {
-        // Save session and redirect based on role
         req.session.save(function(err) {
             if (err) {
                 console.error('Session save error:', err);
                 return res.redirect('/login-failed');
             }
             if (req.user && req.user.role === 'admin') {
-                console.log(`👑 Admin logged in: ${req.user.displayName}`);
                 res.redirect('/admin');
             } else {
-                console.log(`👤 Customer logged in: ${req.user.displayName}`);
                 res.redirect('/');
             }
         });
     }
 );
 
-// 3. Login failed page
 app.get('/login-failed', (req, res) => {
-    res.send(`
-        <h1>❌ Login Failed</h1>
-        <p>Please try again.</p>
-        <a href="/auth/google">Try Again</a>
-        <a href="/">Home</a>
-    `);
+    res.send('Login failed. <a href="/auth/google">Try again</a>');
 });
 
-// 4. Logout
 app.get('/logout', (req, res) => {
-    req.logout(function(err) {
-        if (err) {
-            console.error('Logout error:', err);
-            return res.status(500).send('Error during logout');
-        }
-        req.session.destroy(function(err) {
-            if (err) {
-                console.error('Session destroy error:', err);
-            }
-            res.redirect('/');
-        });
-    });
+    req.logout(() => res.redirect('/'));
 });
 
-// ============================================
-// API ROUTES
-// ============================================
+// API Routes
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
@@ -186,9 +150,7 @@ app.post('/api/orders', (req, res) => {
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
-// ============================================
 // ⭐ SERVE HTML PAGES ⭐
-// ============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
@@ -197,21 +159,16 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
-// ============================================
-// START SERVER
-// ============================================
+// Start Server
 app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log('🍔 DINEFLOW SERVER RUNNING');
     console.log('========================================');
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
-    console.log(`🔑 Google Auth: http://localhost:${PORT}/auth/google`);
-    console.log(`🔑 CALLBACK ROUTE: http://localhost:${PORT}/callback`);
+    console.log(`🔑 Callback: http://localhost:${PORT}/callback`);
     console.log('========================================');
     console.log('✅ Server is ready!');
-    console.log(`📊 Users: ${users.length}`);
-    console.log(`📦 Orders: ${orders.length}`);
     console.log('========================================');
 });
 
