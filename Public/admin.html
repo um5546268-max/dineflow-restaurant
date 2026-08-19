@@ -14,7 +14,34 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            transition: background 0.3s, color 0.3s;
         }
+        body.dark-mode {
+            background: #1a1a2e;
+            color: #f5f5f5;
+        }
+        body.dark-mode .admin-header { background: #16213e; }
+        body.dark-mode .admin-sidebar { background: #16213e; border-right-color: #2d2d44; }
+        body.dark-mode .admin-sidebar .admin-nav-item { color: #f5f5f5; }
+        body.dark-mode .admin-sidebar .admin-nav-item:hover { background: #2d2d44; }
+        body.dark-mode .admin-sidebar .admin-nav-item.active { background: #2d2d44; color: #e74c3c; }
+        body.dark-mode .admin-content { background: #1a1a2e; }
+        body.dark-mode .admin-stat-card { background: #16213e; color: #f5f5f5; }
+        body.dark-mode .admin-table { background: #16213e; }
+        body.dark-mode .admin-table th { background: #2d2d44; color: #f5f5f5; }
+        body.dark-mode .admin-table td { border-top-color: #2d2d44; color: #f5f5f5; }
+        body.dark-mode .admin-form { background: #16213e; }
+        body.dark-mode .admin-form input, body.dark-mode .admin-form select { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .calculator { background: #16213e; }
+        body.dark-mode .calculator .calc-display { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .calculator .calc-buttons .calc-num { background: #2d2d44; color: #f5f5f5; }
+        body.dark-mode .calculator .calc-buttons .calc-num:hover { background: #3d3d5c; }
+        body.dark-mode .settings-card { background: #16213e; color: #f5f5f5; }
+        body.dark-mode .settings-option { border-bottom-color: #2d2d44; }
+        body.dark-mode .settings-option select { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .today-orders-card { background: #16213e; color: #f5f5f5; }
+        body.dark-mode .today-orders-card .order-item { border-bottom-color: #2d2d44; }
+
         .admin-header {
             background: #2d3436;
             color: white;
@@ -23,6 +50,7 @@
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
+            transition: background 0.3s;
         }
         .admin-header h2 { font-size: 1.2em; }
         .admin-header .admin-header-actions {
@@ -67,6 +95,7 @@
             flex-shrink: 0;
             border-right: 1px solid #eee;
             height: 100%;
+            transition: background 0.3s, border-color 0.3s;
         }
         .admin-sidebar::-webkit-scrollbar { width: 3px; }
         .admin-sidebar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
@@ -96,6 +125,7 @@
             overflow-y: auto;
             background: #f8f9fa;
             height: 100%;
+            transition: background 0.3s;
         }
         .admin-content::-webkit-scrollbar { width: 5px; }
         .admin-content::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
@@ -118,6 +148,7 @@
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             text-align: center;
+            transition: background 0.3s, color 0.3s;
         }
         .admin-stat-card .stat-number {
             font-size: 1.8em;
@@ -138,6 +169,7 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s;
         }
         .admin-table table {
             width: 100%;
@@ -150,10 +182,12 @@
             text-align: left;
             font-weight: 600;
             color: #636e72;
+            transition: background 0.3s, color 0.3s;
         }
         .admin-table td {
             padding: 8px 12px;
             border-top: 1px solid #f1f2f6;
+            transition: border-color 0.3s;
         }
         .admin-table .admin-action-btn {
             padding: 3px 12px;
@@ -211,6 +245,7 @@
             margin-bottom: 15px;
             display: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s;
         }
         .admin-form.show { display: block; }
         .admin-form input, .admin-form select {
@@ -220,6 +255,7 @@
             border-radius: 8px;
             font-size: 0.9em;
             margin-bottom: 8px;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
         .admin-form .form-row-admin {
             display: grid;
@@ -250,7 +286,6 @@
         }
         .admin-form .admin-cancel-btn:hover { background: #636e72; }
 
-        /* Icon Picker Styles */
         .icon-picker-container {
             display: flex;
             flex-wrap: wrap;
@@ -373,23 +408,41 @@
             transform: scale(1.1);
         }
 
+        /* Calculator Section */
+        .calculator-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .calculator-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .calculator {
             background: white;
             padding: 15px;
             border-radius: 12px;
-            max-width: 350px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s;
         }
         .calculator .calc-display {
             width: 100%;
-            padding: 12px;
-            font-size: 1.5em;
+            padding: 15px;
+            font-size: 2em;
             text-align: right;
-            border: 1px solid #dfe6e9;
+            border: 2px solid #dfe6e9;
             border-radius: 8px;
             margin-bottom: 10px;
             background: #f8f9fa;
             font-weight: 700;
+            font-family: 'Courier New', monospace;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .calculator .calc-display:focus {
+            outline: none;
+            border-color: #e74c3c;
         }
         .calculator .calc-buttons {
             display: grid;
@@ -397,8 +450,8 @@
             gap: 8px;
         }
         .calculator .calc-buttons button {
-            padding: 12px;
-            font-size: 1em;
+            padding: 14px;
+            font-size: 1.1em;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -406,14 +459,143 @@
             font-weight: 600;
         }
         .calculator .calc-buttons .calc-num { background: #f1f2f6; color: #2d3436; }
-        .calculator .calc-buttons .calc-num:hover { background: #dfe6e9; }
+        .calculator .calc-buttons .calc-num:hover { background: #dfe6e9; transform: scale(1.02); }
         .calculator .calc-buttons .calc-op { background: #3498db; color: white; }
-        .calculator .calc-buttons .calc-op:hover { background: #2980b9; }
+        .calculator .calc-buttons .calc-op:hover { background: #2980b9; transform: scale(1.02); }
         .calculator .calc-buttons .calc-eq { background: #27ae60; color: white; }
-        .calculator .calc-buttons .calc-eq:hover { background: #1e8449; }
+        .calculator .calc-buttons .calc-eq:hover { background: #1e8449; transform: scale(1.02); }
         .calculator .calc-buttons .calc-clear { background: #e74c3c; color: white; }
-        .calculator .calc-buttons .calc-clear:hover { background: #c0392b; }
+        .calculator .calc-buttons .calc-clear:hover { background: #c0392b; transform: scale(1.02); }
         .calculator .calc-buttons .calc-span2 { grid-column: span 2; }
+        .calculator .calc-keyboard-hint {
+            margin-top: 8px;
+            font-size: 0.75em;
+            color: #b2bec3;
+            text-align: center;
+        }
+
+        /* Today's Orders */
+        .today-orders-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s, color 0.3s;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .today-orders-card::-webkit-scrollbar { width: 4px; }
+        .today-orders-card::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        .today-orders-card h4 {
+            margin-bottom: 10px;
+            color: #2d3436;
+            font-size: 1em;
+        }
+        .today-orders-card .order-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s;
+        }
+        .today-orders-card .order-item:last-child {
+            border-bottom: none;
+        }
+        .today-orders-card .order-item .order-id {
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        .today-orders-card .order-item .order-customer {
+            font-size: 0.8em;
+            color: #636e72;
+        }
+        .today-orders-card .order-item .order-total {
+            font-weight: 700;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+        .today-orders-card .order-item .order-status {
+            font-size: 0.65em;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .today-orders-card .no-orders {
+            text-align: center;
+            padding: 20px;
+            color: #b2bec3;
+        }
+
+        /* Settings */
+        .settings-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s, color 0.3s;
+        }
+        .settings-card h4 {
+            margin-bottom: 10px;
+            color: #636e72;
+            font-size: 0.9em;
+        }
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f2f6;
+            transition: border-color 0.3s;
+        }
+        .settings-option:last-child {
+            border-bottom: none;
+        }
+        .settings-option .option-label {
+            font-weight: 500;
+        }
+        .settings-option .option-desc {
+            font-size: 0.75em;
+            color: #b2bec3;
+        }
+        .settings-option select,
+        .settings-option input[type="text"],
+        .settings-option input[type="number"] {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #dfe6e9;
+            font-size: 0.9em;
+            background: white;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .settings-option select:focus,
+        .settings-option input:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .toggle-switch .toggle-dot {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.active .toggle-dot { left: 25px; }
 
         .toast {
             position: fixed;
@@ -659,27 +841,37 @@
 
             <!-- Calculator -->
             <div class="admin-section" id="adminCalculator">
-                <h3 style="margin-bottom:15px;">🧮 Calculator</h3>
-                <div class="calculator">
-                    <input class="calc-display" id="calcDisplay" readonly value="0" />
-                    <div class="calc-buttons">
-                        <button class="calc-clear calc-span2" onclick="calcClear()">C</button>
-                        <button class="calc-op" onclick="calcInput('/')">÷</button>
-                        <button class="calc-num" onclick="calcInput('7')">7</button>
-                        <button class="calc-num" onclick="calcInput('8')">8</button>
-                        <button class="calc-num" onclick="calcInput('9')">9</button>
-                        <button class="calc-op" onclick="calcInput('*')">×</button>
-                        <button class="calc-num" onclick="calcInput('4')">4</button>
-                        <button class="calc-num" onclick="calcInput('5')">5</button>
-                        <button class="calc-num" onclick="calcInput('6')">6</button>
-                        <button class="calc-op" onclick="calcInput('-')">−</button>
-                        <button class="calc-num" onclick="calcInput('1')">1</button>
-                        <button class="calc-num" onclick="calcInput('2')">2</button>
-                        <button class="calc-num" onclick="calcInput('3')">3</button>
-                        <button class="calc-op" onclick="calcInput('+')">+</button>
-                        <button class="calc-num calc-span2" onclick="calcInput('0')">0</button>
-                        <button class="calc-op" onclick="calcInput('.')">.</button>
-                        <button class="calc-eq" onclick="calcResult()">=</button>
+                <h3 style="margin-bottom:15px;">🧮 Calculator & Today's Orders</h3>
+                <div class="calculator-section">
+                    <div class="calculator" id="calculatorWidget">
+                        <input class="calc-display" id="calcDisplay" readonly value="0" />
+                        <div class="calc-buttons">
+                            <button class="calc-clear calc-span2" onclick="calcClear()">C</button>
+                            <button class="calc-op" onclick="calcInput('/')">÷</button>
+                            <button class="calc-num" onclick="calcInput('7')">7</button>
+                            <button class="calc-num" onclick="calcInput('8')">8</button>
+                            <button class="calc-num" onclick="calcInput('9')">9</button>
+                            <button class="calc-op" onclick="calcInput('*')">×</button>
+                            <button class="calc-num" onclick="calcInput('4')">4</button>
+                            <button class="calc-num" onclick="calcInput('5')">5</button>
+                            <button class="calc-num" onclick="calcInput('6')">6</button>
+                            <button class="calc-op" onclick="calcInput('-')">−</button>
+                            <button class="calc-num" onclick="calcInput('1')">1</button>
+                            <button class="calc-num" onclick="calcInput('2')">2</button>
+                            <button class="calc-num" onclick="calcInput('3')">3</button>
+                            <button class="calc-op" onclick="calcInput('+')">+</button>
+                            <button class="calc-num calc-span2" onclick="calcInput('0')">0</button>
+                            <button class="calc-op" onclick="calcInput('.')">.</button>
+                            <button class="calc-eq" onclick="calcResult()">=</button>
+                        </div>
+                        <div class="calc-keyboard-hint">⌨️ Keyboard supported: 0-9, +, -, *, /, Enter, Backspace, Escape</div>
+                    </div>
+
+                    <div class="today-orders-card" id="todayOrdersCard">
+                        <h4>📋 Today's Orders</h4>
+                        <div id="todayOrdersList">
+                            <div class="no-orders">Loading orders...</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -687,16 +879,108 @@
             <!-- Settings -->
             <div class="admin-section" id="adminSettings">
                 <h3 style="margin-bottom:15px;">⚙️ Settings</h3>
-                <div class="admin-form" style="display:block;">
+
+                <div class="settings-card">
                     <h4>Restaurant Settings</h4>
-                    <label style="font-weight:600; font-size:0.9em;">Restaurant Name</label>
-                    <input type="text" id="adminRestaurantName" placeholder="Restaurant Name" style="margin-bottom:10px;" />
-                    <button class="admin-submit-btn" onclick="adminUpdateRestaurantName()">Update Name</button>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Restaurant Name</div>
+                            <div class="option-desc">Change your restaurant name</div>
+                        </div>
+                        <input type="text" id="adminRestaurantName" placeholder="Restaurant Name" style="width:200px;" />
+                        <button class="admin-submit-btn" onclick="adminUpdateRestaurantName()" style="padding:6px 16px; font-size:0.85em;">Update</button>
+                    </div>
                 </div>
-                <div style="margin-top:15px; background:white; border-radius:12px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-                    <h4>System Info</h4>
-                    <p style="color:#636e72; font-size:0.9em;">DineFlow v2.0.0</p>
-                    <p style="color:#636e72; font-size:0.9em;">Total Users: <span id="adminTotalUsers">0</span></p>
+
+                <div class="settings-card">
+                    <h4>🎨 Theme Settings</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Dark Mode</div>
+                            <div class="option-desc">Switch between light and dark theme</div>
+                        </div>
+                        <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()">
+                            <div class="toggle-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🔤 Font Settings</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Font Size</div>
+                            <div class="option-desc">Adjust the font size</div>
+                        </div>
+                        <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+                            <option value="14px">Small</option>
+                            <option value="16px" selected>Medium</option>
+                            <option value="18px">Large</option>
+                            <option value="20px">X-Large</option>
+                        </select>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Font Family</div>
+                            <div class="option-desc">Choose your preferred font</div>
+                        </div>
+                        <select id="fontFamilySelect" onchange="changeFontFamily(this.value)">
+                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="'Courier New', monospace">Courier New</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🌐 Language & Region</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">App Language</div>
+                            <div class="option-desc">Choose your preferred language</div>
+                        </div>
+                        <select id="languageSelect" onchange="changeLanguage(this.value)">
+                            <option value="en">English</option>
+                            <option value="ur">Urdu</option>
+                            <option value="ar">Arabic</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                        </select>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Currency Symbol</div>
+                            <div class="option-desc">Choose your currency</div>
+                        </div>
+                        <select id="currencySelect" onchange="changeCurrency(this.value)">
+                            <option value="$">$ (USD)</option>
+                            <option value="€">€ (EUR)</option>
+                            <option value="£">£ (GBP)</option>
+                            <option value="Rs">Rs (PKR)</option>
+                            <option value="₹">₹ (INR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>📱 About</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">App Version</div>
+                            <div class="option-desc">DineFlow v2.0.0</div>
+                        </div>
+                        <span style="color:#27ae60;">✅ Up to date</span>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Total Users</div>
+                            <div class="option-desc">Registered users</div>
+                        </div>
+                        <span id="adminTotalUsers">0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -734,6 +1018,7 @@
         let users = [];
         let lastOrderCount = 0;
         let restaurantName = 'DineFlow';
+        let currencySymbol = '$';
 
         // Icon picker state
         let currentPickerTarget = 'menu';
@@ -776,6 +1061,7 @@
                 lastOrderCount = orders.length;
                 renderAdminDashboard();
                 renderAdminAllOrders();
+                renderTodayOrders();
             });
             fetch('/api/users').then(r => r.json()).then(data => {
                 users = data.users || [];
@@ -800,6 +1086,7 @@
                         orders = data;
                         renderAdminDashboard();
                         renderAdminAllOrders();
+                        renderTodayOrders();
                     }
                 });
         }
@@ -827,11 +1114,11 @@
                             <tr>
                                 <td>${i.name}</td>
                                 <td>${i.qty || 1}</td>
-                                <td style="text-align:right;">$${(i.price * (i.qty || 1)).toFixed(2)}</td>
+                                <td style="text-align:right;">${currencySymbol}${(i.price * (i.qty || 1)).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </table>
-                    <div class="receipt-total">Total: $${order.total.toFixed(2)}</div>
+                    <div class="receipt-total">Total: ${currencySymbol}${order.total.toFixed(2)}</div>
                     <div class="receipt-footer">Thank you! Status: ${order.status.toUpperCase()}</div>
                 </div>
             `;
@@ -855,6 +1142,7 @@
             if (section === 'menu') renderAdminMenu();
             if (section === 'deals') renderAdminDeals();
             if (section === 'orders') renderAdminAllOrders();
+            if (section === 'calculator') renderTodayOrders();
         }
 
         // ============================================================
@@ -865,7 +1153,7 @@
             const pendingOrders = orders.filter(o => o.status === 'pending').length;
             const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'ready').length;
 
-            document.getElementById('statRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('statRevenue').textContent = `${currencySymbol}${totalRevenue.toFixed(2)}`;
             document.getElementById('statOrders').textContent = orders.length;
             document.getElementById('statPending').textContent = pendingOrders;
             document.getElementById('statCompleted').textContent = completedOrders;
@@ -882,7 +1170,7 @@
                         <td>#${order.id}</td>
                         <td>${order.userName || 'Guest'}</td>
                         <td>${order.items.map(i => i.name).join(', ')}</td>
-                        <td>$${order.total.toFixed(2)}</td>
+                        <td>${currencySymbol}${order.total.toFixed(2)}</td>
                         <td><span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span></td>
                     </tr>
                 `;
@@ -907,7 +1195,7 @@
                         <td style="font-size:1.5em;">${icons}</td>
                         <td>${item.name}</td>
                         <td>${item.category}</td>
-                        <td>$${item.price.toFixed(2)}</td>
+                        <td>${currencySymbol}${item.price.toFixed(2)}</td>
                         <td>
                             <button class="admin-action-btn btn-delete" onclick="deleteMenuItem(${item.id})">🗑️</button>
                         </td>
@@ -966,7 +1254,7 @@
                     <tr>
                         <td style="font-size:1.5em;">${icons}</td>
                         <td>${deal.name}</td>
-                        <td>$${deal.price.toFixed(2)}</td>
+                        <td>${currencySymbol}${deal.price.toFixed(2)}</td>
                         <td><button class="admin-action-btn btn-delete" onclick="deleteDeal(${deal.id})">🗑️</button></td>
                     </tr>
                 `;
@@ -1012,7 +1300,7 @@
         }
 
         // ============================================================
-        // ADMIN ORDERS - FIXED WITH FULL DETAILS
+        // ADMIN ORDERS
         // ============================================================
         function renderAdminAllOrders() {
             if (orders.length === 0) {
@@ -1043,7 +1331,7 @@
                         <td>${order.phone || '-'}</td>
                         <td style="max-width:120px; word-break:break-word;">${order.address || 'Pickup'}</td>
                         <td style="max-width:150px;">${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}</td>
-                        <td><strong>$${order.total.toFixed(2)}</strong></td>
+                        <td><strong>${currencySymbol}${order.total.toFixed(2)}</strong></td>
                         <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
                         <td style="font-size:0.75em;">${order.date || 'Today'}</td>
                         <td>
@@ -1091,17 +1379,56 @@
         }
 
         // ============================================================
+        // TODAY'S ORDERS
+        // ============================================================
+        function renderTodayOrders() {
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => {
+                const orderDate = o.date ? new Date(o.date) : new Date(o.createdAt);
+                return orderDate.toDateString() === today;
+            });
+
+            const container = document.getElementById('todayOrdersList');
+            
+            if (todayOrders.length === 0) {
+                container.innerHTML = '<div class="no-orders">📭 No orders placed today</div>';
+                return;
+            }
+
+            let html = '';
+            const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
+            html += `<div style="padding:8px 0; border-bottom:2px solid #e74c3c; margin-bottom:10px; display:flex; justify-content:space-between;">
+                <strong>Total Today: ${currencySymbol}${todayTotal.toFixed(2)}</strong>
+                <span style="color:#636e72; font-size:0.85em;">${todayOrders.length} orders</span>
+            </div>`;
+
+            todayOrders.slice().reverse().forEach(order => {
+                const statusClass = `status-${order.status}`;
+                html += `
+                    <div class="order-item">
+                        <div>
+                            <div class="order-id">#${order.id} - ${order.userName || 'Guest'}</div>
+                            <div class="order-customer">${order.items.map(i => i.name).join(', ')}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="order-total">${currencySymbol}${order.total.toFixed(2)}</div>
+                            <span class="order-status ${statusClass}">${order.status.toUpperCase()}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ============================================================
         // ADMIN FORM
         // ============================================================
         function toggleAdminForm(formId) {
             const form = document.getElementById(formId);
-            const isShowing = !form.classList.contains('show');
             form.classList.toggle('show');
-            
-            // Only reset icons when opening the form, not when closing
-            if (isShowing) {
+            if (form.classList.contains('show')) {
                 const target = formId === 'menuForm' ? 'menu' : 'deal';
-                // Don't reset - keep existing icons
                 updateIconDisplay(target);
             }
         }
@@ -1126,7 +1453,7 @@
         }
 
         // ============================================================
-        // ICON PICKER - FIXED
+        // ICON PICKER
         // ============================================================
         function openIconPicker(target) {
             currentPickerTarget = target;
@@ -1186,15 +1513,115 @@
         }
 
         // ============================================================
-        // CALCULATOR
+        // CALCULATOR WITH KEYBOARD SUPPORT
         // ============================================================
         let calcDisplay = document.getElementById('calcDisplay');
         let calcExpression = '';
-        function calcInput(value) { calcExpression += value; calcDisplay.value = calcExpression; }
-        function calcClear() { calcExpression = ''; calcDisplay.value = '0'; }
+
+        function calcInput(value) {
+            calcExpression += value;
+            calcDisplay.value = calcExpression;
+        }
+
+        function calcClear() {
+            calcExpression = '';
+            calcDisplay.value = '0';
+        }
+
         function calcResult() {
-            try { const result = eval(calcExpression); calcDisplay.value = result; calcExpression = result.toString(); }
-            catch(e) { calcDisplay.value = 'Error'; calcExpression = ''; }
+            try {
+                const result = eval(calcExpression);
+                calcDisplay.value = result;
+                calcExpression = result.toString();
+            } catch(e) {
+                calcDisplay.value = 'Error';
+                calcExpression = '';
+            }
+        }
+
+        // Keyboard support for calculator
+        document.addEventListener('keydown', function(e) {
+            // Only work if calculator section is active
+            const calcSection = document.getElementById('adminCalculator');
+            if (!calcSection.classList.contains('active')) return;
+
+            const key = e.key;
+            
+            // Numbers
+            if (/^[0-9]$/.test(key)) {
+                e.preventDefault();
+                calcInput(key);
+            }
+            // Operators
+            else if (key === '+') {
+                e.preventDefault();
+                calcInput('+');
+            }
+            else if (key === '-') {
+                e.preventDefault();
+                calcInput('-');
+            }
+            else if (key === '*') {
+                e.preventDefault();
+                calcInput('*');
+            }
+            else if (key === '/') {
+                e.preventDefault();
+                calcInput('/');
+            }
+            // Decimal point
+            else if (key === '.') {
+                e.preventDefault();
+                calcInput('.');
+            }
+            // Equals / Enter
+            else if (key === '=' || key === 'Enter') {
+                e.preventDefault();
+                calcResult();
+            }
+            // Backspace
+            else if (key === 'Backspace') {
+                e.preventDefault();
+                calcExpression = calcExpression.slice(0, -1);
+                calcDisplay.value = calcExpression || '0';
+            }
+            // Escape / Clear
+            else if (key === 'Escape') {
+                e.preventDefault();
+                calcClear();
+            }
+        });
+
+        // ============================================================
+        // THEME SETTINGS
+        // ============================================================
+        function toggleDarkMode() {
+            const toggle = document.getElementById('darkModeToggle');
+            toggle.classList.toggle('active');
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('adminDarkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        function changeFontSize(size) {
+            document.body.style.fontSize = size;
+            localStorage.setItem('adminFontSize', size);
+        }
+
+        function changeFontFamily(font) {
+            document.body.style.fontFamily = font;
+            localStorage.setItem('adminFontFamily', font);
+        }
+
+        function changeLanguage(lang) {
+            localStorage.setItem('adminLanguage', lang);
+            showToast(`🌐 Language changed to: ${lang.toUpperCase()}`);
+        }
+
+        function changeCurrency(currency) {
+            currencySymbol = currency;
+            localStorage.setItem('adminCurrency', currency);
+            showToast(`💰 Currency changed to: ${currency}`);
+            loadAdminData();
         }
 
         // ============================================================
@@ -1214,14 +1641,31 @@
         // INIT
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
+            // Load saved settings
+            if (localStorage.getItem('adminDarkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').classList.add('active');
+            }
+            if (localStorage.getItem('adminFontSize')) {
+                document.body.style.fontSize = localStorage.getItem('adminFontSize');
+                document.getElementById('fontSizeSelect').value = localStorage.getItem('adminFontSize');
+            }
+            if (localStorage.getItem('adminFontFamily')) {
+                document.body.style.fontFamily = localStorage.getItem('adminFontFamily');
+                document.getElementById('fontFamilySelect').value = localStorage.getItem('adminFontFamily');
+            }
+            if (localStorage.getItem('adminCurrency')) {
+                currencySymbol = localStorage.getItem('adminCurrency');
+                document.getElementById('currencySelect').value = currencySymbol;
+            }
+
             loadAdminData();
             setInterval(checkNewOrders, 3000);
+            setInterval(renderTodayOrders, 5000);
             
-            // Initialize icon displays
             updateIconDisplay('menu');
             updateIconDisplay('deal');
             
-            // Close picker when clicking outside
             document.getElementById('iconPickerPopup').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeIconPicker();
