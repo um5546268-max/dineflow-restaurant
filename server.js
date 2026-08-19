@@ -36,10 +36,6 @@ app.use(passport.session());
 const users = [];
 let orders = [];
 let restaurantName = 'DineFlow';
-
-// ============================================
-// MENU ITEMS - SHARED
-// ============================================
 let menuItems = [
     { id: 1, name: 'Cheese Burger', price: 12.99, category: 'burgers', icon: '🍔' },
     { id: 2, name: 'Double Burger', price: 15.99, category: 'burgers', icon: '🍔' },
@@ -60,10 +56,6 @@ let menuItems = [
     { id: 17, name: 'Tiramisu', price: 6.99, category: 'desserts', icon: '🍰' },
     { id: 18, name: 'Chocolate Cake', price: 5.99, category: 'desserts', icon: '🍫' }
 ];
-
-// ============================================
-// DEALS - SHARED
-// ============================================
 let deals = [
     { id: 1, name: '🍔 Burger Combo', desc: 'Cheese Burger + Fries + Drink', price: 15.99, original: 23.97 },
     { id: 2, name: '🍕 Pizza Deal', desc: 'Large Pizza + 2 Drinks', price: 18.99, original: 28.97 },
@@ -143,22 +135,22 @@ app.get('/logout', (req, res) => {
 // ⭐ API ROUTES - SHARED DATA ⭐
 // ============================================
 
-// Get menu items (customer panel uses this)
+// Get menu items
 app.get('/api/menu', (req, res) => {
     res.json(menuItems);
 });
 
-// Get deals (customer panel uses this)
+// Get deals
 app.get('/api/deals', (req, res) => {
     res.json(deals);
 });
 
-// Get restaurant name (customer panel uses this)
+// Get restaurant name
 app.get('/api/restaurant-name', (req, res) => {
     res.json({ name: restaurantName });
 });
 
-// ⭐ UPDATE RESTAURANT NAME (Admin) - FIXED ⭐
+// ⭐ UPDATE RESTAURANT NAME ⭐
 app.post('/api/restaurant-name', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const { name } = req.body;
@@ -171,7 +163,7 @@ app.post('/api/restaurant-name', (req, res) => {
     }
 });
 
-// ⭐ ADD MENU ITEM (Admin) - FIXED ⭐
+// ⭐ ADD MENU ITEM ⭐
 app.post('/api/menu', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const { name, price, category, icon } = req.body;
@@ -190,7 +182,7 @@ app.post('/api/menu', (req, res) => {
     res.status(201).json({ success: true, item: newItem });
 });
 
-// ⭐ DELETE MENU ITEM (Admin) ⭐
+// ⭐ DELETE MENU ITEM ⭐
 app.delete('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const index = menuItems.findIndex(i => i.id === parseInt(req.params.id));
@@ -202,7 +194,7 @@ app.delete('/api/menu/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// ⭐ ADD DEAL (Admin) - FIXED ⭐
+// ⭐ ADD DEAL ⭐
 app.post('/api/deals', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const { name, desc, price, original } = req.body;
@@ -221,7 +213,7 @@ app.post('/api/deals', (req, res) => {
     res.status(201).json({ success: true, deal: newDeal });
 });
 
-// ⭐ DELETE DEAL (Admin) ⭐
+// ⭐ DELETE DEAL ⭐
 app.delete('/api/deals/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const index = deals.findIndex(d => d.id === parseInt(req.params.id));

@@ -446,7 +446,7 @@
         });
 
         // ============================================================
-        // ⭐ LOAD ALL DATA - FIXED ⭐
+        // ⭐ LOAD ALL DATA - FIXED WITH CACHE BUSTING ⭐
         // ============================================================
         function loadAllData() {
             loadRestaurantName();
@@ -457,7 +457,8 @@
         }
 
         function loadRestaurantName() {
-            fetch('/api/restaurant-name')
+            // Add timestamp to prevent caching
+            fetch('/api/restaurant-name?t=' + Date.now())
                 .then(r => r.json())
                 .then(data => {
                     restaurantName = data.name || 'DineFlow';
@@ -467,7 +468,8 @@
         }
 
         function loadMenu() {
-            fetch('/api/menu')
+            // Add timestamp to prevent caching
+            fetch('/api/menu?t=' + Date.now())
                 .then(r => r.json())
                 .then(data => {
                     menuItems = data;
@@ -478,7 +480,8 @@
         }
 
         function loadDeals() {
-            fetch('/api/deals')
+            // Add timestamp to prevent caching
+            fetch('/api/deals?t=' + Date.now())
                 .then(r => r.json())
                 .then(data => {
                     deals = data;
@@ -698,6 +701,8 @@
         // DEALS
         // ============================================================
         function openDeals() {
+            // Refresh deals before showing
+            loadDeals();
             dealsPopup.classList.add('show');
             renderDeals();
         }
@@ -756,9 +761,10 @@
 
             if (panel === 'menu') {
                 document.querySelector('.nav-item[data-panel="menu"]').classList.add('active');
-                renderMenu();
+                loadMenu();
             } else if (panel === 'orders') {
                 document.querySelector('.nav-item[data-panel="orders"]').classList.add('active');
+                loadOrders();
                 renderOrders();
             } else if (panel === 'account') {
                 document.querySelector('.nav-item[data-panel="account"]').classList.add('active');
@@ -824,6 +830,9 @@
         // RENDER ACCOUNT
         // ============================================================
         function renderAccount() {
+            // Refresh auth status
+            loadAuthStatus();
+
             let html = `
                 <div style="text-align:center; padding:30px 20px;">
                     <div style="font-size:4em; margin-bottom:10px;">${isLoggedIn ? '👤' : '👋'}</div>
@@ -1017,14 +1026,14 @@
         }
 
         // ============================================================
-        // ⭐ PERIODIC DATA REFRESH - FIXED ⭐
+        // ⭐ AGGRESSIVE DATA REFRESH - EVERY 5 SECONDS ⭐
         // ============================================================
-        // Refresh data every 10 seconds to show admin changes
         setInterval(function() {
             loadMenu();
             loadDeals();
             loadRestaurantName();
-        }, 10000);
+            loadOrders();
+        }, 5000); // Refresh every 5 seconds
 
         // ============================================================
         // LOAD THEME ON START
