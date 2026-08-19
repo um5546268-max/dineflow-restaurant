@@ -54,21 +54,13 @@ const PORT = process.env.PORT || 5000;
 // MIDDLEWARE
 // ============================================
 app.use(cors({
-    origin: ['http://localhost:5000', 'https://*.ngrok-free.dev', 'http://*.ngrok-free.dev', '*'],
+    origin: ['http://localhost:5000', 'https://*.onrender.com', 'https://*.railway.app', 'https://*.vercel.app', '*'],
     credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'Public')));
-
-// ============================================
-// NGROK WARNING SKIP
-// ============================================
-app.use((req, res, next) => {
-    res.setHeader('ngrok-skip-browser-warning', 'true');
-    next();
-});
 
 // ============================================
 // SESSION CONFIGURATION
@@ -92,7 +84,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ============================================
-// GOOGLE OAUTH STRATEGY
+// GOOGLE OAUTH STRATEGY - CLEAN (NO SECRETS)
 // ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -165,8 +157,10 @@ app.get('/callback',
             }
             
             if (req.user && req.user.role === 'admin') {
+                console.log(`👑 Admin logged in: ${req.user.displayName}`);
                 res.redirect('/admin');
             } else {
+                console.log(`👤 Customer logged in: ${req.user.displayName}`);
                 res.redirect('/');
             }
         });
@@ -175,10 +169,25 @@ app.get('/callback',
 
 app.get('/login-failed', (req, res) => {
     res.send(`
-        <h1>❌ Login Failed</h1>
-        <p>Please try again.</p>
-        <a href="/auth/google">Try Again</a>
-        <a href="/">Home</a>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Login Failed</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                .btn { display: inline-block; padding: 12px 30px; background: #4285f4; color: white; text-decoration: none; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <h1>❌ Login Failed</h1>
+            <p>Please try again.</p>
+            <a href="/auth/google" class="btn">Try Again</a>
+            <br><br>
+            <a href="/">Home</a>
+        </body>
+        </html>
     `);
 });
 

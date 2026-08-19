@@ -1,11 +1,10 @@
 {
   "name": "dineflow-restaurant",
-  "version": "2.0.0",
-  "description": "Complete Restaurant Ordering System",
+  "version": "1.0.0",
+  "description": "Restaurant Ordering System",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -14,8 +13,5 @@
     "express-session": "^1.17.3",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
   }
 }

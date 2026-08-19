@@ -1,0 +1,21 @@
+# Environment variables (contains secrets!)
+.env
+
+# Node modules (too large for GitHub)
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Database files
+*.db
+*.sqlite
