@@ -4,12 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>DineFlow - Admin Panel</title>
-    <!-- Include the Emoji Picker library -->
-    <script type="module">
-        // This script loads the emoji picker
-        import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.23.0/index.js';
-        window.emojiPickerReady = true;
-    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -256,7 +250,7 @@
         }
         .admin-form .admin-cancel-btn:hover { background: #636e72; }
 
-        /* Emoji Picker Styles */
+        /* Icon Picker Styles */
         .icon-picker-container {
             display: flex;
             flex-wrap: wrap;
@@ -267,6 +261,7 @@
             border: 1px solid #dfe6e9;
             border-radius: 8px;
             min-height: 50px;
+            background: white;
         }
         .icon-picker-container .selected-icon {
             font-size: 1.8em;
@@ -275,19 +270,30 @@
             border-radius: 6px;
             transition: all 0.3s;
             border: 1px solid transparent;
+            position: relative;
         }
         .icon-picker-container .selected-icon:hover {
-            background: #f1f2f6;
-            border-color: #b2bec3;
-        }
-        .icon-picker-container .selected-icon.remove-icon {
-            opacity: 0.5;
-            font-size: 1.2em;
-        }
-        .icon-picker-container .selected-icon.remove-icon:hover {
-            opacity: 1;
             background: #fdf2f2;
             border-color: #e74c3c;
+        }
+        .icon-picker-container .selected-icon:hover::after {
+            content: '✕';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.4em;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-picker-container .icon-hint {
+            color: #b2bec3;
+            font-size: 0.85em;
         }
         .icon-picker-btn {
             background: #dfe6e9;
@@ -607,7 +613,7 @@
                             <option value="desserts">Desserts</option>
                         </select>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <button class="admin-add-btn" onclick="openIconPicker('menu')" style="margin:0; padding: 6px 16px; font-size: 0.85em;">🎨 Add Icon</button>
+                            <button class="icon-picker-btn" onclick="openIconPicker('menu')">🎨 Add Icon</button>
                             <span id="menuSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
                         </div>
                     </div>
@@ -632,7 +638,7 @@
                         <input type="number" id="adminDealOriginal" placeholder="Original Price" step="0.01" />
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                        <button class="admin-add-btn" onclick="openIconPicker('deal')" style="margin:0; padding: 6px 16px; font-size: 0.85em;">🎨 Add Icon</button>
+                        <button class="icon-picker-btn" onclick="openIconPicker('deal')">🎨 Add Icon</button>
                         <span id="dealSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
                     </div>
                     <button class="admin-submit-btn" onclick="adminAddDeal()">Add Deal</button>
@@ -730,7 +736,7 @@
         let restaurantName = 'DineFlow';
 
         // Icon picker state
-        let currentPickerTarget = 'menu'; // 'menu' or 'deal'
+        let currentPickerTarget = 'menu';
         let selectedIcons = { menu: [], deal: [] };
 
         // ============================================================
@@ -741,7 +747,7 @@
             '🥘', '🍲', '🥩', '🍖', '🍗', '🥓', '🧀', '🍳', '🥚', '🍞',
             '🥐', '🥖', '🥨', '🥯', '🧇', '🍩', '🍪', '🎂', '🍰', '🧁',
             '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🥛', '☕', '🧃', '🥤',
-            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🧁', '🥮',
+            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🥮',
             '🍡', '🍧', '🍨', '🍦', '🥧', '🍰', '🎂', '🍮', '🍭', '🍬',
             '🍫', '🍿', '🍩', '🍪', '🧇', '🥐', '🥖', '🥨', '🥯', '🧀',
             '🥗', '🥙', '🌮', '🌯', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱',
@@ -1006,38 +1012,96 @@
         }
 
         // ============================================================
-        // ADMIN ORDERS
+        // ADMIN ORDERS - FIXED WITH FULL DETAILS
         // ============================================================
         function renderAdminAllOrders() {
             if (orders.length === 0) {
-                document.getElementById('adminAllOrdersTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders</p>';
+                document.getElementById('adminAllOrdersTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
                 return;
             }
-            let html = `<table><tr><th>#</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr>`;
+
+            let html = `<table>
+                <tr>
+                    <th>#</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
             orders.slice().reverse().forEach(order => {
+                const statusClass = `status-${order.status}`;
                 html += `
                     <tr>
-                        <td>#${order.id}</td>
+                        <td><strong>#${order.id}</strong></td>
                         <td>${order.userName || 'Guest'}</td>
-                        <td>${order.items.map(i => i.name).join(', ')}</td>
-                        <td>$${order.total.toFixed(2)}</td>
-                        <td><span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span></td>
+                        <td>${order.phone || '-'}</td>
+                        <td style="max-width:120px; word-break:break-word;">${order.address || 'Pickup'}</td>
+                        <td style="max-width:150px;">${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}</td>
+                        <td><strong>$${order.total.toFixed(2)}</strong></td>
+                        <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
+                        <td style="font-size:0.75em;">${order.date || 'Today'}</td>
+                        <td>
+                            <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
+                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                                <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                            <button class="admin-action-btn btn-print" onclick="showReceiptForOrder(${order.id})">🖨️</button>
+                        </td>
                     </tr>
                 `;
             });
+
             html += `</table>`;
             document.getElementById('adminAllOrdersTable').innerHTML = html;
+        }
+
+        function updateOrderStatus(id, status) {
+            fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Order status updated!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function showReceiptForOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                showReceipt(order);
+            }
         }
 
         // ============================================================
         // ADMIN FORM
         // ============================================================
         function toggleAdminForm(formId) {
-            document.getElementById(formId).classList.toggle('show');
-            // Reset icon selection when form is hidden
-            if (!document.getElementById(formId).classList.contains('show')) {
+            const form = document.getElementById(formId);
+            const isShowing = !form.classList.contains('show');
+            form.classList.toggle('show');
+            
+            // Only reset icons when opening the form, not when closing
+            if (isShowing) {
                 const target = formId === 'menuForm' ? 'menu' : 'deal';
-                selectedIcons[target] = [];
+                // Don't reset - keep existing icons
                 updateIconDisplay(target);
             }
         }
@@ -1062,7 +1126,7 @@
         }
 
         // ============================================================
-        // ICON PICKER
+        // ICON PICKER - FIXED
         // ============================================================
         function openIconPicker(target) {
             currentPickerTarget = target;
@@ -1099,6 +1163,15 @@
             const icons = selectedIcons[target];
             
             container.innerHTML = '';
+            
+            if (icons.length === 0) {
+                const hint = document.createElement('span');
+                hint.className = 'icon-hint';
+                hint.textContent = 'Click "Add Icon" to choose';
+                container.appendChild(hint);
+                return;
+            }
+            
             icons.forEach((icon, index) => {
                 const span = document.createElement('span');
                 span.className = 'selected-icon';
@@ -1110,14 +1183,6 @@
                 };
                 container.appendChild(span);
             });
-            
-            if (icons.length === 0) {
-                const hint = document.createElement('span');
-                hint.textContent = '🎨 Click "Add Icon" to choose';
-                hint.style.color = '#b2bec3';
-                hint.style.fontSize = '0.85em';
-                container.appendChild(hint);
-            }
         }
 
         // ============================================================
@@ -1152,19 +1217,9 @@
             loadAdminData();
             setInterval(checkNewOrders, 3000);
             
-            // Update icon display on form open
-            document.getElementById('menuForm').addEventListener('transitionend', function() {
-                if (this.classList.contains('show')) {
-                    selectedIcons.menu = [];
-                    updateIconDisplay('menu');
-                }
-            });
-            document.getElementById('dealForm').addEventListener('transitionend', function() {
-                if (this.classList.contains('show')) {
-                    selectedIcons.deal = [];
-                    updateIconDisplay('deal');
-                }
-            });
+            // Initialize icon displays
+            updateIconDisplay('menu');
+            updateIconDisplay('deal');
             
             // Close picker when clicking outside
             document.getElementById('iconPickerPopup').addEventListener('click', function(e) {
