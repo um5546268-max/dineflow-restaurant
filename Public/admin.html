@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>DineFlow - Admin Panel</title>
+    <!-- Include the Emoji Picker library -->
+    <script type="module">
+        // This script loads the emoji picker
+        import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.23.0/index.js';
+        window.emojiPickerReady = true;
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -250,6 +256,117 @@
         }
         .admin-form .admin-cancel-btn:hover { background: #636e72; }
 
+        /* Emoji Picker Styles */
+        .icon-picker-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            min-height: 50px;
+        }
+        .icon-picker-container .selected-icon {
+            font-size: 1.8em;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        .icon-picker-container .selected-icon:hover {
+            background: #f1f2f6;
+            border-color: #b2bec3;
+        }
+        .icon-picker-container .selected-icon.remove-icon {
+            opacity: 0.5;
+            font-size: 1.2em;
+        }
+        .icon-picker-container .selected-icon.remove-icon:hover {
+            opacity: 1;
+            background: #fdf2f2;
+            border-color: #e74c3c;
+        }
+        .icon-picker-btn {
+            background: #dfe6e9;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #2d3436;
+        }
+        .icon-picker-btn:hover {
+            background: #b2bec3;
+        }
+        .icon-picker-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 99999;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+        .icon-picker-popup.show {
+            display: block;
+        }
+        .icon-picker-popup .picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .icon-picker-popup .picker-header h4 {
+            font-size: 1em;
+            color: #2d3436;
+        }
+        .icon-picker-popup .picker-header button {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #b2bec3;
+            transition: all 0.3s;
+        }
+        .icon-picker-popup .picker-header button:hover {
+            color: #e74c3c;
+        }
+        .icon-picker-popup .picker-body {
+            padding: 10px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .icon-picker-popup .picker-body .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+        .icon-picker-popup .picker-body .emoji-grid button {
+            font-size: 1.8em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .icon-picker-popup .picker-body .emoji-grid button:hover {
+            background: #f1f2f6;
+            transform: scale(1.1);
+        }
+
         .calculator {
             background: white;
             padding: 15px;
@@ -403,10 +520,13 @@
             .admin-header .admin-header-actions a { font-size: 0.7em; padding: 4px 10px; }
             .admin-table table { font-size: 0.75em; }
             .admin-table th, .admin-table td { padding: 6px 8px; }
+            .icon-picker-popup { width: 95%; max-width: 350px; }
+            .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(5, 1fr); }
         }
         @media (max-width: 400px) {
             .admin-sidebar { width: 110px; }
             .admin-sidebar .admin-nav-item { font-size: 0.65em; padding: 8px 10px; }
+            .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(4, 1fr); }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -476,7 +596,6 @@
                         <input type="number" id="adminItemPrice" placeholder="Price" step="0.01" />
                     </div>
                     <div class="form-row-admin">
-                        <input type="text" id="adminItemIcon" placeholder="Emoji (e.g. 🍔)" />
                         <select id="adminItemCategory">
                             <option value="burgers">Burgers</option>
                             <option value="pizza">Pizza</option>
@@ -487,6 +606,10 @@
                             <option value="appetizers">Appetizers</option>
                             <option value="desserts">Desserts</option>
                         </select>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="admin-add-btn" onclick="openIconPicker('menu')" style="margin:0; padding: 6px 16px; font-size: 0.85em;">🎨 Add Icon</button>
+                            <span id="menuSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
+                        </div>
                     </div>
                     <button class="admin-submit-btn" onclick="adminAddItem()">Add Item</button>
                     <button class="admin-cancel-btn" onclick="toggleAdminForm('menuForm')">Cancel</button>
@@ -507,6 +630,10 @@
                     <div class="form-row-admin">
                         <input type="number" id="adminDealPrice" placeholder="Deal Price" step="0.01" />
                         <input type="number" id="adminDealOriginal" placeholder="Original Price" step="0.01" />
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <button class="admin-add-btn" onclick="openIconPicker('deal')" style="margin:0; padding: 6px 16px; font-size: 0.85em;">🎨 Add Icon</button>
+                        <span id="dealSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
                     </div>
                     <button class="admin-submit-btn" onclick="adminAddDeal()">Add Deal</button>
                     <button class="admin-cancel-btn" onclick="toggleAdminForm('dealForm')">Cancel</button>
@@ -569,6 +696,17 @@
         </div>
     </div>
 
+    <!-- Icon Picker Popup -->
+    <div class="icon-picker-popup" id="iconPickerPopup">
+        <div class="picker-header">
+            <h4>🎨 Choose Icons</h4>
+            <button onclick="closeIconPicker()">✕</button>
+        </div>
+        <div class="picker-body">
+            <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+    </div>
+
     <div class="receipt-popup" id="receiptPopup">
         <div class="receipt-content">
             <button class="receipt-close" onclick="closeReceipt()">✕</button>
@@ -581,6 +719,9 @@
     </div>
 
     <script>
+        // ============================================================
+        // DATA
+        // ============================================================
         let menuItems = [];
         let deals = [];
         let orders = [];
@@ -588,6 +729,29 @@
         let lastOrderCount = 0;
         let restaurantName = 'DineFlow';
 
+        // Icon picker state
+        let currentPickerTarget = 'menu'; // 'menu' or 'deal'
+        let selectedIcons = { menu: [], deal: [] };
+
+        // ============================================================
+        // EMOJI DATA
+        // ============================================================
+        const emojiList = [
+            '🍕', '🍔', '🍟', '🌭', '🥪', '🍝', '🥗', '🌮', '🌯', '🥙',
+            '🥘', '🍲', '🥩', '🍖', '🍗', '🥓', '🧀', '🍳', '🥚', '🍞',
+            '🥐', '🥖', '🥨', '🥯', '🧇', '🍩', '🍪', '🎂', '🍰', '🧁',
+            '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🥛', '☕', '🧃', '🥤',
+            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🧁', '🥮',
+            '🍡', '🍧', '🍨', '🍦', '🥧', '🍰', '🎂', '🍮', '🍭', '🍬',
+            '🍫', '🍿', '🍩', '🍪', '🧇', '🥐', '🥖', '🥨', '🥯', '🧀',
+            '🥗', '🥙', '🌮', '🌯', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱',
+            '🥟', '🍤', '🍙', '🍚', '🍘', '🥠', '🍢', '🍡', '🍧', '🍨',
+            '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿'
+        ];
+
+        // ============================================================
+        // LOAD DATA
+        // ============================================================
         function loadAdminData() {
             fetch('/api/user/profile')
                 .then(r => r.json())
@@ -599,8 +763,8 @@
                     }
                 });
 
-            fetch('/api/menu').then(r => r.json()).then(data => { menuItems = data; renderAdminMenu(); });
-            fetch('/api/deals').then(r => r.json()).then(data => { deals = data; renderAdminDeals(); });
+            fetch('/api/menu?t=' + Date.now()).then(r => r.json()).then(data => { menuItems = data; renderAdminMenu(); });
+            fetch('/api/deals?t=' + Date.now()).then(r => r.json()).then(data => { deals = data; renderAdminDeals(); });
             fetch('/api/orders/all').then(r => r.json()).then(data => {
                 orders = data;
                 lastOrderCount = orders.length;
@@ -634,6 +798,9 @@
                 });
         }
 
+        // ============================================================
+        // RECEIPT
+        // ============================================================
         function showReceipt(order) {
             const html = `
                 <div id="receiptPrint">
@@ -670,6 +837,9 @@
         function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
         function printReceipt() { window.print(); }
 
+        // ============================================================
+        // ADMIN NAVIGATION
+        // ============================================================
         function showAdminSection(section) {
             document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
             document.querySelector(`.admin-nav-item[data-admin="${section}"]`).classList.add('active');
@@ -681,6 +851,9 @@
             if (section === 'orders') renderAdminAllOrders();
         }
 
+        // ============================================================
+        // ADMIN DASHBOARD
+        // ============================================================
         function renderAdminDashboard() {
             const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
             const pendingOrders = orders.filter(o => o.status === 'pending').length;
@@ -712,6 +885,9 @@
             document.getElementById('adminOrdersList').innerHTML = html;
         }
 
+        // ============================================================
+        // ADMIN MENU
+        // ============================================================
         function renderAdminMenu() {
             if (menuItems.length === 0) {
                 document.getElementById('adminMenuTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No menu items</p>';
@@ -719,9 +895,10 @@
             }
             let html = `<table><tr><th>Icon</th><th>Name</th><th>Category</th><th>Price</th><th>Actions</th></tr>`;
             menuItems.forEach(item => {
+                const icons = item.icons ? item.icons.join(' ') : (item.icon || '🍽️');
                 html += `
                     <tr>
-                        <td style="font-size:1.5em;">${item.icon || '🍽️'}</td>
+                        <td style="font-size:1.5em;">${icons}</td>
                         <td>${item.name}</td>
                         <td>${item.category}</td>
                         <td>$${item.price.toFixed(2)}</td>
@@ -746,33 +923,42 @@
             const name = document.getElementById('adminItemName').value;
             const price = parseFloat(document.getElementById('adminItemPrice').value);
             const category = document.getElementById('adminItemCategory').value;
-            const icon = document.getElementById('adminItemIcon').value || '🍽️';
+            const icons = selectedIcons.menu;
+
             if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
+            if (icons.length === 0) { showToast('⚠️ Please add at least one icon'); return; }
+
             fetch('/api/menu', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, price, category, icon })
+                body: JSON.stringify({ name, price, category, icons: icons })
             })
             .then(r => r.json())
             .then(() => {
                 showToast('✅ Item added!');
                 document.getElementById('adminItemName').value = '';
                 document.getElementById('adminItemPrice').value = '';
-                document.getElementById('adminItemIcon').value = '';
+                selectedIcons.menu = [];
+                updateIconDisplay('menu');
                 toggleAdminForm('menuForm');
                 loadAdminData();
             });
         }
 
+        // ============================================================
+        // ADMIN DEALS
+        // ============================================================
         function renderAdminDeals() {
             if (deals.length === 0) {
                 document.getElementById('adminDealsTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No deals</p>';
                 return;
             }
-            let html = `<table><tr><th>Name</th><th>Price</th><th>Actions</th></tr>`;
+            let html = `<table><tr><th>Icon</th><th>Name</th><th>Price</th><th>Actions</th></tr>`;
             deals.forEach(deal => {
+                const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
                 html += `
                     <tr>
+                        <td style="font-size:1.5em;">${icons}</td>
                         <td>${deal.name}</td>
                         <td>$${deal.price.toFixed(2)}</td>
                         <td><button class="admin-action-btn btn-delete" onclick="deleteDeal(${deal.id})">🗑️</button></td>
@@ -795,11 +981,15 @@
             const desc = document.getElementById('adminDealDesc').value;
             const price = parseFloat(document.getElementById('adminDealPrice').value);
             const original = parseFloat(document.getElementById('adminDealOriginal').value);
+            const icons = selectedIcons.deal;
+
             if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
+            if (icons.length === 0) { showToast('⚠️ Please add at least one icon'); return; }
+
             fetch('/api/deals', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, desc, price, original })
+                body: JSON.stringify({ name, desc, price, original, icons: icons })
             })
             .then(r => r.json())
             .then(() => {
@@ -808,11 +998,16 @@
                 document.getElementById('adminDealDesc').value = '';
                 document.getElementById('adminDealPrice').value = '';
                 document.getElementById('adminDealOriginal').value = '';
+                selectedIcons.deal = [];
+                updateIconDisplay('deal');
                 toggleAdminForm('dealForm');
                 loadAdminData();
             });
         }
 
+        // ============================================================
+        // ADMIN ORDERS
+        // ============================================================
         function renderAdminAllOrders() {
             if (orders.length === 0) {
                 document.getElementById('adminAllOrdersTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders</p>';
@@ -834,10 +1029,22 @@
             document.getElementById('adminAllOrdersTable').innerHTML = html;
         }
 
+        // ============================================================
+        // ADMIN FORM
+        // ============================================================
         function toggleAdminForm(formId) {
             document.getElementById(formId).classList.toggle('show');
+            // Reset icon selection when form is hidden
+            if (!document.getElementById(formId).classList.contains('show')) {
+                const target = formId === 'menuForm' ? 'menu' : 'deal';
+                selectedIcons[target] = [];
+                updateIconDisplay(target);
+            }
         }
 
+        // ============================================================
+        // ADMIN SETTINGS
+        // ============================================================
         function adminUpdateRestaurantName() {
             const name = document.getElementById('adminRestaurantName').value;
             if (!name) { showToast('⚠️ Enter a name'); return; }
@@ -854,6 +1061,68 @@
             });
         }
 
+        // ============================================================
+        // ICON PICKER
+        // ============================================================
+        function openIconPicker(target) {
+            currentPickerTarget = target;
+            const popup = document.getElementById('iconPickerPopup');
+            const grid = document.getElementById('emojiGrid');
+            
+            grid.innerHTML = '';
+            emojiList.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.textContent = emoji;
+                btn.onclick = () => {
+                    const currentIcons = selectedIcons[currentPickerTarget];
+                    if (currentIcons.length < 5 && !currentIcons.includes(emoji)) {
+                        currentIcons.push(emoji);
+                        updateIconDisplay(currentPickerTarget);
+                    } else if (currentIcons.includes(emoji)) {
+                        showToast('⚠️ This icon is already selected');
+                    } else {
+                        showToast('⚠️ Maximum 5 icons allowed');
+                    }
+                };
+                grid.appendChild(btn);
+            });
+            
+            popup.classList.add('show');
+        }
+
+        function closeIconPicker() {
+            document.getElementById('iconPickerPopup').classList.remove('show');
+        }
+
+        function updateIconDisplay(target) {
+            const container = document.getElementById(target + 'SelectedIcons');
+            const icons = selectedIcons[target];
+            
+            container.innerHTML = '';
+            icons.forEach((icon, index) => {
+                const span = document.createElement('span');
+                span.className = 'selected-icon';
+                span.textContent = icon;
+                span.title = 'Click to remove';
+                span.onclick = () => {
+                    selectedIcons[target].splice(index, 1);
+                    updateIconDisplay(target);
+                };
+                container.appendChild(span);
+            });
+            
+            if (icons.length === 0) {
+                const hint = document.createElement('span');
+                hint.textContent = '🎨 Click "Add Icon" to choose';
+                hint.style.color = '#b2bec3';
+                hint.style.fontSize = '0.85em';
+                container.appendChild(hint);
+            }
+        }
+
+        // ============================================================
+        // CALCULATOR
+        // ============================================================
         let calcDisplay = document.getElementById('calcDisplay');
         let calcExpression = '';
         function calcInput(value) { calcExpression += value; calcDisplay.value = calcExpression; }
@@ -863,6 +1132,9 @@
             catch(e) { calcDisplay.value = 'Error'; calcExpression = ''; }
         }
 
+        // ============================================================
+        // TOAST
+        // ============================================================
         function showToast(message) {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
@@ -873,9 +1145,33 @@
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 2500);
         }
 
+        // ============================================================
+        // INIT
+        // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             loadAdminData();
             setInterval(checkNewOrders, 3000);
+            
+            // Update icon display on form open
+            document.getElementById('menuForm').addEventListener('transitionend', function() {
+                if (this.classList.contains('show')) {
+                    selectedIcons.menu = [];
+                    updateIconDisplay('menu');
+                }
+            });
+            document.getElementById('dealForm').addEventListener('transitionend', function() {
+                if (this.classList.contains('show')) {
+                    selectedIcons.deal = [];
+                    updateIconDisplay('deal');
+                }
+            });
+            
+            // Close picker when clicking outside
+            document.getElementById('iconPickerPopup').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeIconPicker();
+                }
+            });
         });
     </script>
 </body>

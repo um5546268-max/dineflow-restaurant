@@ -37,30 +37,30 @@ const users = [];
 let orders = [];
 let restaurantName = 'DineFlow';
 let menuItems = [
-    { id: 1, name: 'Cheese Burger', price: 12.99, category: 'burgers', icon: '🍔' },
-    { id: 2, name: 'Double Burger', price: 15.99, category: 'burgers', icon: '🍔' },
-    { id: 3, name: 'Chicken Burger', price: 11.99, category: 'burgers', icon: '🍔' },
-    { id: 4, name: 'Margherita Pizza', price: 14.99, category: 'pizza', icon: '🍕' },
-    { id: 5, name: 'Pepperoni Pizza', price: 16.99, category: 'pizza', icon: '🍕' },
-    { id: 6, name: 'BBQ Chicken Pizza', price: 17.99, category: 'pizza', icon: '🍕' },
-    { id: 7, name: 'Chicken Sandwich', price: 10.99, category: 'sandwiches', icon: '🥪' },
-    { id: 8, name: 'Club Sandwich', price: 11.99, category: 'sandwiches', icon: '🥪' },
-    { id: 9, name: 'French Fries', price: 4.99, category: 'sides', icon: '🍟' },
-    { id: 10, name: 'Onion Rings', price: 5.99, category: 'sides', icon: '🧅' },
-    { id: 11, name: 'Chocolate Shake', price: 5.99, category: 'drinks', icon: '🥤' },
-    { id: 12, name: 'Iced Tea', price: 3.99, category: 'drinks', icon: '🧋' },
-    { id: 13, name: 'Caesar Salad', price: 8.99, category: 'salads', icon: '🥗' },
-    { id: 14, name: 'Greek Salad', price: 9.99, category: 'salads', icon: '🥗' },
-    { id: 15, name: 'Chicken Wings', price: 9.99, category: 'appetizers', icon: '🍗' },
-    { id: 16, name: 'Mozzarella Sticks', price: 7.99, category: 'appetizers', icon: '🧀' },
-    { id: 17, name: 'Tiramisu', price: 6.99, category: 'desserts', icon: '🍰' },
-    { id: 18, name: 'Chocolate Cake', price: 5.99, category: 'desserts', icon: '🍫' }
+    { id: 1, name: 'Cheese Burger', price: 12.99, category: 'burgers', icons: ['🍔'] },
+    { id: 2, name: 'Double Burger', price: 15.99, category: 'burgers', icons: ['🍔', '🧀'] },
+    { id: 3, name: 'Chicken Burger', price: 11.99, category: 'burgers', icons: ['🍔', '🐔'] },
+    { id: 4, name: 'Margherita Pizza', price: 14.99, category: 'pizza', icons: ['🍕', '🧀'] },
+    { id: 5, name: 'Pepperoni Pizza', price: 16.99, category: 'pizza', icons: ['🍕', '🥓'] },
+    { id: 6, name: 'BBQ Chicken Pizza', price: 17.99, category: 'pizza', icons: ['🍕', '🐔'] },
+    { id: 7, name: 'Chicken Sandwich', price: 10.99, category: 'sandwiches', icons: ['🥪', '🐔'] },
+    { id: 8, name: 'Club Sandwich', price: 11.99, category: 'sandwiches', icons: ['🥪', '🥓'] },
+    { id: 9, name: 'French Fries', price: 4.99, category: 'sides', icons: ['🍟'] },
+    { id: 10, name: 'Onion Rings', price: 5.99, category: 'sides', icons: ['🧅'] },
+    { id: 11, name: 'Chocolate Shake', price: 5.99, category: 'drinks', icons: ['🥤', '🍫'] },
+    { id: 12, name: 'Iced Tea', price: 3.99, category: 'drinks', icons: ['🧋'] },
+    { id: 13, name: 'Caesar Salad', price: 8.99, category: 'salads', icons: ['🥗', '🧀'] },
+    { id: 14, name: 'Greek Salad', price: 9.99, category: 'salads', icons: ['🥗'] },
+    { id: 15, name: 'Chicken Wings', price: 9.99, category: 'appetizers', icons: ['🍗', '🔥'] },
+    { id: 16, name: 'Mozzarella Sticks', price: 7.99, category: 'appetizers', icons: ['🧀', '🔥'] },
+    { id: 17, name: 'Tiramisu', price: 6.99, category: 'desserts', icons: ['🍰', '☕'] },
+    { id: 18, name: 'Chocolate Cake', price: 5.99, category: 'desserts', icons: ['🍫', '🎂'] }
 ];
 let deals = [
-    { id: 1, name: '🍔 Burger Combo', desc: 'Cheese Burger + Fries + Drink', price: 15.99, original: 23.97 },
-    { id: 2, name: '🍕 Pizza Deal', desc: 'Large Pizza + 2 Drinks', price: 18.99, original: 28.97 },
-    { id: 3, name: '🥪 Family Pack', desc: '4 Sandwiches + 4 Fries', price: 29.99, original: 45.96 },
-    { id: 4, name: '🍗 Wing Wednesday', desc: '12 Wings + Dip', price: 8.99, original: 13.99 }
+    { id: 1, name: 'Burger Combo', desc: 'Cheese Burger + Fries + Drink', price: 15.99, original: 23.97, icons: ['🍔', '🍟', '🥤'] },
+    { id: 2, name: 'Pizza Deal', desc: 'Large Pizza + 2 Drinks', price: 18.99, original: 28.97, icons: ['🍕', '🥤', '🥤'] },
+    { id: 3, name: 'Family Pack', desc: '4 Sandwiches + 4 Fries', price: 29.99, original: 45.96, icons: ['🥪', '🥪', '🍟', '🍟'] },
+    { id: 4, name: 'Wing Wednesday', desc: '12 Wings + Dip', price: 8.99, original: 13.99, icons: ['🍗', '🔥', '🧀'] }
 ];
 
 // ============================================
@@ -132,25 +132,20 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================
-// ⭐ API ROUTES - SHARED DATA ⭐
+// API ROUTES
 // ============================================
-
-// Get menu items
 app.get('/api/menu', (req, res) => {
     res.json(menuItems);
 });
 
-// Get deals
 app.get('/api/deals', (req, res) => {
     res.json(deals);
 });
 
-// Get restaurant name
 app.get('/api/restaurant-name', (req, res) => {
     res.json({ name: restaurantName });
 });
 
-// ⭐ UPDATE RESTAURANT NAME ⭐
 app.post('/api/restaurant-name', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const { name } = req.body;
@@ -163,26 +158,27 @@ app.post('/api/restaurant-name', (req, res) => {
     }
 });
 
-// ⭐ ADD MENU ITEM ⭐
 app.post('/api/menu', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { name, price, category, icon } = req.body;
+    const { name, price, category, icons } = req.body;
     if (!name || !price || !category) {
         return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (!icons || !icons.length) {
+        return res.status(400).json({ error: 'Please add at least one icon' });
     }
     const newItem = {
         id: menuItems.length + 1,
         name,
         price: parseFloat(price),
         category,
-        icon: icon || '🍽️'
+        icons: icons.slice(0, 5) // Max 5 icons
     };
     menuItems.push(newItem);
-    console.log(`🍽️ New menu item added: ${newItem.name}`);
+    console.log(`🍽️ New menu item added: ${newItem.name} with icons: ${newItem.icons.join(' ')}`);
     res.status(201).json({ success: true, item: newItem });
 });
 
-// ⭐ DELETE MENU ITEM ⭐
 app.delete('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const index = menuItems.findIndex(i => i.id === parseInt(req.params.id));
@@ -194,26 +190,28 @@ app.delete('/api/menu/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// ⭐ ADD DEAL ⭐
 app.post('/api/deals', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { name, desc, price, original } = req.body;
+    const { name, desc, price, original, icons } = req.body;
     if (!name || !price) {
         return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (!icons || !icons.length) {
+        return res.status(400).json({ error: 'Please add at least one icon' });
     }
     const newDeal = {
         id: deals.length + 1,
         name,
         desc: desc || '',
         price: parseFloat(price),
-        original: parseFloat(original) || parseFloat(price) * 1.5
+        original: parseFloat(original) || parseFloat(price) * 1.5,
+        icons: icons.slice(0, 5) // Max 5 icons
     };
     deals.push(newDeal);
-    console.log(`🔥 New deal added: ${newDeal.name}`);
+    console.log(`🔥 New deal added: ${newDeal.name} with icons: ${newDeal.icons.join(' ')}`);
     res.status(201).json({ success: true, deal: newDeal });
 });
 
-// ⭐ DELETE DEAL ⭐
 app.delete('/api/deals/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const index = deals.findIndex(d => d.id === parseInt(req.params.id));
@@ -225,21 +223,16 @@ app.delete('/api/deals/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// User profile
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
 });
 
-// Users list
 app.get('/api/users', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ total: users.length, users: users });
 });
 
-// ============================================
-// ORDER ROUTES
-// ============================================
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json(orders);
@@ -288,7 +281,7 @@ app.put('/api/orders/:id/status', (req, res) => {
 });
 
 // ============================================
-// ⭐ SERVE HTML PAGES ⭐
+// SERVE HTML PAGES
 // ============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
