@@ -30,9 +30,16 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Users
+// ============================================
+// DATABASE - SHARED BETWEEN ALL PANELS
+// ============================================
 const users = [];
 let orders = [];
+let restaurantName = 'DineFlow';
+
+// ============================================
+// MENU ITEMS - SHARED
+// ============================================
 let menuItems = [
     { id: 1, name: 'Cheese Burger', price: 12.99, category: 'burgers', icon: '🍔' },
     { id: 2, name: 'Double Burger', price: 15.99, category: 'burgers', icon: '🍔' },
@@ -45,10 +52,28 @@ let menuItems = [
     { id: 9, name: 'French Fries', price: 4.99, category: 'sides', icon: '🍟' },
     { id: 10, name: 'Onion Rings', price: 5.99, category: 'sides', icon: '🧅' },
     { id: 11, name: 'Chocolate Shake', price: 5.99, category: 'drinks', icon: '🥤' },
-    { id: 12, name: 'Iced Tea', price: 3.99, category: 'drinks', icon: '🧋' }
+    { id: 12, name: 'Iced Tea', price: 3.99, category: 'drinks', icon: '🧋' },
+    { id: 13, name: 'Caesar Salad', price: 8.99, category: 'salads', icon: '🥗' },
+    { id: 14, name: 'Greek Salad', price: 9.99, category: 'salads', icon: '🥗' },
+    { id: 15, name: 'Chicken Wings', price: 9.99, category: 'appetizers', icon: '🍗' },
+    { id: 16, name: 'Mozzarella Sticks', price: 7.99, category: 'appetizers', icon: '🧀' },
+    { id: 17, name: 'Tiramisu', price: 6.99, category: 'desserts', icon: '🍰' },
+    { id: 18, name: 'Chocolate Cake', price: 5.99, category: 'desserts', icon: '🍫' }
 ];
 
-// Google OAuth
+// ============================================
+// DEALS - SHARED
+// ============================================
+let deals = [
+    { id: 1, name: '🍔 Burger Combo', desc: 'Cheese Burger + Fries + Drink', price: 15.99, original: 23.97 },
+    { id: 2, name: '🍕 Pizza Deal', desc: 'Large Pizza + 2 Drinks', price: 18.99, original: 28.97 },
+    { id: 3, name: '🥪 Family Pack', desc: '4 Sandwiches + 4 Fries', price: 29.99, original: 45.96 },
+    { id: 4, name: '🍗 Wing Wednesday', desc: '12 Wings + Dip', price: 8.99, original: 13.99 }
+];
+
+// ============================================
+// GOOGLE OAUTH
+// ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -79,11 +104,11 @@ passport.deserializeUser((id, done) => {
 });
 
 // ============================================
-// ⭐ GOOGLE AUTH ROUTES - SCOPE IS HERE ⭐
+// AUTH ROUTES
 // ============================================
 app.get('/auth/google',
     passport.authenticate('google', { 
-        scope: ['profile', 'email'],   // ⭐ THIS IS THE SCOPE!
+        scope: ['profile', 'email'],
         accessType: 'offline',
         prompt: 'select_account'
     })
@@ -114,16 +139,115 @@ app.get('/logout', (req, res) => {
     req.logout(() => res.redirect('/'));
 });
 
-// API Routes
+// ============================================
+// ⭐ API ROUTES - SHARED DATA ⭐
+// ============================================
+
+// Get menu items (customer panel uses this)
+app.get('/api/menu', (req, res) => {
+    res.json(menuItems);
+});
+
+// Get deals (customer panel uses this)
+app.get('/api/deals', (req, res) => {
+    res.json(deals);
+});
+
+// Get restaurant name (customer panel uses this)
+app.get('/api/restaurant-name', (req, res) => {
+    res.json({ name: restaurantName });
+});
+
+// ⭐ UPDATE RESTAURANT NAME (Admin) - FIXED ⭐
+app.post('/api/restaurant-name', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { name } = req.body;
+    if (name) {
+        restaurantName = name;
+        console.log(`📛 Restaurant name updated to: ${restaurantName}`);
+        res.json({ success: true, name: restaurantName });
+    } else {
+        res.status(400).json({ error: 'Name required' });
+    }
+});
+
+// ⭐ ADD MENU ITEM (Admin) - FIXED ⭐
+app.post('/api/menu', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { name, price, category, icon } = req.body;
+    if (!name || !price || !category) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    const newItem = {
+        id: menuItems.length + 1,
+        name,
+        price: parseFloat(price),
+        category,
+        icon: icon || '🍽️'
+    };
+    menuItems.push(newItem);
+    console.log(`🍽️ New menu item added: ${newItem.name}`);
+    res.status(201).json({ success: true, item: newItem });
+});
+
+// ⭐ DELETE MENU ITEM (Admin) ⭐
+app.delete('/api/menu/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = menuItems.findIndex(i => i.id === parseInt(req.params.id));
+    if (index === -1) {
+        return res.status(404).json({ error: 'Item not found' });
+    }
+    const deletedItem = menuItems.splice(index, 1);
+    console.log(`🗑️ Menu item deleted: ${deletedItem[0].name}`);
+    res.json({ success: true });
+});
+
+// ⭐ ADD DEAL (Admin) - FIXED ⭐
+app.post('/api/deals', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { name, desc, price, original } = req.body;
+    if (!name || !price) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    const newDeal = {
+        id: deals.length + 1,
+        name,
+        desc: desc || '',
+        price: parseFloat(price),
+        original: parseFloat(original) || parseFloat(price) * 1.5
+    };
+    deals.push(newDeal);
+    console.log(`🔥 New deal added: ${newDeal.name}`);
+    res.status(201).json({ success: true, deal: newDeal });
+});
+
+// ⭐ DELETE DEAL (Admin) ⭐
+app.delete('/api/deals/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = deals.findIndex(d => d.id === parseInt(req.params.id));
+    if (index === -1) {
+        return res.status(404).json({ error: 'Deal not found' });
+    }
+    const deletedDeal = deals.splice(index, 1);
+    console.log(`🗑️ Deal deleted: ${deletedDeal[0].name}`);
+    res.json({ success: true });
+});
+
+// User profile
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
 });
 
-app.get('/api/menu', (req, res) => {
-    res.json(menuItems);
+// Users list
+app.get('/api/users', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    res.json({ total: users.length, users: users });
 });
 
+// ============================================
+// ORDER ROUTES
+// ============================================
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json(orders);
@@ -153,10 +277,27 @@ app.post('/api/orders', (req, res) => {
         date: new Date().toLocaleString()
     };
     orders.push(newOrder);
+    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName}`);
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
-// Serve HTML Pages
+app.put('/api/orders/:id/status', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const order = orders.find(o => o.id === parseInt(req.params.id));
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    const { status } = req.body;
+    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    order.status = status;
+    console.log(`📦 Order #${order.id} status updated to: ${status}`);
+    res.json({ success: true, order });
+});
+
+// ============================================
+// ⭐ SERVE HTML PAGES ⭐
+// ============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
@@ -165,15 +306,20 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
-// Start Server
+// ============================================
+// START SERVER
+// ============================================
 app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log('🍔 DINEFLOW SERVER RUNNING');
     console.log('========================================');
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
-    console.log(`🔑 Google Auth: http://localhost:${PORT}/auth/google`);
-    console.log(`🔑 Callback: http://localhost:${PORT}/callback`);
+    console.log('========================================');
+    console.log(`🍽️ Menu Items: ${menuItems.length}`);
+    console.log(`🔥 Deals: ${deals.length}`);
+    console.log(`📦 Orders: ${orders.length}`);
+    console.log(`👤 Users: ${users.length}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
