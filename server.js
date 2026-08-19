@@ -60,6 +60,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ⭐ IMPORTANT: Serve static files from Public folder
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // ============================================
@@ -84,7 +86,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ============================================
-// GOOGLE OAUTH STRATEGY - CLEAN (NO SECRETS)
+// GOOGLE OAUTH STRATEGY
 // ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -387,12 +389,15 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// SERVE PAGES
+// ⭐ SERVE HTML PAGES - FIXED ⭐
 // ============================================
+
+// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
+// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
@@ -417,7 +422,11 @@ function getLocalIp() {
 // ERROR HANDLING
 // ============================================
 app.use((req, res) => {
-    res.status(404).json({ error: 'Not Found' });
+    res.status(404).send(`
+        <h1>404 - Page Not Found</h1>
+        <p>The page you are looking for does not exist.</p>
+        <a href="/">Go to Home</a>
+    `);
 });
 
 app.use((err, req, res, next) => {
