@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>DineFlow - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            color: #2d3436;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .admin-header {
+            background: #2d3436;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .admin-header h2 {
+            font-size: 1.2em;
+        }
+        .admin-header .admin-header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .admin-header .admin-header-actions a {
+            color: white;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+        .admin-header .admin-header-actions a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .admin-header .admin-header-actions .view-site-btn {
+            background: #27ae60;
+        }
+        .admin-header .admin-header-actions .view-site-btn:hover {
+            background: #1e8449;
+        }
+        .admin-header .admin-header-actions .logout-btn {
+            background: #e74c3c;
+        }
+        .admin-header .admin-header-actions .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        /* Body */
+        .admin-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .admin-sidebar {
+            width: 200px;
+            background: white;
+            padding: 10px 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 1px solid #eee;
+            height: 100%;
+        }
+        .admin-sidebar::-webkit-scrollbar {
+            width: 3px;
+        }
+        .admin-sidebar::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+        .admin-sidebar .admin-nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: #2d3436;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .admin-sidebar .admin-nav-item:hover {
+            background: #f8f9fa;
+        }
+        .admin-sidebar .admin-nav-item.active {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+
+        /* Content */
+        .admin-content {
+            flex: 1;
+            padding: 15px 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            height: 100%;
+        }
+        .admin-content::-webkit-scrollbar {
+            width: 5px;
+        }
+        .admin-content::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+        .admin-content .admin-section {
+            display: none;
+        }
+        .admin-content .admin-section.active {
+            display: block;
+        }
+
+        /* Stats */
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .admin-stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+        .admin-stat-card .stat-number {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #2d3436;
+        }
+        .admin-stat-card .stat-label {
+            font-size: 0.8em;
+            color: #636e72;
+        }
+        .admin-stat-card .stat-icon {
+            font-size: 2em;
+        }
+
+        /* Tables */
+        .admin-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .admin-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        .admin-table th {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #636e72;
+        }
+        .admin-table td {
+            padding: 8px 12px;
+            border-top: 1px solid #f1f2f6;
+        }
+        .admin-table .admin-action-btn {
+            padding: 3px 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 2px;
+        }
+        .admin-table .btn-edit {
+            background: #3498db;
+            color: white;
+        }
+        .admin-table .btn-edit:hover {
+            background: #2980b9;
+        }
+        .admin-table .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        .admin-table .btn-delete:hover {
+            background: #c0392b;
+        }
+        .admin-table .btn-save {
+            background: #27ae60;
+            color: white;
+        }
+        .admin-table .btn-save:hover {
+            background: #1e8449;
+        }
+        .admin-table .btn-cancel {
+            background: #b2bec3;
+            color: white;
+        }
+        .admin-table .btn-cancel:hover {
+            background: #636e72;
+        }
+        .admin-table .btn-print {
+            background: #f39c12;
+            color: white;
+        }
+        .admin-table .btn-print:hover {
+            background: #d68910;
+        }
+        .admin-table .status-badge {
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+        .status-confirmed {
+            background: #e8f4fd;
+            color: #3498db;
+        }
+        .status-preparing {
+            background: #fef9e7;
+            color: #f39c12;
+        }
+        .status-ready {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .status-delivered {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .status-cancelled {
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+
+        .admin-add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        .admin-add-btn:hover {
+            background: #1e8449;
+            transform: scale(1.02);
+        }
+
+        /* Admin Form */
+        .admin-form {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .admin-form.show {
+            display: block;
+        }
+        .admin-form input,
+        .admin-form select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        .admin-form .form-row-admin {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .admin-form .admin-submit-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .admin-form .admin-submit-btn:hover {
+            background: #1e8449;
+        }
+        .admin-form .admin-cancel-btn {
+            background: #b2bec3;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 8px;
+        }
+        .admin-form .admin-cancel-btn:hover {
+            background: #636e72;
+        }
+
+        /* Calculator */
+        .calculator {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            max-width: 350px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .calculator .calc-display {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.5em;
+            text-align: right;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            font-weight: 700;
+        }
+        .calculator .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calculator .calc-buttons button {
+            padding: 12px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .calculator .calc-buttons .calc-num {
+            background: #f1f2f6;
+            color: #2d3436;
+        }
+        .calculator .calc-buttons .calc-num:hover {
+            background: #dfe6e9;
+        }
+        .calculator .calc-buttons .calc-op {
+            background: #3498db;
+            color: white;
+        }
+        .calculator .calc-buttons .calc-op:hover {
+            background: #2980b9;
+        }
+        .calculator .calc-buttons .calc-eq {
+            background: #27ae60;
+            color: white;
+        }
+        .calculator .calc-buttons .calc-eq:hover {
+            background: #1e8449;
+        }
+        .calculator .calc-buttons .calc-clear {
+            background: #e74c3c;
+            color: white;
+        }
+        .calculator .calc-buttons .calc-clear:hover {
+            background: #c0392b;
+        }
+        .calculator .calc-buttons .calc-span2 {
+            grid-column: span 2;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3436;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== RECEIPT PRINT STYLES ===== */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receiptPrint, #receiptPrint * {
+                visibility: visible;
+            }
+            #receiptPrint {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 80mm;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                background: white;
+                color: black;
+            }
+            #receiptPrint .receipt-header {
+                text-align: center;
+                border-bottom: 1px dashed #333;
+                padding-bottom: 8px;
+                margin-bottom: 8px;
+            }
+            #receiptPrint .receipt-header h2 {
+                font-size: 16px;
+                margin: 0;
+            }
+            #receiptPrint .receipt-header p {
+                font-size: 10px;
+                margin: 2px 0;
+                color: #555;
+            }
+            #receiptPrint .receipt-items {
+                width: 100%;
+                margin: 8px 0;
+            }
+            #receiptPrint .receipt-items th {
+                text-align: left;
+                font-size: 10px;
+                border-bottom: 1px solid #333;
+                padding: 4px 0;
+            }
+            #receiptPrint .receipt-items td {
+                padding: 4px 0;
+                font-size: 10px;
+            }
+            #receiptPrint .receipt-total {
+                border-top: 1px dashed #333;
+                padding-top: 8px;
+                margin-top: 8px;
+                text-align: right;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            #receiptPrint .receipt-footer {
+                text-align: center;
+                border-top: 1px dashed #333;
+                padding-top: 8px;
+                margin-top: 8px;
+                font-size: 10px;
+                color: #555;
+            }
+            #receiptPrint .receipt-order-info {
+                font-size: 10px;
+                margin: 4px 0;
+            }
+        }
+
+        /* Receipt Popup */
+        .receipt-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .receipt-popup.show {
+            display: flex;
+        }
+        .receipt-popup .receipt-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+        .receipt-popup .receipt-close {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 1.4em;
+            cursor: pointer;
+            color: #b2bec3;
+            background: none;
+            border: none;
+        }
+        .receipt-popup .receipt-close:hover {
+            color: #e74c3c;
+        }
+        .receipt-popup .receipt-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .receipt-popup .receipt-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .receipt-popup .btn-print-receipt {
+            background: #27ae60;
+            color: white;
+        }
+        .receipt-popup .btn-print-receipt:hover {
+            background: #1e8449;
+        }
+        .receipt-popup .btn-close-receipt {
+            background: #b2bec3;
+            color: white;
+        }
+        .receipt-popup .btn-close-receipt:hover {
+            background: #636e72;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .admin-sidebar {
+                width: 140px;
+            }
+            .admin-sidebar .admin-nav-item {
+                font-size: 0.75em;
+                padding: 10px 14px;
+            }
+            .admin-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .admin-form .form-row-admin {
+                grid-template-columns: 1fr;
+            }
+            .admin-header h2 {
+                font-size: 1em;
+            }
+            .admin-header .admin-header-actions a {
+                font-size: 0.7em;
+                padding: 4px 10px;
+            }
+            .admin-table table {
+                font-size: 0.75em;
+            }
+            .admin-table th,
+            .admin-table td {
+                padding: 6px 8px;
+            }
+        }
+        @media (max-width: 400px) {
+            .admin-sidebar {
+                width: 110px;
+            }
+            .admin-sidebar .admin-nav-item {
+                font-size: 0.65em;
+                padding: 8px 10px;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+
+        /* New Order Alert */
+        .new-order-alert {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 9998;
+            animation: slideIn 0.5s ease;
+            display: none;
+        }
+        .new-order-alert.show {
+            display: block;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- New Order Alert -->
+    <div class="new-order-alert" id="newOrderAlert">
+        🔔 New Order Received! #<span id="newOrderNumber">0</span>
+    </div>
+
+    <!-- Header -->
+    <header class="admin-header">
+        <h2>👑 Admin Dashboard</h2>
+        <div class="admin-header-actions">
+            <a href="/" class="view-site-btn">📱 View Site</a>
+            <a href="/logout" class="logout-btn">🚪 Logout</a>
+        </div>
+    </header>
+
+    <!-- Body -->
+    <div class="admin-body">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <a class="admin-nav-item active" data-admin="dashboard" onclick="showAdminSection('dashboard')">📊 Dashboard</a>
+            <a class="admin-nav-item" data-admin="menu" onclick="showAdminSection('menu')">🍽️ Menu</a>
+            <a class="admin-nav-item" data-admin="deals" onclick="showAdminSection('deals')">🔥 Deals</a>
+            <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
+            <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
+            <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
+        </div>
+
+        <!-- Content -->
+        <div class="admin-content">
+
+            <!-- Dashboard -->
+            <div class="admin-section active" id="adminDashboard">
+                <h3 style="margin-bottom:15px;">📊 Dashboard Overview</h3>
+                <div class="admin-stats" id="adminStats">
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-number" id="statRevenue">$0.00</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-number" id="statOrders">0</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-number" id="statPending">0</div>
+                        <div class="stat-label">Pending Orders</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-number" id="statCompleted">0</div>
+                        <div class="stat-label">Completed Orders</div>
+                    </div>
+                </div>
+                <h4 style="margin-bottom:10px;">📋 Recent Orders</h4>
+                <div class="admin-table" id="adminOrdersList">
+                    <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
+                </div>
+            </div>
+
+            <!-- Menu -->
+            <div class="admin-section" id="adminMenu">
+                <h3 style="margin-bottom:10px;">🍽️ Menu Management</h3>
+                <button class="admin-add-btn" onclick="toggleAdminForm('menuForm')">➕ Add New Item</button>
+                <div class="admin-form" id="menuForm">
+                    <h4>Add Menu Item</h4>
+                    <div class="form-row-admin">
+                        <input type="text" id="adminItemName" placeholder="Item Name" />
+                        <input type="number" id="adminItemPrice" placeholder="Price" step="0.01" />
+                    </div>
+                    <div class="form-row-admin">
+                        <input type="text" id="adminItemIcon" placeholder="Emoji (e.g. 🍔)" />
+                        <select id="adminItemCategory">
+                            <option value="burgers">Burgers</option>
+                            <option value="pizza">Pizza</option>
+                            <option value="sandwiches">Sandwiches</option>
+                            <option value="sides">Sides</option>
+                            <option value="drinks">Drinks</option>
+                            <option value="salads">Salads</option>
+                            <option value="appetizers">Appetizers</option>
+                            <option value="desserts">Desserts</option>
+                        </select>
+                    </div>
+                    <button class="admin-submit-btn" onclick="adminAddItem()">Add Item</button>
+                    <button class="admin-cancel-btn" onclick="toggleAdminForm('menuForm')">Cancel</button>
+                </div>
+                <div class="admin-table" id="adminMenuTable">
+                    <p style="color:#b2bec3; padding:15px;">Loading menu...</p>
+                </div>
+            </div>
+
+            <!-- Deals -->
+            <div class="admin-section" id="adminDeals">
+                <h3 style="margin-bottom:10px;">🔥 Deal Management</h3>
+                <button class="admin-add-btn" onclick="toggleAdminForm('dealForm')">➕ Add New Deal</button>
+                <div class="admin-form" id="dealForm">
+                    <h4>Add Deal</h4>
+                    <input type="text" id="adminDealName" placeholder="Deal Name" />
+                    <input type="text" id="adminDealDesc" placeholder="Description" />
+                    <div class="form-row-admin">
+                        <input type="number" id="adminDealPrice" placeholder="Deal Price" step="0.01" />
+                        <input type="number" id="adminDealOriginal" placeholder="Original Price" step="0.01" />
+                    </div>
+                    <button class="admin-submit-btn" onclick="adminAddDeal()">Add Deal</button>
+                    <button class="admin-cancel-btn" onclick="toggleAdminForm('dealForm')">Cancel</button>
+                </div>
+                <div class="admin-table" id="adminDealsTable">
+                    <p style="color:#b2bec3; padding:15px;">Loading deals...</p>
+                </div>
+            </div>
+
+            <!-- Orders -->
+            <div class="admin-section" id="adminOrders">
+                <h3 style="margin-bottom:10px;">📦 All Orders</h3>
+                <div class="admin-table" id="adminAllOrdersTable">
+                    <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
+                </div>
+            </div>
+
+            <!-- Calculator -->
+            <div class="admin-section" id="adminCalculator">
+                <h3 style="margin-bottom:15px;">🧮 Calculator</h3>
+                <div class="calculator">
+                    <input class="calc-display" id="calcDisplay" readonly value="0" />
+                    <div class="calc-buttons">
+                        <button class="calc-clear calc-span2" onclick="calcClear()">C</button>
+                        <button class="calc-op" onclick="calcInput('/')">÷</button>
+                        <button class="calc-num" onclick="calcInput('7')">7</button>
+                        <button class="calc-num" onclick="calcInput('8')">8</button>
+                        <button class="calc-num" onclick="calcInput('9')">9</button>
+                        <button class="calc-op" onclick="calcInput('*')">×</button>
+                        <button class="calc-num" onclick="calcInput('4')">4</button>
+                        <button class="calc-num" onclick="calcInput('5')">5</button>
+                        <button class="calc-num" onclick="calcInput('6')">6</button>
+                        <button class="calc-op" onclick="calcInput('-')">−</button>
+                        <button class="calc-num" onclick="calcInput('1')">1</button>
+                        <button class="calc-num" onclick="calcInput('2')">2</button>
+                        <button class="calc-num" onclick="calcInput('3')">3</button>
+                        <button class="calc-op" onclick="calcInput('+')">+</button>
+                        <button class="calc-num calc-span2" onclick="calcInput('0')">0</button>
+                        <button class="calc-op" onclick="calcInput('.')">.</button>
+                        <button class="calc-eq" onclick="calcResult()">=</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="admin-section" id="adminSettings">
+                <h3 style="margin-bottom:15px;">⚙️ Settings</h3>
+                <div class="admin-form" style="display:block;">
+                    <h4>Restaurant Settings</h4>
+                    <label style="font-weight:600; font-size:0.9em;">Restaurant Name</label>
+                    <input type="text" id="adminRestaurantName" placeholder="Restaurant Name" style="margin-bottom:10px;" />
+                    <button class="admin-submit-btn" onclick="adminUpdateRestaurantName()">Update Name</button>
+                </div>
+                <div style="margin-top:15px; background:white; border-radius:12px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <h4>System Info</h4>
+                    <p style="color:#636e72; font-size:0.9em;">DineFlow v2.0.0</p>
+                    <p style="color:#636e72; font-size:0.9em;">Total Users: <span id="adminTotalUsers">0</span></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Receipt Popup -->
+    <div class="receipt-popup" id="receiptPopup">
+        <div class="receipt-content">
+            <button class="receipt-close" onclick="closeReceipt()">✕</button>
+            <div id="receiptPrint"></div>
+            <div class="receipt-actions">
+                <button class="btn-print-receipt" onclick="printReceipt()">🖨️ Print Receipt</button>
+                <button class="btn-close-receipt" onclick="closeReceipt()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // DATA
+        // ============================================================
+        let menuItems = [];
+        let deals = [];
+        let orders = [];
+        let users = [];
+        let isLoggedIn = false;
+        let lastOrderCount = 0;
+
+        // ============================================================
+        // DOM REFS
+        // ============================================================
+        const adminMenuTable = document.getElementById('adminMenuTable');
+        const adminDealsTable = document.getElementById('adminDealsTable');
+        const adminOrdersList = document.getElementById('adminOrdersList');
+        const adminAllOrdersTable = document.getElementById('adminAllOrdersTable');
+        const newOrderAlert = document.getElementById('newOrderAlert');
+        const newOrderNumber = document.getElementById('newOrderNumber');
+
+        // ============================================================
+        // LOAD DATA
+        // ============================================================
+        function loadAdminData() {
+            // Check auth
+            fetch('/api/user/profile')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.user) {
+                        isLoggedIn = true;
+                        if (data.user.role === 'admin') {
+                            document.querySelector('.admin-header h2').textContent = '👑 Admin Dashboard';
+                        } else {
+                            document.querySelector('.admin-header h2').textContent = '👤 Customer View';
+                        }
+                    } else {
+                        isLoggedIn = false;
+                        window.location.href = '/auth/google';
+                    }
+                });
+
+            // Load menu
+            fetch('/api/menu')
+                .then(r => r.json())
+                .then(data => {
+                    menuItems = data;
+                    renderAdminMenu();
+                });
+
+            // Load deals
+            fetch('/api/deals')
+                .then(r => r.json())
+                .then(data => {
+                    deals = data;
+                    renderAdminDeals();
+                });
+
+            // Load orders
+            fetch('/api/orders/all')
+                .then(r => r.json())
+                .then(data => {
+                    orders = data;
+                    lastOrderCount = orders.length;
+                    renderAdminOrders();
+                    renderAdminDashboard();
+                    renderAdminAllOrders();
+                })
+                .catch(() => {
+                    orders = [];
+                    renderAdminOrders();
+                    renderAdminDashboard();
+                    renderAdminAllOrders();
+                });
+
+            // Load users
+            fetch('/api/users')
+                .then(r => r.json())
+                .then(data => {
+                    users = data.users || [];
+                    document.getElementById('adminTotalUsers').textContent = users.length;
+                })
+                .catch(() => {});
+
+            // Load restaurant name
+            fetch('/api/restaurant-name')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('adminRestaurantName').value = data.name || 'DineFlow';
+                });
+        }
+
+        // ============================================================
+        // CHECK FOR NEW ORDERS (Polling)
+        // ============================================================
+        function checkNewOrders() {
+            fetch('/api/orders/all')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length > lastOrderCount) {
+                        const newOrders = data.slice(lastOrderCount);
+                        newOrders.forEach(order => {
+                            showNewOrderAlert(order.id);
+                            showReceipt(order);
+                        });
+                        lastOrderCount = data.length;
+                        orders = data;
+                        renderAdminDashboard();
+                        renderAdminAllOrders();
+                        renderAdminOrders();
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // ============================================================
+        // NEW ORDER ALERT
+        // ============================================================
+        function showNewOrderAlert(orderId) {
+            newOrderNumber.textContent = orderId;
+            newOrderAlert.classList.add('show');
+            setTimeout(() => {
+                newOrderAlert.classList.remove('show');
+            }, 8000);
+        }
+
+        // ============================================================
+        // SHOW RECEIPT
+        // ============================================================
+        function showReceipt(order) {
+            const receiptHTML = generateReceiptHTML(order);
+            document.getElementById('receiptPrint').innerHTML = receiptHTML;
+            document.getElementById('receiptPopup').classList.add('show');
+
+            // Auto print after 1 second
+            setTimeout(() => {
+                printReceipt();
+            }, 1000);
+        }
+
+        function generateReceiptHTML(order) {
+            const date = new Date();
+            return `
+                <div id="receiptPrint">
+                    <div class="receipt-header">
+                        <h2>${restaurantName || 'DineFlow'}</h2>
+                        <p>Restaurant Order Receipt</p>
+                        <p>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</p>
+                        <p style="font-weight:bold;">Order #${order.id}</p>
+                    </div>
+                    <div class="receipt-order-info">
+                        <p><strong>Customer:</strong> ${order.userName || 'Guest'}</p>
+                        <p><strong>Phone:</strong> ${order.phone || '-'}</p>
+                        <p><strong>Address:</strong> ${order.address || 'In-store pickup'}</p>
+                    </div>
+                    <table class="receipt-items">
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th style="text-align:right;">Price</th>
+                        </tr>
+                        ${order.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.qty || 1}</td>
+                                <td style="text-align:right;">$${(item.price * (item.qty || 1)).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    <div class="receipt-total">
+                        Total: $${order.total.toFixed(2)}
+                    </div>
+                    <div class="receipt-footer">
+                        <p>Thank you for your order!</p>
+                        <p>Status: ${order.status.toUpperCase()}</p>
+                        <p>${restaurantName || 'DineFlow'} - Your Trusted Restaurant</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeReceipt() {
+            document.getElementById('receiptPopup').classList.remove('show');
+        }
+
+        function printReceipt() {
+            window.print();
+        }
+
+        // ============================================================
+        // ADMIN NAVIGATION
+        // ============================================================
+        function showAdminSection(section) {
+            document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.admin-nav-item[data-admin="${section}"]`).classList.add('active');
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`admin${section.charAt(0).toUpperCase() + section.slice(1)}`).classList.add('active');
+
+            if (section === 'dashboard') renderAdminDashboard();
+            if (section === 'menu') renderAdminMenu();
+            if (section === 'deals') renderAdminDeals();
+            if (section === 'orders') renderAdminAllOrders();
+        }
+
+        // ============================================================
+        // RENDER ADMIN DASHBOARD
+        // ============================================================
+        function renderAdminDashboard() {
+            const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+            const pendingOrders = orders.filter(o => o.status === 'pending').length;
+            const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'ready').length;
+
+            document.getElementById('statRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('statOrders').textContent = orders.length;
+            document.getElementById('statPending').textContent = pendingOrders;
+            document.getElementById('statCompleted').textContent = completedOrders;
+
+            if (orders.length === 0) {
+                adminOrdersList.innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            orders.slice().reverse().slice(0, 10).forEach(order => {
+                const statusClass = `status-${order.status}`;
+                html += `
+                    <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.userName || 'Guest'}</td>
+                        <td>${order.items.map(i => i.name).join(', ')}</td>
+                        <td>$${order.total.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
+                        <td>
+                            <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
+                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                                <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                            <button class="admin-action-btn btn-print" onclick="showReceiptForOrder(${order.id})">🖨️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</table>`;
+            adminOrdersList.innerHTML = html;
+        }
+
+        function showReceiptForOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                showReceipt(order);
+            }
+        }
+
+        // ============================================================
+        // RENDER ADMIN MENU
+        // ============================================================
+        function renderAdminMenu() {
+            if (menuItems.length === 0) {
+                adminMenuTable.innerHTML = '<p style="color:#b2bec3; padding:15px;">No menu items</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            `;
+
+            menuItems.forEach(item => {
+                html += `
+                    <tr id="menu-row-${item.id}">
+                        <td style="font-size:1.5em;">${item.icon || '🍽️'}</td>
+                        <td class="item-name-${item.id}">${item.name}</td>
+                        <td class="item-category-${item.id}">${item.category}</td>
+                        <td class="item-price-${item.id}">$${item.price.toFixed(2)}</td>
+                        <td>
+                            <button class="admin-action-btn btn-edit" onclick="editMenuItem(${item.id})">✏️ Edit</button>
+                            <button class="admin-action-btn btn-delete" onclick="deleteMenuItem(${item.id})">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</table>`;
+            adminMenuTable.innerHTML = html;
+        }
+
+        function editMenuItem(id) {
+            const item = menuItems.find(i => i.id === id);
+            if (!item) return;
+
+            const row = document.getElementById(`menu-row-${id}`);
+            if (!row) return;
+
+            row.innerHTML = `
+                <td style="font-size:1.5em;">
+                    <input type="text" id="edit-icon-${id}" value="${item.icon || '🍽️'}" style="width:40px; text-align:center; font-size:1.2em; border:1px solid #dfe6e9; border-radius:6px;">
+                </td>
+                <td><input type="text" id="edit-name-${id}" value="${item.name}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
+                <td>
+                    <select id="edit-category-${id}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;">
+                        <option value="burgers" ${item.category === 'burgers' ? 'selected' : ''}>Burgers</option>
+                        <option value="pizza" ${item.category === 'pizza' ? 'selected' : ''}>Pizza</option>
+                        <option value="sandwiches" ${item.category === 'sandwiches' ? 'selected' : ''}>Sandwiches</option>
+                        <option value="sides" ${item.category === 'sides' ? 'selected' : ''}>Sides</option>
+                        <option value="drinks" ${item.category === 'drinks' ? 'selected' : ''}>Drinks</option>
+                        <option value="salads" ${item.category === 'salads' ? 'selected' : ''}>Salads</option>
+                        <option value="appetizers" ${item.category === 'appetizers' ? 'selected' : ''}>Appetizers</option>
+                        <option value="desserts" ${item.category === 'desserts' ? 'selected' : ''}>Desserts</option>
+                    </select>
+                </td>
+                <td><input type="number" id="edit-price-${id}" value="${item.price}" step="0.01" style="width:80px; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
+                <td>
+                    <button class="admin-action-btn btn-save" onclick="saveMenuItem(${id})">💾 Save</button>
+                    <button class="admin-action-btn btn-cancel" onclick="renderAdminMenu()">✕ Cancel</button>
+                </td>
+            `;
+        }
+
+        function saveMenuItem(id) {
+            const name = document.getElementById(`edit-name-${id}`).value;
+            const price = parseFloat(document.getElementById(`edit-price-${id}`).value);
+            const category = document.getElementById(`edit-category-${id}`).value;
+            const icon = document.getElementById(`edit-icon-${id}`).value;
+
+            if (!name || !price) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+
+            fetch(`/api/menu/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, category, icon })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Menu item updated!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function deleteMenuItem(id) {
+            if (!confirm('Delete this menu item?')) return;
+
+            fetch(`/api/menu/${id}`, {
+                method: 'DELETE'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Menu item deleted!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function adminAddItem() {
+            const name = document.getElementById('adminItemName').value;
+            const price = parseFloat(document.getElementById('adminItemPrice').value);
+            const category = document.getElementById('adminItemCategory').value;
+            const icon = document.getElementById('adminItemIcon').value || '🍽️';
+
+            if (!name || !price) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+
+            fetch('/api/menu', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, category, icon })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Menu item added!');
+                    document.getElementById('adminItemName').value = '';
+                    document.getElementById('adminItemPrice').value = '';
+                    document.getElementById('adminItemIcon').value = '';
+                    toggleAdminForm('menuForm');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Add failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // RENDER ADMIN DEALS
+        // ============================================================
+        function renderAdminDeals() {
+            if (deals.length === 0) {
+                adminDealsTable.innerHTML = '<p style="color:#b2bec3; padding:15px;">No deals available</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Original</th>
+                    <th>Actions</th>
+                </tr>
+            `;
+
+            deals.forEach(deal => {
+                html += `
+                    <tr>
+                        <td>${deal.name}</td>
+                        <td>${deal.desc || ''}</td>
+                        <td>$${deal.price.toFixed(2)}</td>
+                        <td>$${(deal.original || deal.price * 1.5).toFixed(2)}</td>
+                        <td>
+                            <button class="admin-action-btn btn-delete" onclick="deleteDeal(${deal.id})">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</table>`;
+            adminDealsTable.innerHTML = html;
+        }
+
+        function deleteDeal(id) {
+            if (!confirm('Delete this deal?')) return;
+
+            fetch(`/api/deals/${id}`, {
+                method: 'DELETE'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Deal deleted!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function adminAddDeal() {
+            const name = document.getElementById('adminDealName').value;
+            const desc = document.getElementById('adminDealDesc').value;
+            const price = parseFloat(document.getElementById('adminDealPrice').value);
+            const original = parseFloat(document.getElementById('adminDealOriginal').value);
+
+            if (!name || !price) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+
+            fetch('/api/deals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, desc, price, original })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Deal added!');
+                    document.getElementById('adminDealName').value = '';
+                    document.getElementById('adminDealDesc').value = '';
+                    document.getElementById('adminDealPrice').value = '';
+                    document.getElementById('adminDealOriginal').value = '';
+                    toggleAdminForm('dealForm');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Add failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // RENDER ALL ORDERS
+        // ============================================================
+        function renderAdminAllOrders() {
+            if (orders.length === 0) {
+                adminAllOrdersTable.innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            orders.slice().reverse().forEach(order => {
+                const statusClass = `status-${order.status}`;
+                html += `
+                    <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.userName || 'Guest'}</td>
+                        <td>${order.phone || '-'}</td>
+                        <td style="max-width:120px; word-break:break-word;">${order.address || 'Pickup'}</td>
+                        <td>${order.items.map(i => i.name).join(', ')}</td>
+                        <td>$${order.total.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
+                        <td style="font-size:0.75em;">${order.date || 'Today'}</td>
+                        <td>
+                            <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
+                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                                <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                            <button class="admin-action-btn btn-print" onclick="showReceiptForOrder(${order.id})">🖨️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</table>`;
+            adminAllOrdersTable.innerHTML = html;
+        }
+
+        function updateOrderStatus(id, status) {
+            fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Order status updated!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // ADMIN FORM TOGGLE
+        // ============================================================
+        function toggleAdminForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.toggle('show');
+        }
+
+        // ============================================================
+        // ADMIN SETTINGS
+        // ============================================================
+        function adminUpdateRestaurantName() {
+            const name = document.getElementById('adminRestaurantName').value;
+            if (!name) {
+                showToast('⚠️ Please enter a name');
+                return;
+            }
+
+            fetch('/api/restaurant-name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Restaurant name updated!');
+                    restaurantName = name;
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // CALCULATOR
+        // ============================================================
+        let calcDisplay = document.getElementById('calcDisplay');
+        let calcExpression = '';
+
+        function calcInput(value) {
+            calcExpression += value;
+            calcDisplay.value = calcExpression;
+        }
+
+        function calcClear() {
+            calcExpression = '';
+            calcDisplay.value = '0';
+        }
+
+        function calcResult() {
+            try {
+                const result = eval(calcExpression);
+                calcDisplay.value = result;
+                calcExpression = result.toString();
+            } catch (e) {
+                calcDisplay.value = 'Error';
+                calcExpression = '';
+            }
+        }
+
+        // ============================================================
+        // TOAST
+        // ============================================================
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdminData();
+
+            // Check for new orders every 3 seconds
+            setInterval(checkNewOrders, 3000);
+        });
+    </script>
+</body>
+</html>
