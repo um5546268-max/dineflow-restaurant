@@ -145,7 +145,7 @@ app.get('/auth/google',
     })
 );
 
-// Step 2: Google redirects here after login - THIS WAS MISSING!
+// Step 2: Google redirects here after login
 app.get('/callback',
     passport.authenticate('google', { 
         failureRedirect: '/login-failed',
