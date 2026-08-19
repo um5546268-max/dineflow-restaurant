@@ -145,7 +145,7 @@ app.get('/auth/google',
     })
 );
 
-// Step 2: Google redirects here after login
+// Step 2: Google redirects here after login - THIS IS THE FIX!
 app.get('/callback',
     passport.authenticate('google', { 
         failureRedirect: '/login-failed',
@@ -392,10 +392,12 @@ app.delete('/api/deals/:id', (req, res) => {
 // ⭐ SERVE HTML PAGES ⭐
 // ============================================
 
+// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
+// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
