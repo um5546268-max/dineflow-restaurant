@@ -738,6 +738,8 @@
             <a class="admin-nav-item" data-admin="deals" onclick="showAdminSection('deals')">🔥 Deals</a>
             <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
             <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
+            <a class="admin-nav-item" data-admin="feedback" onclick="showAdminSection('feedback')">⭐ Feedback</a>
+            <a class="admin-nav-item" data-admin="support" onclick="showAdminSection('support')">🎫 Support</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
         </div>
 
@@ -873,6 +875,34 @@
                             <div class="no-orders">Loading orders...</div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ⭐ Feedback Section -->
+            <div class="admin-section" id="adminFeedback">
+                <h3 style="margin-bottom:15px;">⭐ Customer Feedback</h3>
+                <div class="admin-stats" style="margin-bottom:15px;">
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-number" id="avgRating">0.0</div>
+                        <div class="stat-label">Average Rating</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-number" id="totalFeedbacks">0</div>
+                        <div class="stat-label">Total Feedbacks</div>
+                    </div>
+                </div>
+                <div class="admin-table" id="feedbackList">
+                    <p style="color:#b2bec3; padding:15px;">Loading feedback...</p>
+                </div>
+            </div>
+
+            <!-- 🎫 Support Section -->
+            <div class="admin-section" id="adminSupport">
+                <h3 style="margin-bottom:15px;">🎫 Support Tickets</h3>
+                <div class="admin-table" id="supportList">
+                    <p style="color:#b2bec3; padding:15px;">Loading tickets...</p>
                 </div>
             </div>
 
@@ -1071,6 +1101,8 @@
                 restaurantName = data.name || 'DineFlow';
                 document.getElementById('adminRestaurantName').value = restaurantName;
             });
+            renderAdminFeedback();
+            renderAdminSupport();
         }
 
         function checkNewOrders() {
@@ -1143,6 +1175,8 @@
             if (section === 'deals') renderAdminDeals();
             if (section === 'orders') renderAdminAllOrders();
             if (section === 'calculator') renderTodayOrders();
+            if (section === 'feedback') renderAdminFeedback();
+            if (section === 'support') renderAdminSupport();
         }
 
         // ============================================================
@@ -1541,18 +1575,15 @@
 
         // Keyboard support for calculator
         document.addEventListener('keydown', function(e) {
-            // Only work if calculator section is active
             const calcSection = document.getElementById('adminCalculator');
             if (!calcSection.classList.contains('active')) return;
 
             const key = e.key;
             
-            // Numbers
             if (/^[0-9]$/.test(key)) {
                 e.preventDefault();
                 calcInput(key);
             }
-            // Operators
             else if (key === '+') {
                 e.preventDefault();
                 calcInput('+');
@@ -1569,28 +1600,169 @@
                 e.preventDefault();
                 calcInput('/');
             }
-            // Decimal point
             else if (key === '.') {
                 e.preventDefault();
                 calcInput('.');
             }
-            // Equals / Enter
             else if (key === '=' || key === 'Enter') {
                 e.preventDefault();
                 calcResult();
             }
-            // Backspace
             else if (key === 'Backspace') {
                 e.preventDefault();
                 calcExpression = calcExpression.slice(0, -1);
                 calcDisplay.value = calcExpression || '0';
             }
-            // Escape / Clear
             else if (key === 'Escape') {
                 e.preventDefault();
                 calcClear();
             }
         });
+
+        // ============================================================
+        // ⭐ FEEDBACK FUNCTIONS ⭐
+        // ============================================================
+        function renderAdminFeedback() {
+            fetch('/api/feedback/all')
+                .then(r => r.json())
+                .then(data => {
+                    const feedbacks = data || [];
+                    document.getElementById('totalFeedbacks').textContent = feedbacks.length;
+                    
+                    if (feedbacks.length > 0) {
+                        const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
+                        const avg = (total / feedbacks.length).toFixed(1);
+                        document.getElementById('avgRating').textContent = avg;
+                    } else {
+                        document.getElementById('avgRating').textContent = '0.0';
+                    }
+                    
+                    if (feedbacks.length === 0) {
+                        document.getElementById('feedbackList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No feedback yet</p>';
+                        return;
+                    }
+                    
+                    let html = `<table>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Rating</th>
+                            <th>Comment</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    `;
+                    
+                    feedbacks.slice().reverse().forEach(f => {
+                        const stars = '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
+                        html += `
+                            <tr>
+                                <td>${f.userName}</td>
+                                <td>${stars}</td>
+                                <td>${f.comment || '-'}</td>
+                                <td style="font-size:0.75em;">${f.date}</td>
+                                <td>
+                                    <button class="admin-action-btn btn-delete" onclick="deleteFeedback(${f.id})">🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += `</table>`;
+                    document.getElementById('feedbackList').innerHTML = html;
+                })
+                .catch(() => {});
+        }
+
+        function deleteFeedback(id) {
+            if (!confirm('Delete this feedback?')) return;
+            fetch(`/api/feedback/${id}`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(() => {
+                    showToast('✅ Feedback deleted!');
+                    renderAdminFeedback();
+                });
+        }
+
+        // ============================================================
+        // 🎫 SUPPORT FUNCTIONS ⭐
+        // ============================================================
+        function renderAdminSupport() {
+            fetch('/api/support/all')
+                .then(r => r.json())
+                .then(data => {
+                    const tickets = data || [];
+                    if (tickets.length === 0) {
+                        document.getElementById('supportList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No support tickets</p>';
+                        return;
+                    }
+                    
+                    let html = `<table>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th>Subject</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    `;
+                    
+                    tickets.slice().reverse().forEach(t => {
+                        const priorityColors = {
+                            low: '🟢',
+                            normal: '🟡',
+                            high: '🔴'
+                        };
+                        html += `
+                            <tr>
+                                <td>#${t.id}</td>
+                                <td>${t.userName}</td>
+                                <td>${t.subject}</td>
+                                <td>${priorityColors[t.priority] || '🟡'} ${t.priority}</td>
+                                <td>
+                                    <select onchange="updateTicketStatus(${t.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
+                                        <option value="open" ${t.status === 'open' ? 'selected' : ''}>Open</option>
+                                        <option value="in-progress" ${t.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                        <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>Closed</option>
+                                    </select>
+                                </td>
+                                <td style="font-size:0.75em;">${t.date}</td>
+                                <td>
+                                    <button class="admin-action-btn btn-edit" onclick="viewTicket(${t.id})">👁️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += `</table>`;
+                    document.getElementById('supportList').innerHTML = html;
+                })
+                .catch(() => {});
+        }
+
+        function updateTicketStatus(id, status) {
+            fetch(`/api/support/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Ticket status updated!');
+                    renderAdminSupport();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function viewTicket(id) {
+            const ticket = supportTickets.find(t => t.id === id);
+            if (!ticket) return;
+            alert(`📋 Ticket #${ticket.id}\n\nCustomer: ${ticket.userName}\nEmail: ${ticket.userEmail}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}`);
+        }
 
         // ============================================================
         // THEME SETTINGS
@@ -1641,7 +1813,6 @@
         // INIT
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Load saved settings
             if (localStorage.getItem('adminDarkMode') === 'true') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeToggle').classList.add('active');

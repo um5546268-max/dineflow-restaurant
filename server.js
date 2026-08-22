@@ -36,6 +36,8 @@ app.use(passport.session());
 const users = [];
 let orders = [];
 let restaurantName = 'DineFlow';
+let feedbacks = [];
+let supportTickets = [];
 let menuItems = [
     { id: 1, name: 'Cheese Burger', price: 12.99, category: 'burgers', icons: ['🍔'] },
     { id: 2, name: 'Double Burger', price: 15.99, category: 'burgers', icons: ['🍔', '🧀'] },
@@ -132,6 +134,110 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================
+// ⭐ FEEDBACK ROUTES ⭐
+// ============================================
+
+// Submit feedback (customer)
+app.post('/api/feedback', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Please login first' });
+    const { rating, comment, restaurantId } = req.body;
+    if (!rating) {
+        return res.status(400).json({ error: 'Rating is required' });
+    }
+    const newFeedback = {
+        id: feedbacks.length + 1,
+        userId: req.user.id,
+        userName: req.user.displayName,
+        userEmail: req.user.email,
+        rating: parseInt(rating),
+        comment: comment || '',
+        restaurantId: restaurantId || 'default',
+        date: new Date().toLocaleString(),
+        createdAt: new Date()
+    };
+    feedbacks.push(newFeedback);
+    console.log(`⭐ New feedback from ${newFeedback.userName}: ${newFeedback.rating} stars`);
+    res.status(201).json({ success: true, feedback: newFeedback });
+});
+
+// Get all feedbacks (admin)
+app.get('/api/feedback/all', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    res.json(feedbacks);
+});
+
+// Get average rating
+app.get('/api/feedback/average', (req, res) => {
+    if (feedbacks.length === 0) {
+        return res.json({ average: 0, count: 0 });
+    }
+    const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
+    const average = total / feedbacks.length;
+    res.json({ average: parseFloat(average.toFixed(2)), count: feedbacks.length });
+});
+
+// Delete feedback (admin)
+app.delete('/api/feedback/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = feedbacks.findIndex(f => f.id === parseInt(req.params.id));
+    if (index === -1) {
+        return res.status(404).json({ error: 'Feedback not found' });
+    }
+    feedbacks.splice(index, 1);
+    res.json({ success: true });
+});
+
+// ============================================
+// ⭐ SUPPORT TICKET ROUTES ⭐
+// ============================================
+
+// Create support ticket (customer)
+app.post('/api/support', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Please login first' });
+    const { subject, message, priority } = req.body;
+    if (!subject || !message) {
+        return res.status(400).json({ error: 'Subject and message are required' });
+    }
+    const newTicket = {
+        id: supportTickets.length + 1,
+        userId: req.user.id,
+        userName: req.user.displayName,
+        userEmail: req.user.email,
+        subject: subject,
+        message: message,
+        priority: priority || 'normal',
+        status: 'open',
+        date: new Date().toLocaleString(),
+        createdAt: new Date()
+    };
+    supportTickets.push(newTicket);
+    console.log(`🎫 New support ticket from ${newTicket.userName}: ${newTicket.subject}`);
+    res.status(201).json({ success: true, ticket: newTicket });
+});
+
+// Get all tickets (admin)
+app.get('/api/support/all', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    res.json(supportTickets);
+});
+
+// Update ticket status (admin)
+app.put('/api/support/:id/status', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const ticket = supportTickets.find(t => t.id === parseInt(req.params.id));
+    if (!ticket) {
+        return res.status(404).json({ error: 'Ticket not found' });
+    }
+    const { status } = req.body;
+    const validStatuses = ['open', 'in-progress', 'resolved', 'closed'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    ticket.status = status;
+    res.json({ success: true, ticket });
+});
+
+// ============================================
 // API ROUTES
 // ============================================
 app.get('/api/menu', (req, res) => {
@@ -172,7 +278,7 @@ app.post('/api/menu', (req, res) => {
         name,
         price: parseFloat(price),
         category,
-        icons: icons.slice(0, 5) // Max 5 icons
+        icons: icons.slice(0, 5)
     };
     menuItems.push(newItem);
     console.log(`🍽️ New menu item added: ${newItem.name} with icons: ${newItem.icons.join(' ')}`);
@@ -205,7 +311,7 @@ app.post('/api/deals', (req, res) => {
         desc: desc || '',
         price: parseFloat(price),
         original: parseFloat(original) || parseFloat(price) * 1.5,
-        icons: icons.slice(0, 5) // Max 5 icons
+        icons: icons.slice(0, 5)
     };
     deals.push(newDeal);
     console.log(`🔥 New deal added: ${newDeal.name} with icons: ${newDeal.icons.join(' ')}`);
@@ -305,6 +411,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔥 Deals: ${deals.length}`);
     console.log(`📦 Orders: ${orders.length}`);
     console.log(`👤 Users: ${users.length}`);
+    console.log(`⭐ Feedbacks: ${feedbacks.length}`);
+    console.log(`🎫 Support Tickets: ${supportTickets.length}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');

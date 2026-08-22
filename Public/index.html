@@ -97,7 +97,6 @@
             cursor: pointer; 
         }
         .deals-btn:hover { background: #c0392b !important; transform: scale(1.02); }
-        /* ⭐ REMOVED ADMIN BUTTON FROM CUSTOMER PANEL ⭐ */
         .cart-icon { position: relative; font-size: 1.2em; cursor: pointer; }
         .cart-badge { 
             position: absolute; 
@@ -205,7 +204,7 @@
         }
         .btn-cart:hover { background: #dfe6e9; transform: scale(1.05); }
 
-        /* Bottom Navigation - REMOVED ADMIN BUTTON */
+        /* Bottom Navigation */
         .bottom-nav {
             background: white;
             display: flex;
@@ -384,6 +383,26 @@
         .status-delivered { background: #e8f8f0; color: #27ae60; }
         .status-cancelled { background: #fdf2f2; color: #e74c3c; }
 
+        /* Feedback Stars */
+        .star-btn {
+            font-size: 2.2em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+        .star-btn.active {
+            opacity: 1;
+            filter: grayscale(0%);
+            transform: scale(1.1);
+        }
+        .star-btn:hover {
+            transform: scale(1.2);
+        }
+
         @media (max-width: 600px) {
             .sidebar { width: 75px; }
             .category-item .cat-icon { font-size: 1.2em; }
@@ -398,6 +417,7 @@
             .bottom-nav .nav-item { font-size: 0.55em; padding: 3px 8px; }
             .bottom-nav .nav-item .nav-icon { font-size: 1.1em; }
             .deal-item .deal-icons { font-size: 1.2em; }
+            .star-btn { font-size: 1.8em; }
         }
         @media (max-width: 400px) {
             .sidebar { width: 60px; }
@@ -408,6 +428,7 @@
             .menu-item-card .item-icons { font-size: 1.5em; }
             .menu-item-card .item-name { font-size: 0.75em; }
             .btn-quick, .btn-cart { font-size: 0.55em; padding: 3px 8px; }
+            .star-btn { font-size: 1.5em; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -429,7 +450,6 @@
         <div class="restaurant-name" id="restaurantName">🍔 Dine<span>Flow</span></div>
         <div class="top-actions">
             <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
-            <!-- ⭐ REMOVED ADMIN BUTTON ⭐ -->
             <span class="cart-icon" onclick="showPanel('orders')">
                 🛒
                 <span class="cart-badge" id="cartCount">0</span>
@@ -501,6 +521,49 @@
             </a>
             <br>
             <button onclick="closeLoginRequired()" style="margin-top:10px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Close</button>
+        </div>
+    </div>
+
+    <!-- ⭐ FEEDBACK POPUP ⭐ -->
+    <div class="popup-overlay" id="feedbackPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeFeedback()">✕</button>
+            <div class="popup-title">⭐ Rate Us</div>
+            <div class="popup-subtitle">How was your experience?</div>
+            <div style="display: flex; gap: 8px; justify-content: center; margin: 15px 0;">
+                <button class="star-btn" data-star="1" onclick="selectStar(1)">⭐</button>
+                <button class="star-btn" data-star="2" onclick="selectStar(2)">⭐</button>
+                <button class="star-btn" data-star="3" onclick="selectStar(3)">⭐</button>
+                <button class="star-btn" data-star="4" onclick="selectStar(4)">⭐</button>
+                <button class="star-btn" data-star="5" onclick="selectStar(5)">⭐</button>
+            </div>
+            <div style="text-align: center; margin: 5px 0 15px 0; font-size: 0.9em; color: #636e72;" id="starLabel">Select a rating</div>
+            <textarea id="feedbackComment" placeholder="Share your feedback (optional)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em; margin-bottom:10px; resize:vertical; min-height:60px;"></textarea>
+            <button class="order-submit-btn" onclick="submitFeedback()">💬 Submit Feedback</button>
+            <button style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeFeedback()">Maybe Later</button>
+            <div style="margin-top:15px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
+                <p style="font-size:0.8em; color:#b2bec3;">Need help? <a href="#" onclick="openSupport()" style="color:#e74c3c; text-decoration:none; font-weight:600;">Contact Support</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⭐ SUPPORT POPUP ⭐ -->
+    <div class="popup-overlay" id="supportPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeSupport()">✕</button>
+            <div class="popup-title">🎫 Customer Support</div>
+            <div class="popup-subtitle">We're here to help!</div>
+            <form id="supportForm" onsubmit="submitSupport(event)">
+                <select id="supportPriority" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
+                    <option value="low">🟢 Low Priority</option>
+                    <option value="normal" selected>🟡 Normal Priority</option>
+                    <option value="high">🔴 High Priority</option>
+                </select>
+                <input type="text" id="supportSubject" placeholder="Subject" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;" />
+                <textarea id="supportMessage" placeholder="Describe your issue..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; min-height:100px; resize:vertical; font-size:0.9em;"></textarea>
+                <button type="submit" class="order-submit-btn">📤 Submit Ticket</button>
+                <button type="button" style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeSupport()">Cancel</button>
+            </form>
         </div>
     </div>
 
@@ -766,6 +829,9 @@
             pendingOrder = null;
         }
 
+        // ============================================================
+        // SUBMIT ORDER - MODIFIED TO SHOW FEEDBACK POPUP
+        // ============================================================
         function submitOrder(event) {
             event.preventDefault();
 
@@ -799,6 +865,8 @@
                 if (data.message) {
                     closeOrderPopup();
                     showToast('✅ Order placed successfully!');
+                    // ⭐ Show feedback popup after order
+                    showFeedbackPopup();
                     loadOrders();
                     const itemIds = items.map(i => i.id);
                     cart = cart.filter(i => !itemIds.includes(i.id));
@@ -825,7 +893,7 @@
         }
 
         // ============================================================
-        // DEALS - FIXED TO SHOW PROPERLY
+        // DEALS
         // ============================================================
         function openDeals() {
             loadDeals();
@@ -1134,6 +1202,97 @@
         }
 
         // ============================================================
+        // ⭐ FEEDBACK FUNCTIONS ⭐
+        // ============================================================
+        let selectedRating = 0;
+
+        function showFeedbackPopup() {
+            selectedRating = 0;
+            document.getElementById('feedbackComment').value = '';
+            document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('starLabel').textContent = 'Select a rating';
+            setTimeout(() => {
+                document.getElementById('feedbackPopup').classList.add('show');
+            }, 1500);
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedbackPopup').classList.remove('show');
+        }
+
+        function selectStar(rating) {
+            selectedRating = rating;
+            document.querySelectorAll('.star-btn').forEach((b, i) => {
+                b.classList.toggle('active', i < rating);
+            });
+            const labels = ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Excellent'];
+            document.getElementById('starLabel').textContent = labels[rating] || 'Select a rating';
+        }
+
+        function submitFeedback() {
+            if (!selectedRating) {
+                showToast('⚠️ Please select a rating');
+                return;
+            }
+            const comment = document.getElementById('feedbackComment').value;
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: selectedRating, comment: comment })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('⭐ Thank you for your feedback!');
+                    closeFeedback();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // 🎫 SUPPORT FUNCTIONS ⭐
+        // ============================================================
+        function openSupport() {
+            document.getElementById('supportPopup').classList.add('show');
+        }
+
+        function closeSupport() {
+            document.getElementById('supportPopup').classList.remove('show');
+        }
+
+        function submitSupport(event) {
+            event.preventDefault();
+            const subject = document.getElementById('supportSubject').value;
+            const message = document.getElementById('supportMessage').value;
+            const priority = document.getElementById('supportPriority').value;
+            
+            if (!subject || !message) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+            
+            fetch('/api/support', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject, message, priority })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Support ticket submitted! We\'ll get back to you.');
+                    closeSupport();
+                    document.getElementById('supportForm').reset();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
         // TOAST NOTIFICATION
         // ============================================================
         function showToast(message) {
@@ -1177,72 +1336,6 @@
             document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
             document.querySelector('.restaurant-name span').style.color = '#ffffff';
         }
-
-        // Function to toggle dark mode (for the toggle in settings)
-        function toggleCustomerDarkMode() {
-            const toggle = document.querySelector('.toggle-switch');
-            if (toggle) {
-                toggle.classList.toggle('active');
-                const isDark = toggle.classList.contains('active');
-                
-                if (isDark) {
-                    document.body.style.background = '#1a1a2e';
-                    document.body.style.color = '#ffffff';
-                    document.querySelector('.top-header').style.background = '#16213e';
-                    document.querySelector('.top-header').style.color = '#ffffff';
-                    document.querySelector('.sidebar').style.background = '#16213e';
-                    document.querySelector('.sidebar').style.borderRight = '1px solid #2d2d44';
-                    document.querySelector('.bottom-nav').style.background = '#16213e';
-                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
-                    document.querySelector('.restaurant-name span').style.color = '#ffffff';
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.body.style.background = '#f8f9fa';
-                    document.body.style.color = '#2d3436';
-                    document.querySelector('.top-header').style.background = 'white';
-                    document.querySelector('.top-header').style.color = '#2d3436';
-                    document.querySelector('.sidebar').style.background = 'white';
-                    document.querySelector('.sidebar').style.borderRight = '1px solid #eee';
-                    document.querySelector('.bottom-nav').style.background = 'white';
-                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #eee';
-                    document.querySelector('.restaurant-name span').style.color = '#2d3436';
-                    localStorage.setItem('theme', 'light');
-                }
-            }
-        }
-
-        // Override the onclick for the toggle switch
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.toggle-switch') && !e.target.closest('.toggle-switch').getAttribute('onclick')) {
-                const toggle = e.target.closest('.toggle-switch');
-                toggle.classList.toggle('active');
-                const isDark = toggle.classList.contains('active');
-                
-                if (isDark) {
-                    document.body.style.background = '#1a1a2e';
-                    document.body.style.color = '#ffffff';
-                    document.querySelector('.top-header').style.background = '#16213e';
-                    document.querySelector('.top-header').style.color = '#ffffff';
-                    document.querySelector('.sidebar').style.background = '#16213e';
-                    document.querySelector('.sidebar').style.borderRight = '1px solid #2d2d44';
-                    document.querySelector('.bottom-nav').style.background = '#16213e';
-                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
-                    document.querySelector('.restaurant-name span').style.color = '#ffffff';
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.body.style.background = '#f8f9fa';
-                    document.body.style.color = '#2d3436';
-                    document.querySelector('.top-header').style.background = 'white';
-                    document.querySelector('.top-header').style.color = '#2d3436';
-                    document.querySelector('.sidebar').style.background = 'white';
-                    document.querySelector('.sidebar').style.borderRight = '1px solid #eee';
-                    document.querySelector('.bottom-nav').style.background = 'white';
-                    document.querySelector('.bottom-nav').style.borderTop = '1px solid #eee';
-                    document.querySelector('.restaurant-name span').style.color = '#2d3436';
-                    localStorage.setItem('theme', 'light');
-                }
-            }
-        });
     </script>
 </body>
 </html>
