@@ -30,9 +30,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ============================================
-// DATABASE - SHARED BETWEEN ALL PANELS
-// ============================================
+// Users storage
 const users = [];
 let orders = [];
 let restaurantName = 'DineFlow';
@@ -64,23 +62,13 @@ let deals = [
     { id: 3, name: 'Family Pack', desc: '4 Sandwiches + 4 Fries', price: 2999, original: 4596, icons: ['🥪', '🥪', '🍟', '🍟'] },
     { id: 4, name: 'Wing Wednesday', desc: '12 Wings + Dip', price: 899, original: 1399, icons: ['🍗', '🔥', '🧀'] }
 ];
-
 let availableLayers = [
-    '🧀 Cheese',
-    '🥬 Lettuce',
-    '🍅 Tomato',
-    '🧅 Onion',
-    '🥩 Extra Patty',
-    '🌶️ Mayo',
-    '🧄 Garlic Sauce',
-    '🌿 Jalapeno',
-    '🍄 Mushroom',
-    '🥓 Bacon'
+    '🧀 Cheese', '🥬 Lettuce', '🍅 Tomato', '🧅 Onion',
+    '🥩 Extra Patty', '🌶️ Mayo', '🧄 Garlic Sauce',
+    '🌿 Jalapeno', '🍄 Mushroom', '🥓 Bacon'
 ];
 
-// ============================================
-// GOOGLE OAUTH
-// ============================================
+// Google OAuth
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -110,9 +98,7 @@ passport.deserializeUser((id, done) => {
     done(null, user);
 });
 
-// ============================================
-// AUTH ROUTES
-// ============================================
+// Auth Routes
 app.get('/auth/google',
     passport.authenticate('google', { 
         scope: ['profile', 'email'],
@@ -147,261 +133,20 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================
-// FEEDBACK ROUTES
-// ============================================
-
-app.post('/api/feedback', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Please login first' });
-    const { rating, comment, restaurantId } = req.body;
-    if (!rating) {
-        return res.status(400).json({ error: 'Rating is required' });
-    }
-    const newFeedback = {
-        id: feedbacks.length + 1,
-        userId: req.user.id,
-        userName: req.user.displayName,
-        userEmail: req.user.email,
-        rating: parseInt(rating),
-        comment: comment || '',
-        restaurantId: restaurantId || 'default',
-        date: new Date().toLocaleString(),
-        createdAt: new Date()
-    };
-    feedbacks.push(newFeedback);
-    console.log(`⭐ New feedback from ${newFeedback.userName}: ${newFeedback.rating} stars`);
-    res.status(201).json({ success: true, feedback: newFeedback });
-});
-
-app.get('/api/feedback/all', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    res.json(feedbacks);
-});
-
-app.get('/api/feedback/average', (req, res) => {
-    if (feedbacks.length === 0) {
-        return res.json({ average: 0, count: 0 });
-    }
-    const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
-    const average = total / feedbacks.length;
-    res.json({ average: parseFloat(average.toFixed(2)), count: feedbacks.length });
-});
-
-app.delete('/api/feedback/:id', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const index = feedbacks.findIndex(f => f.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Feedback not found' });
-    }
-    feedbacks.splice(index, 1);
-    res.json({ success: true });
-});
-
-// ============================================
-// SUPPORT TICKET ROUTES
-// ============================================
-
-app.post('/api/support', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Please login first' });
-    const { subject, message, priority } = req.body;
-    if (!subject || !message) {
-        return res.status(400).json({ error: 'Subject and message are required' });
-    }
-    const newTicket = {
-        id: supportTickets.length + 1,
-        userId: req.user.id,
-        userName: req.user.displayName,
-        userEmail: req.user.email,
-        subject: subject,
-        message: message,
-        priority: priority || 'normal',
-        status: 'open',
-        date: new Date().toLocaleString(),
-        createdAt: new Date()
-    };
-    supportTickets.push(newTicket);
-    console.log(`🎫 New support ticket from ${newTicket.userName}: ${newTicket.subject}`);
-    res.status(201).json({ success: true, ticket: newTicket });
-});
-
-app.get('/api/support/all', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    res.json(supportTickets);
-});
-
-app.put('/api/support/:id/status', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const ticket = supportTickets.find(t => t.id === parseInt(req.params.id));
-    if (!ticket) {
-        return res.status(404).json({ error: 'Ticket not found' });
-    }
-    const { status } = req.body;
-    const validStatuses = ['open', 'in-progress', 'resolved', 'closed'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
-    }
-    ticket.status = status;
-    res.json({ success: true, ticket });
-});
-
-// ============================================
-// LAYERS ROUTES
-// ============================================
-
-app.get('/api/layers', (req, res) => {
-    res.json(availableLayers);
-});
-
-app.post('/api/layers', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { layer } = req.body;
-    if (!layer) {
-        return res.status(400).json({ error: 'Layer name is required' });
-    }
-    if (!availableLayers.includes(layer)) {
-        availableLayers.push(layer);
-        console.log(`🧅 New layer added: ${layer}`);
-        res.json({ success: true, layers: availableLayers });
-    } else {
-        res.status(400).json({ error: 'Layer already exists' });
-    }
-});
-
-app.delete('/api/layers/:layer', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const layer = decodeURIComponent(req.params.layer);
-    const index = availableLayers.indexOf(layer);
-    if (index === -1) {
-        return res.status(404).json({ error: 'Layer not found' });
-    }
-    availableLayers.splice(index, 1);
-    console.log(`🗑️ Layer deleted: ${layer}`);
-    res.json({ success: true, layers: availableLayers });
-});
-
-app.put('/api/menu/:id/layers', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const item = menuItems.find(i => i.id === parseInt(req.params.id));
-    if (!item) {
-        return res.status(404).json({ error: 'Item not found' });
-    }
-    const { layers } = req.body;
-    if (layers && Array.isArray(layers)) {
-        item.layers = layers;
-        console.log(`🍔 Layers updated for ${item.name}: ${layers.join(', ')}`);
-        res.json({ success: true, item });
-    } else {
-        res.status(400).json({ error: 'Invalid layers format' });
-    }
-});
-
-// ============================================
 // API ROUTES
 // ============================================
-app.get('/api/menu', (req, res) => {
-    res.json(menuItems);
-});
-
-app.get('/api/deals', (req, res) => {
-    res.json(deals);
-});
-
-app.get('/api/restaurant-name', (req, res) => {
-    res.json({ name: restaurantName });
-});
-
-app.post('/api/restaurant-name', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { name } = req.body;
-    if (name) {
-        restaurantName = name;
-        console.log(`📛 Restaurant name updated to: ${restaurantName}`);
-        res.json({ success: true, name: restaurantName });
-    } else {
-        res.status(400).json({ error: 'Name required' });
-    }
-});
-
-app.post('/api/menu', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { name, price, category, icons, layers } = req.body;
-    if (!name || !price || !category) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    if (!icons || !icons.length) {
-        return res.status(400).json({ error: 'Please add at least one icon' });
-    }
-    const newItem = {
-        id: menuItems.length + 1,
-        name,
-        price: parseFloat(price),
-        category,
-        icons: icons.slice(0, 5),
-        layers: layers || []
-    };
-    menuItems.push(newItem);
-    console.log(`🍽️ New menu item added: ${newItem.name} with icons: ${newItem.icons.join(' ')}`);
-    res.status(201).json({ success: true, item: newItem });
-});
-
-app.delete('/api/menu/:id', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const index = menuItems.findIndex(i => i.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Item not found' });
-    }
-    const deletedItem = menuItems.splice(index, 1);
-    console.log(`🗑️ Menu item deleted: ${deletedItem[0].name}`);
-    res.json({ success: true });
-});
-
-app.post('/api/deals', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { name, desc, price, original, icons } = req.body;
-    if (!name || !price) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    if (!icons || !icons.length) {
-        return res.status(400).json({ error: 'Please add at least one icon' });
-    }
-    const newDeal = {
-        id: deals.length + 1,
-        name,
-        desc: desc || '',
-        price: parseFloat(price),
-        original: parseFloat(original) || parseFloat(price) * 1.5,
-        icons: icons.slice(0, 5)
-    };
-    deals.push(newDeal);
-    console.log(`🔥 New deal added: ${newDeal.name} with icons: ${newDeal.icons.join(' ')}`);
-    res.status(201).json({ success: true, deal: newDeal });
-});
-
-app.delete('/api/deals/:id', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const index = deals.findIndex(d => d.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Deal not found' });
-    }
-    const deletedDeal = deals.splice(index, 1);
-    console.log(`🗑️ Deal deleted: ${deletedDeal[0].name}`);
-    res.json({ success: true });
-});
-
+app.get('/api/menu', (req, res) => { res.json(menuItems); });
+app.get('/api/deals', (req, res) => { res.json(deals); });
+app.get('/api/restaurant-name', (req, res) => { res.json({ name: restaurantName }); });
+app.get('/api/layers', (req, res) => { res.json(availableLayers); });
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
 });
-
-app.get('/api/users', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    res.json({ total: users.length, users: users });
-});
-
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json(orders);
 });
-
 app.get('/api/orders/myorders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const userOrders = orders.filter(o => o.userId === req.user.id);
@@ -428,7 +173,6 @@ app.post('/api/orders', (req, res) => {
         createdAt: new Date()
     };
     orders.push(newOrder);
-    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} at ${newOrder.date}`);
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
@@ -442,20 +186,177 @@ app.put('/api/orders/:id/status', (req, res) => {
         return res.status(400).json({ error: 'Invalid status' });
     }
     order.status = status;
-    console.log(`📦 Order #${order.id} status updated to: ${status}`);
     res.json({ success: true, order });
 });
 
-// ============================================
-// ⭐ SERVE HTML PAGES - THIS IS THE FIX ⭐
-// ============================================
+app.post('/api/feedback', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Please login first' });
+    const { rating, comment } = req.body;
+    if (!rating) return res.status(400).json({ error: 'Rating is required' });
+    const newFeedback = {
+        id: feedbacks.length + 1,
+        userId: req.user.id,
+        userName: req.user.displayName,
+        userEmail: req.user.email,
+        rating: parseInt(rating),
+        comment: comment || '',
+        date: new Date().toLocaleString(),
+        createdAt: new Date()
+    };
+    feedbacks.push(newFeedback);
+    res.status(201).json({ success: true, feedback: newFeedback });
+});
 
-// Customer Panel
+app.get('/api/feedback/all', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    res.json(feedbacks);
+});
+
+app.delete('/api/feedback/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = feedbacks.findIndex(f => f.id === parseInt(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Feedback not found' });
+    feedbacks.splice(index, 1);
+    res.json({ success: true });
+});
+
+app.post('/api/support', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Please login first' });
+    const { subject, message, priority } = req.body;
+    if (!subject || !message) return res.status(400).json({ error: 'Subject and message are required' });
+    const newTicket = {
+        id: supportTickets.length + 1,
+        userId: req.user.id,
+        userName: req.user.displayName,
+        userEmail: req.user.email,
+        subject, message,
+        priority: priority || 'normal',
+        status: 'open',
+        date: new Date().toLocaleString(),
+        createdAt: new Date()
+    };
+    supportTickets.push(newTicket);
+    res.status(201).json({ success: true, ticket: newTicket });
+});
+
+app.get('/api/support/all', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    res.json(supportTickets);
+});
+
+app.put('/api/support/:id/status', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const ticket = supportTickets.find(t => t.id === parseInt(req.params.id));
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    const { status } = req.body;
+    const validStatuses = ['open', 'in-progress', 'resolved', 'closed'];
+    if (!validStatuses.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    ticket.status = status;
+    res.json({ success: true, ticket });
+});
+
+app.post('/api/restaurant-name', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { name } = req.body;
+    if (name) {
+        restaurantName = name;
+        res.json({ success: true, name: restaurantName });
+    } else {
+        res.status(400).json({ error: 'Name required' });
+    }
+});
+
+app.post('/api/layers', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { layer } = req.body;
+    if (!layer) return res.status(400).json({ error: 'Layer name is required' });
+    if (!availableLayers.includes(layer)) {
+        availableLayers.push(layer);
+        res.json({ success: true, layers: availableLayers });
+    } else {
+        res.status(400).json({ error: 'Layer already exists' });
+    }
+});
+
+app.delete('/api/layers/:layer', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const layer = decodeURIComponent(req.params.layer);
+    const index = availableLayers.indexOf(layer);
+    if (index === -1) return res.status(404).json({ error: 'Layer not found' });
+    availableLayers.splice(index, 1);
+    res.json({ success: true, layers: availableLayers });
+});
+
+app.put('/api/menu/:id/layers', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const item = menuItems.find(i => i.id === parseInt(req.params.id));
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    const { layers } = req.body;
+    if (layers && Array.isArray(layers)) {
+        item.layers = layers;
+        res.json({ success: true, item });
+    } else {
+        res.status(400).json({ error: 'Invalid layers format' });
+    }
+});
+
+app.post('/api/menu', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { name, price, category, icons, layers } = req.body;
+    if (!name || !price || !category) return res.status(400).json({ error: 'Missing required fields' });
+    if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
+    const newItem = {
+        id: menuItems.length + 1,
+        name,
+        price: parseFloat(price),
+        category,
+        icons: icons.slice(0, 5),
+        layers: layers || []
+    };
+    menuItems.push(newItem);
+    res.status(201).json({ success: true, item: newItem });
+});
+
+app.delete('/api/menu/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = menuItems.findIndex(i => i.id === parseInt(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Item not found' });
+    menuItems.splice(index, 1);
+    res.json({ success: true });
+});
+
+app.post('/api/deals', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { name, desc, price, original, icons } = req.body;
+    if (!name || !price) return res.status(400).json({ error: 'Missing required fields' });
+    if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
+    const newDeal = {
+        id: deals.length + 1,
+        name,
+        desc: desc || '',
+        price: parseFloat(price),
+        original: parseFloat(original) || parseFloat(price) * 1.5,
+        icons: icons.slice(0, 5)
+    };
+    deals.push(newDeal);
+    res.status(201).json({ success: true, deal: newDeal });
+});
+
+app.delete('/api/deals/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = deals.findIndex(d => d.id === parseInt(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Deal not found' });
+    deals.splice(index, 1);
+    res.json({ success: true });
+});
+
+// ============================================
+// ⭐ SERVE HTML PAGES - FIX ⭐
+// ============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
-// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
@@ -474,9 +375,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔥 Deals: ${deals.length}`);
     console.log(`📦 Orders: ${orders.length}`);
     console.log(`👤 Users: ${users.length}`);
-    console.log(`⭐ Feedbacks: ${feedbacks.length}`);
-    console.log(`🎫 Support Tickets: ${supportTickets.length}`);
-    console.log(`🧅 Available Layers: ${availableLayers.length}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
