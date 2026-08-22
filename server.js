@@ -30,7 +30,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Users storage
+// ============================================
+// DATABASE
+// ============================================
 const users = [];
 let orders = [];
 let restaurantName = 'DineFlow';
@@ -68,7 +70,9 @@ let availableLayers = [
     '🌿 Jalapeno', '🍄 Mushroom', '🥓 Bacon'
 ];
 
-// Google OAuth
+// ============================================
+// GOOGLE OAUTH
+// ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -98,7 +102,9 @@ passport.deserializeUser((id, done) => {
     done(null, user);
 });
 
-// Auth Routes
+// ============================================
+// AUTH ROUTES
+// ============================================
 app.get('/auth/google',
     passport.authenticate('google', { 
         scope: ['profile', 'email'],
@@ -351,7 +357,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ⭐ SERVE HTML PAGES - FIX ⭐
+// ⭐ SERVE HTML PAGES ⭐
 // ============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
