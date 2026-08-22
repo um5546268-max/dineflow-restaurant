@@ -88,7 +88,7 @@
         }
 
         .admin-sidebar {
-            width: 200px;
+            width: 220px;
             background: white;
             padding: 10px 0;
             overflow-y: auto;
@@ -740,6 +740,7 @@
             <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
             <a class="admin-nav-item" data-admin="feedback" onclick="showAdminSection('feedback')">⭐ Feedback</a>
             <a class="admin-nav-item" data-admin="support" onclick="showAdminSection('support')">🎫 Support</a>
+            <a class="admin-nav-item" data-admin="layers" onclick="showAdminSection('layers')">🧅 Layers</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
         </div>
 
@@ -750,7 +751,7 @@
                 <div class="admin-stats" id="adminStats">
                     <div class="admin-stat-card">
                         <div class="stat-icon">💰</div>
-                        <div class="stat-number" id="statRevenue">$0.00</div>
+                        <div class="stat-number" id="statRevenue">Rs 0.00</div>
                         <div class="stat-label">Total Revenue</div>
                     </div>
                     <div class="admin-stat-card">
@@ -783,7 +784,7 @@
                     <h4>Add Menu Item</h4>
                     <div class="form-row-admin">
                         <input type="text" id="adminItemName" placeholder="Item Name" />
-                        <input type="number" id="adminItemPrice" placeholder="Price" step="0.01" />
+                        <input type="number" id="adminItemPrice" placeholder="Price (Rs)" step="0.01" />
                     </div>
                     <div class="form-row-admin">
                         <select id="adminItemCategory">
@@ -818,8 +819,8 @@
                     <input type="text" id="adminDealName" placeholder="Deal Name" />
                     <input type="text" id="adminDealDesc" placeholder="Description" />
                     <div class="form-row-admin">
-                        <input type="number" id="adminDealPrice" placeholder="Deal Price" step="0.01" />
-                        <input type="number" id="adminDealOriginal" placeholder="Original Price" step="0.01" />
+                        <input type="number" id="adminDealPrice" placeholder="Deal Price (Rs)" step="0.01" />
+                        <input type="number" id="adminDealOriginal" placeholder="Original Price (Rs)" step="0.01" />
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
                         <button class="icon-picker-btn" onclick="openIconPicker('deal')">🎨 Add Icon</button>
@@ -906,6 +907,22 @@
                 </div>
             </div>
 
+            <!-- 🧅 Layers Management -->
+            <div class="admin-section" id="adminLayers">
+                <h3 style="margin-bottom:15px;">🧅 Manage Layers</h3>
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+                    <input type="text" id="newLayerInput" placeholder="Add new layer (e.g., Extra Cheese)" style="flex:1; min-width:200px; padding:10px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em;" />
+                    <button class="admin-add-btn" onclick="addNewLayer()" style="margin:0;">➕ Add</button>
+                </div>
+                <div class="admin-table" id="layersList">
+                    <p style="color:#b2bec3; padding:15px;">Loading layers...</p>
+                </div>
+                <div style="margin-top:15px; background:#fef9e7; padding:15px; border-radius:12px; border-left:4px solid #f39c12;">
+                    <h4 style="color:#f39c12;">💡 Tip</h4>
+                    <p style="font-size:0.85em; color:#636e72;">Layers added here will be available for burger-type items. To assign layers to a menu item, edit the item in the Menu section.</p>
+                </div>
+            </div>
+
             <!-- Settings -->
             <div class="admin-section" id="adminSettings">
                 <h3 style="margin-bottom:15px;">⚙️ Settings</h3>
@@ -986,10 +1003,10 @@
                             <div class="option-desc">Choose your currency</div>
                         </div>
                         <select id="currencySelect" onchange="changeCurrency(this.value)">
+                            <option value="Rs">Rs (PKR)</option>
                             <option value="$">$ (USD)</option>
                             <option value="€">€ (EUR)</option>
                             <option value="£">£ (GBP)</option>
-                            <option value="Rs">Rs (PKR)</option>
                             <option value="₹">₹ (INR)</option>
                         </select>
                     </div>
@@ -1048,7 +1065,7 @@
         let users = [];
         let lastOrderCount = 0;
         let restaurantName = 'DineFlow';
-        let currencySymbol = '$';
+        let currencySymbol = 'Rs';
 
         // Icon picker state
         let currentPickerTarget = 'menu';
@@ -1103,6 +1120,7 @@
             });
             renderAdminFeedback();
             renderAdminSupport();
+            renderAdminLayers();
         }
 
         function checkNewOrders() {
@@ -1127,18 +1145,20 @@
         // RECEIPT
         // ============================================================
         function showReceipt(order) {
+            const orderTime = order.date || new Date(order.createdAt).toLocaleString();
             const html = `
                 <div id="receiptPrint">
                     <div class="receipt-header">
                         <h2>${restaurantName}</h2>
                         <p>Order Receipt</p>
-                        <p>${new Date().toLocaleString()}</p>
+                        <p style="font-weight:bold;">🕐 Order Time: ${orderTime}</p>
                         <p style="font-weight:bold;">Order #${order.id}</p>
                     </div>
                     <div class="receipt-order-info">
                         <p><strong>Customer:</strong> ${order.userName || 'Guest'}</p>
                         <p><strong>Phone:</strong> ${order.phone || '-'}</p>
                         <p><strong>Address:</strong> ${order.address || 'Pickup'}</p>
+                        ${order.layers && order.layers.length ? `<p><strong>🧅 Layers:</strong> ${order.layers.join(', ')}</p>` : ''}
                     </div>
                     <table class="receipt-items">
                         <tr><th>Item</th><th>Qty</th><th style="text-align:right;">Price</th></tr>
@@ -1146,11 +1166,11 @@
                             <tr>
                                 <td>${i.name}</td>
                                 <td>${i.qty || 1}</td>
-                                <td style="text-align:right;">${currencySymbol}${(i.price * (i.qty || 1)).toFixed(2)}</td>
+                                <td style="text-align:right;">${currencySymbol} ${(i.price * (i.qty || 1)).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </table>
-                    <div class="receipt-total">Total: ${currencySymbol}${order.total.toFixed(2)}</div>
+                    <div class="receipt-total">Total: ${currencySymbol} ${order.total.toFixed(2)}</div>
                     <div class="receipt-footer">Thank you! Status: ${order.status.toUpperCase()}</div>
                 </div>
             `;
@@ -1177,6 +1197,7 @@
             if (section === 'calculator') renderTodayOrders();
             if (section === 'feedback') renderAdminFeedback();
             if (section === 'support') renderAdminSupport();
+            if (section === 'layers') renderAdminLayers();
         }
 
         // ============================================================
@@ -1187,7 +1208,7 @@
             const pendingOrders = orders.filter(o => o.status === 'pending').length;
             const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'ready').length;
 
-            document.getElementById('statRevenue').textContent = `${currencySymbol}${totalRevenue.toFixed(2)}`;
+            document.getElementById('statRevenue').textContent = `${currencySymbol} ${totalRevenue.toFixed(2)}`;
             document.getElementById('statOrders').textContent = orders.length;
             document.getElementById('statPending').textContent = pendingOrders;
             document.getElementById('statCompleted').textContent = completedOrders;
@@ -1204,7 +1225,7 @@
                         <td>#${order.id}</td>
                         <td>${order.userName || 'Guest'}</td>
                         <td>${order.items.map(i => i.name).join(', ')}</td>
-                        <td>${currencySymbol}${order.total.toFixed(2)}</td>
+                        <td>${currencySymbol} ${order.total.toFixed(2)}</td>
                         <td><span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span></td>
                     </tr>
                 `;
@@ -1221,16 +1242,19 @@
                 document.getElementById('adminMenuTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No menu items</p>';
                 return;
             }
-            let html = `<table><tr><th>Icon</th><th>Name</th><th>Category</th><th>Price</th><th>Actions</th></tr>`;
+            let html = `<table><tr><th>Icon</th><th>Name</th><th>Category</th><th>Price</th><th>Layers</th><th>Actions</th></tr>`;
             menuItems.forEach(item => {
                 const icons = item.icons ? item.icons.join(' ') : (item.icon || '🍽️');
+                const layers = item.layers && item.layers.length ? item.layers.join(', ') : '-';
                 html += `
                     <tr>
                         <td style="font-size:1.5em;">${icons}</td>
                         <td>${item.name}</td>
                         <td>${item.category}</td>
-                        <td>${currencySymbol}${item.price.toFixed(2)}</td>
+                        <td>${currencySymbol} ${item.price.toFixed(2)}</td>
+                        <td style="font-size:0.75em;">${layers}</td>
                         <td>
+                            <button class="admin-action-btn btn-edit" onclick="editMenuItem(${item.id})">✏️ Edit</button>
                             <button class="admin-action-btn btn-delete" onclick="deleteMenuItem(${item.id})">🗑️</button>
                         </td>
                     </tr>
@@ -1238,6 +1262,108 @@
             });
             html += `</table>`;
             document.getElementById('adminMenuTable').innerHTML = html;
+        }
+
+        function editMenuItem(id) {
+            const item = menuItems.find(i => i.id === id);
+            if (!item) return;
+
+            fetch('/api/layers')
+                .then(r => r.json())
+                .then(layers => {
+                    const row = document.getElementById(`menu-row-${id}`);
+                    if (!row) return;
+
+                    let layersHtml = '';
+                    if (layers && layers.length > 0) {
+                        layersHtml = layers.map(layer => {
+                            const isChecked = item.layers && item.layers.includes(layer);
+                            return `
+                                <label style="font-size:0.75em; margin-right:6px;">
+                                    <input type="checkbox" class="layer-checkbox-${id}" value="${layer}" ${isChecked ? 'checked' : ''}>
+                                    ${layer}
+                                </label>
+                            `;
+                        }).join('');
+                    } else {
+                        layersHtml = '<span style="color:#b2bec3; font-size:0.75em;">No layers available</span>';
+                    }
+
+                    row.innerHTML = `
+                        <td style="font-size:1.5em;">
+                            <input type="text" id="edit-icon-${id}" value="${item.icon || '🍽️'}" style="width:40px; text-align:center; font-size:1.2em; border:1px solid #dfe6e9; border-radius:6px;">
+                        </td>
+                        <td><input type="text" id="edit-name-${id}" value="${item.name}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
+                        <td>
+                            <select id="edit-category-${id}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;">
+                                <option value="burgers" ${item.category === 'burgers' ? 'selected' : ''}>Burgers</option>
+                                <option value="pizza" ${item.category === 'pizza' ? 'selected' : ''}>Pizza</option>
+                                <option value="sandwiches" ${item.category === 'sandwiches' ? 'selected' : ''}>Sandwiches</option>
+                                <option value="sides" ${item.category === 'sides' ? 'selected' : ''}>Sides</option>
+                                <option value="drinks" ${item.category === 'drinks' ? 'selected' : ''}>Drinks</option>
+                                <option value="salads" ${item.category === 'salads' ? 'selected' : ''}>Salads</option>
+                                <option value="appetizers" ${item.category === 'appetizers' ? 'selected' : ''}>Appetizers</option>
+                                <option value="desserts" ${item.category === 'desserts' ? 'selected' : ''}>Desserts</option>
+                            </select>
+                        </td>
+                        <td><input type="number" id="edit-price-${id}" value="${item.price}" step="0.01" style="width:80px; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
+                        <td>
+                            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px; max-width:120px;">
+                                ${layersHtml}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="admin-action-btn btn-save" onclick="saveMenuItem(${id})">💾 Save</button>
+                            <button class="admin-action-btn btn-cancel" onclick="renderAdminMenu()">✕ Cancel</button>
+                        </td>
+                    `;
+                })
+                .catch(() => {
+                    showToast('❌ Failed to load layers');
+                });
+        }
+
+        function saveMenuItem(id) {
+            const name = document.getElementById(`edit-name-${id}`).value;
+            const price = parseFloat(document.getElementById(`edit-price-${id}`).value);
+            const category = document.getElementById(`edit-category-${id}`).value;
+            const icon = document.getElementById(`edit-icon-${id}`).value;
+            
+            const layerCheckboxes = document.querySelectorAll(`.layer-checkbox-${id}:checked`);
+            const layers = Array.from(layerCheckboxes).map(el => el.value);
+
+            if (!name || !price) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+
+            fetch(`/api/menu/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, category, icon })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    return fetch(`/api/menu/${id}/layers`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ layers })
+                    });
+                } else {
+                    throw new Error(data.error || 'Update failed');
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Menu item updated!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Layer update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
         }
 
         function deleteMenuItem(id) {
@@ -1281,14 +1407,15 @@
                 document.getElementById('adminDealsTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No deals</p>';
                 return;
             }
-            let html = `<table><tr><th>Icon</th><th>Name</th><th>Price</th><th>Actions</th></tr>`;
+            let html = `<table><tr><th>Icon</th><th>Name</th><th>Price</th><th>Original</th><th>Actions</th></tr>`;
             deals.forEach(deal => {
                 const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
                 html += `
                     <tr>
                         <td style="font-size:1.5em;">${icons}</td>
                         <td>${deal.name}</td>
-                        <td>${currencySymbol}${deal.price.toFixed(2)}</td>
+                        <td>${currencySymbol} ${deal.price.toFixed(2)}</td>
+                        <td>${currencySymbol} ${(deal.original || deal.price * 1.5).toFixed(2)}</td>
                         <td><button class="admin-action-btn btn-delete" onclick="deleteDeal(${deal.id})">🗑️</button></td>
                     </tr>
                 `;
@@ -1349,15 +1476,17 @@
                     <th>Phone</th>
                     <th>Address</th>
                     <th>Items</th>
+                    <th>Layers</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>Date</th>
+                    <th>Time</th>
                     <th>Action</th>
                 </tr>
             `;
 
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
+                const layers = order.layers && order.layers.length ? order.layers.join(', ') : '-';
                 html += `
                     <tr>
                         <td><strong>#${order.id}</strong></td>
@@ -1365,9 +1494,10 @@
                         <td>${order.phone || '-'}</td>
                         <td style="max-width:120px; word-break:break-word;">${order.address || 'Pickup'}</td>
                         <td style="max-width:150px;">${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}</td>
-                        <td><strong>${currencySymbol}${order.total.toFixed(2)}</strong></td>
+                        <td style="font-size:0.7em; max-width:100px;">${layers}</td>
+                        <td><strong>${currencySymbol} ${order.total.toFixed(2)}</strong></td>
                         <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
-                        <td style="font-size:0.75em;">${order.date || 'Today'}</td>
+                        <td style="font-size:0.7em;">${order.date || 'Today'}</td>
                         <td>
                             <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
                                 <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
@@ -1432,20 +1562,21 @@
             let html = '';
             const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
             html += `<div style="padding:8px 0; border-bottom:2px solid #e74c3c; margin-bottom:10px; display:flex; justify-content:space-between;">
-                <strong>Total Today: ${currencySymbol}${todayTotal.toFixed(2)}</strong>
+                <strong>Total Today: ${currencySymbol} ${todayTotal.toFixed(2)}</strong>
                 <span style="color:#636e72; font-size:0.85em;">${todayOrders.length} orders</span>
             </div>`;
 
             todayOrders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
+                const layers = order.layers && order.layers.length ? '🧅 ' + order.layers.join(', ') : '';
                 html += `
                     <div class="order-item">
                         <div>
                             <div class="order-id">#${order.id} - ${order.userName || 'Guest'}</div>
-                            <div class="order-customer">${order.items.map(i => i.name).join(', ')}</div>
+                            <div class="order-customer">${order.items.map(i => i.name).join(', ')} ${layers}</div>
                         </div>
                         <div style="text-align:right;">
-                            <div class="order-total">${currencySymbol}${order.total.toFixed(2)}</div>
+                            <div class="order-total">${currencySymbol} ${order.total.toFixed(2)}</div>
                             <span class="order-status ${statusClass}">${order.status.toUpperCase()}</span>
                         </div>
                     </div>
@@ -1762,6 +1893,87 @@
             const ticket = supportTickets.find(t => t.id === id);
             if (!ticket) return;
             alert(`📋 Ticket #${ticket.id}\n\nCustomer: ${ticket.userName}\nEmail: ${ticket.userEmail}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}`);
+        }
+
+        // ============================================================
+        // 🧅 LAYERS FUNCTIONS ⭐
+        // ============================================================
+        function renderAdminLayers() {
+            fetch('/api/layers')
+                .then(r => r.json())
+                .then(data => {
+                    const layers = data || [];
+                    if (layers.length === 0) {
+                        document.getElementById('layersList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No layers defined</p>';
+                        return;
+                    }
+                    
+                    let html = `<table>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Action</th>
+                        </tr>
+                    `;
+                    
+                    layers.forEach(layer => {
+                        html += `
+                            <tr>
+                                <td style="font-size:1.1em;">${layer}</td>
+                                <td>
+                                    <button class="admin-action-btn btn-delete" onclick="deleteLayer('${encodeURIComponent(layer)}')">🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += `</table>`;
+                    document.getElementById('layersList').innerHTML = html;
+                })
+                .catch(() => {});
+        }
+
+        function addNewLayer() {
+            const input = document.getElementById('newLayerInput');
+            const layer = input.value.trim();
+            if (!layer) {
+                showToast('⚠️ Please enter a layer name');
+                return;
+            }
+            
+            fetch('/api/layers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ layer })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Layer added successfully!');
+                    input.value = '';
+                    renderAdminLayers();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to add layer'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function deleteLayer(encodedLayer) {
+            const layer = decodeURIComponent(encodedLayer);
+            if (!confirm(`Delete layer "${layer}"?`)) return;
+            
+            fetch(`/api/layers/${encodedLayer}`, {
+                method: 'DELETE'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Layer deleted!');
+                    renderAdminLayers();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
         }
 
         // ============================================================

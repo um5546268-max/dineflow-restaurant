@@ -39,30 +39,46 @@ let restaurantName = 'DineFlow';
 let feedbacks = [];
 let supportTickets = [];
 let menuItems = [
-    { id: 1, name: 'Cheese Burger', price: 12.99, category: 'burgers', icons: ['🍔'] },
-    { id: 2, name: 'Double Burger', price: 15.99, category: 'burgers', icons: ['🍔', '🧀'] },
-    { id: 3, name: 'Chicken Burger', price: 11.99, category: 'burgers', icons: ['🍔', '🐔'] },
-    { id: 4, name: 'Margherita Pizza', price: 14.99, category: 'pizza', icons: ['🍕', '🧀'] },
-    { id: 5, name: 'Pepperoni Pizza', price: 16.99, category: 'pizza', icons: ['🍕', '🥓'] },
-    { id: 6, name: 'BBQ Chicken Pizza', price: 17.99, category: 'pizza', icons: ['🍕', '🐔'] },
-    { id: 7, name: 'Chicken Sandwich', price: 10.99, category: 'sandwiches', icons: ['🥪', '🐔'] },
-    { id: 8, name: 'Club Sandwich', price: 11.99, category: 'sandwiches', icons: ['🥪', '🥓'] },
-    { id: 9, name: 'French Fries', price: 4.99, category: 'sides', icons: ['🍟'] },
-    { id: 10, name: 'Onion Rings', price: 5.99, category: 'sides', icons: ['🧅'] },
-    { id: 11, name: 'Chocolate Shake', price: 5.99, category: 'drinks', icons: ['🥤', '🍫'] },
-    { id: 12, name: 'Iced Tea', price: 3.99, category: 'drinks', icons: ['🧋'] },
-    { id: 13, name: 'Caesar Salad', price: 8.99, category: 'salads', icons: ['🥗', '🧀'] },
-    { id: 14, name: 'Greek Salad', price: 9.99, category: 'salads', icons: ['🥗'] },
-    { id: 15, name: 'Chicken Wings', price: 9.99, category: 'appetizers', icons: ['🍗', '🔥'] },
-    { id: 16, name: 'Mozzarella Sticks', price: 7.99, category: 'appetizers', icons: ['🧀', '🔥'] },
-    { id: 17, name: 'Tiramisu', price: 6.99, category: 'desserts', icons: ['🍰', '☕'] },
-    { id: 18, name: 'Chocolate Cake', price: 5.99, category: 'desserts', icons: ['🍫', '🎂'] }
+    { id: 1, name: 'Cheese Burger', price: 1299, category: 'burgers', icons: ['🍔'], layers: ['🧀 Cheese', '🥬 Lettuce', '🍅 Tomato'] },
+    { id: 2, name: 'Double Burger', price: 1599, category: 'burgers', icons: ['🍔', '🧀'], layers: ['🧀 Cheese', '🥬 Lettuce', '🍅 Tomato', '🥩 Extra Patty'] },
+    { id: 3, name: 'Chicken Burger', price: 1199, category: 'burgers', icons: ['🍔', '🐔'], layers: ['🧀 Cheese', '🥬 Lettuce', '🌶️ Mayo'] },
+    { id: 4, name: 'Margherita Pizza', price: 1499, category: 'pizza', icons: ['🍕', '🧀'] },
+    { id: 5, name: 'Pepperoni Pizza', price: 1699, category: 'pizza', icons: ['🍕', '🥓'] },
+    { id: 6, name: 'BBQ Chicken Pizza', price: 1799, category: 'pizza', icons: ['🍕', '🐔'] },
+    { id: 7, name: 'Chicken Sandwich', price: 1099, category: 'sandwiches', icons: ['🥪', '🐔'] },
+    { id: 8, name: 'Club Sandwich', price: 1199, category: 'sandwiches', icons: ['🥪', '🥓'] },
+    { id: 9, name: 'French Fries', price: 499, category: 'sides', icons: ['🍟'] },
+    { id: 10, name: 'Onion Rings', price: 599, category: 'sides', icons: ['🧅'] },
+    { id: 11, name: 'Chocolate Shake', price: 599, category: 'drinks', icons: ['🥤', '🍫'] },
+    { id: 12, name: 'Iced Tea', price: 399, category: 'drinks', icons: ['🧋'] },
+    { id: 13, name: 'Caesar Salad', price: 899, category: 'salads', icons: ['🥗', '🧀'] },
+    { id: 14, name: 'Greek Salad', price: 999, category: 'salads', icons: ['🥗'] },
+    { id: 15, name: 'Chicken Wings', price: 999, category: 'appetizers', icons: ['🍗', '🔥'] },
+    { id: 16, name: 'Mozzarella Sticks', price: 799, category: 'appetizers', icons: ['🧀', '🔥'] },
+    { id: 17, name: 'Tiramisu', price: 699, category: 'desserts', icons: ['🍰', '☕'] },
+    { id: 18, name: 'Chocolate Cake', price: 599, category: 'desserts', icons: ['🍫', '🎂'] }
 ];
 let deals = [
-    { id: 1, name: 'Burger Combo', desc: 'Cheese Burger + Fries + Drink', price: 15.99, original: 23.97, icons: ['🍔', '🍟', '🥤'] },
-    { id: 2, name: 'Pizza Deal', desc: 'Large Pizza + 2 Drinks', price: 18.99, original: 28.97, icons: ['🍕', '🥤', '🥤'] },
-    { id: 3, name: 'Family Pack', desc: '4 Sandwiches + 4 Fries', price: 29.99, original: 45.96, icons: ['🥪', '🥪', '🍟', '🍟'] },
-    { id: 4, name: 'Wing Wednesday', desc: '12 Wings + Dip', price: 8.99, original: 13.99, icons: ['🍗', '🔥', '🧀'] }
+    { id: 1, name: 'Burger Combo', desc: 'Cheese Burger + Fries + Drink', price: 1599, original: 2397, icons: ['🍔', '🍟', '🥤'] },
+    { id: 2, name: 'Pizza Deal', desc: 'Large Pizza + 2 Drinks', price: 1899, original: 2897, icons: ['🍕', '🥤', '🥤'] },
+    { id: 3, name: 'Family Pack', desc: '4 Sandwiches + 4 Fries', price: 2999, original: 4596, icons: ['🥪', '🥪', '🍟', '🍟'] },
+    { id: 4, name: 'Wing Wednesday', desc: '12 Wings + Dip', price: 899, original: 1399, icons: ['🍗', '🔥', '🧀'] }
+];
+
+// ============================================
+// ⭐ CUSTOM LAYERS STORAGE ⭐
+// ============================================
+let availableLayers = [
+    '🧀 Cheese',
+    '🥬 Lettuce',
+    '🍅 Tomato',
+    '🧅 Onion',
+    '🥩 Extra Patty',
+    '🌶️ Mayo',
+    '🧄 Garlic Sauce',
+    '🌿 Jalapeno',
+    '🍄 Mushroom',
+    '🥓 Bacon'
 ];
 
 // ============================================
@@ -137,7 +153,6 @@ app.get('/logout', (req, res) => {
 // ⭐ FEEDBACK ROUTES ⭐
 // ============================================
 
-// Submit feedback (customer)
 app.post('/api/feedback', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const { rating, comment, restaurantId } = req.body;
@@ -160,13 +175,11 @@ app.post('/api/feedback', (req, res) => {
     res.status(201).json({ success: true, feedback: newFeedback });
 });
 
-// Get all feedbacks (admin)
 app.get('/api/feedback/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json(feedbacks);
 });
 
-// Get average rating
 app.get('/api/feedback/average', (req, res) => {
     if (feedbacks.length === 0) {
         return res.json({ average: 0, count: 0 });
@@ -176,7 +189,6 @@ app.get('/api/feedback/average', (req, res) => {
     res.json({ average: parseFloat(average.toFixed(2)), count: feedbacks.length });
 });
 
-// Delete feedback (admin)
 app.delete('/api/feedback/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const index = feedbacks.findIndex(f => f.id === parseInt(req.params.id));
@@ -191,7 +203,6 @@ app.delete('/api/feedback/:id', (req, res) => {
 // ⭐ SUPPORT TICKET ROUTES ⭐
 // ============================================
 
-// Create support ticket (customer)
 app.post('/api/support', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const { subject, message, priority } = req.body;
@@ -215,13 +226,11 @@ app.post('/api/support', (req, res) => {
     res.status(201).json({ success: true, ticket: newTicket });
 });
 
-// Get all tickets (admin)
 app.get('/api/support/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json(supportTickets);
 });
 
-// Update ticket status (admin)
 app.put('/api/support/:id/status', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const ticket = supportTickets.find(t => t.id === parseInt(req.params.id));
@@ -235,6 +244,61 @@ app.put('/api/support/:id/status', (req, res) => {
     }
     ticket.status = status;
     res.json({ success: true, ticket });
+});
+
+// ============================================
+// ⭐ LAYERS ROUTES ⭐
+// ============================================
+
+// Get all available layers
+app.get('/api/layers', (req, res) => {
+    res.json(availableLayers);
+});
+
+// Add a new layer (admin)
+app.post('/api/layers', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const { layer } = req.body;
+    if (!layer) {
+        return res.status(400).json({ error: 'Layer name is required' });
+    }
+    if (!availableLayers.includes(layer)) {
+        availableLayers.push(layer);
+        console.log(`🧅 New layer added: ${layer}`);
+        res.json({ success: true, layers: availableLayers });
+    } else {
+        res.status(400).json({ error: 'Layer already exists' });
+    }
+});
+
+// Delete a layer (admin)
+app.delete('/api/layers/:layer', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const layer = decodeURIComponent(req.params.layer);
+    const index = availableLayers.indexOf(layer);
+    if (index === -1) {
+        return res.status(404).json({ error: 'Layer not found' });
+    }
+    availableLayers.splice(index, 1);
+    console.log(`🗑️ Layer deleted: ${layer}`);
+    res.json({ success: true, layers: availableLayers });
+});
+
+// Update menu item layers (admin)
+app.put('/api/menu/:id/layers', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const item = menuItems.find(i => i.id === parseInt(req.params.id));
+    if (!item) {
+        return res.status(404).json({ error: 'Item not found' });
+    }
+    const { layers } = req.body;
+    if (layers && Array.isArray(layers)) {
+        item.layers = layers;
+        console.log(`🍔 Layers updated for ${item.name}: ${layers.join(', ')}`);
+        res.json({ success: true, item });
+    } else {
+        res.status(400).json({ error: 'Invalid layers format' });
+    }
 });
 
 // ============================================
@@ -266,7 +330,7 @@ app.post('/api/restaurant-name', (req, res) => {
 
 app.post('/api/menu', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const { name, price, category, icons } = req.body;
+    const { name, price, category, icons, layers } = req.body;
     if (!name || !price || !category) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -278,7 +342,8 @@ app.post('/api/menu', (req, res) => {
         name,
         price: parseFloat(price),
         category,
-        icons: icons.slice(0, 5)
+        icons: icons.slice(0, 5),
+        layers: layers || []
     };
     menuItems.push(newItem);
     console.log(`🍽️ New menu item added: ${newItem.name} with icons: ${newItem.icons.join(' ')}`);
@@ -352,7 +417,7 @@ app.get('/api/orders/myorders', (req, res) => {
 
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
-    const { items, total, name, phone, address } = req.body;
+    const { items, total, name, phone, address, layers } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -363,12 +428,14 @@ app.post('/api/orders', (req, res) => {
         phone: phone || '',
         address: address || 'In-store pickup',
         items: items,
+        layers: layers || {},
         total: parseFloat(total),
         status: 'pending',
-        date: new Date().toLocaleString()
+        date: new Date().toLocaleString(),
+        createdAt: new Date()
     };
     orders.push(newOrder);
-    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName}`);
+    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} at ${newOrder.date}`);
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
@@ -413,6 +480,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`👤 Users: ${users.length}`);
     console.log(`⭐ Feedbacks: ${feedbacks.length}`);
     console.log(`🎫 Support Tickets: ${supportTickets.length}`);
+    console.log(`🧅 Available Layers: ${availableLayers.length}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
