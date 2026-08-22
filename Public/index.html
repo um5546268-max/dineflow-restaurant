@@ -500,7 +500,7 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <button class="nav-item" data-panel="menu" onclick="showPanel('menu')">
+        <button class="nav-item active" data-panel="menu" onclick="showPanel('menu')">
             <span class="nav-icon">🍽️</span> Menu
         </button>
         <button class="nav-item" data-panel="orders" onclick="showPanel('orders')">
@@ -611,6 +611,9 @@
         let pendingOrder = null;
         let restaurantName = 'DineFlow';
 
+        // ⭐ FIX: Track current panel
+        let currentPanel = 'menu';
+
         // ============================================================
         // DOM REFS
         // ============================================================
@@ -645,6 +648,8 @@
             }, 2000);
             
             loadAllData();
+            // ⭐ FIX: Set initial panel
+            showPanel('menu');
         });
 
         // ============================================================
@@ -691,8 +696,10 @@
                 .then(r => r.json())
                 .then(data => {
                     menuItems = data;
-                    renderCategories();
-                    renderMenu();
+                    if (currentPanel === 'menu') {
+                        renderCategories();
+                        renderMenu();
+                    }
                 })
                 .catch(() => {});
         }
@@ -712,6 +719,9 @@
                 .then(data => {
                     orders = data;
                     updateOrderBadge();
+                    if (currentPanel === 'orders') {
+                        renderOrders();
+                    }
                 })
                 .catch(() => {});
         }
@@ -966,30 +976,21 @@
         }
 
         // ============================================================
-        // PANEL NAVIGATION - FIXED
+        // ⭐ FIXED: PANEL NAVIGATION - STAYS ON SELECTED PANEL ⭐
         // ============================================================
-        let currentPanel = 'menu';
-
         function showPanel(panel) {
-            // Don't switch if already on same panel
-            if (currentPanel === panel) {
-                // Just refresh the content
-                if (panel === 'menu') renderMenu();
-                else if (panel === 'orders') { loadOrders(); renderOrders(); }
-                else if (panel === 'account') renderAccount();
-                else if (panel === 'feedback') renderFeedbackSection();
-                else if (panel === 'support') renderSupportSection();
-                else if (panel === 'settings') renderSettings();
-                return;
-            }
-
+            // Set current panel
             currentPanel = panel;
             
+            // Update nav items
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.querySelector(`.nav-item[data-panel="${panel}"]`)?.classList.add('active');
+            const navItem = document.querySelector(`.nav-item[data-panel="${panel}"]`);
+            if (navItem) navItem.classList.add('active');
 
+            // Render content based on panel
             if (panel === 'menu') {
-                loadMenu();
+                renderCategories();
+                renderMenu();
             } else if (panel === 'orders') {
                 loadOrders();
                 renderOrders();
@@ -1147,7 +1148,7 @@
             menuArea.innerHTML = html;
             // Reset stars
             customerSelectedRating = 0;
-            document.querySelectorAll('#feedbackSection .star-btn')?.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#customerStarLabel')?.forEach(b => {});
         }
 
         function selectStarCustomer(rating) {
@@ -1196,7 +1197,7 @@
                     <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <p style="color:#636e72; margin-bottom:15px;">How can we help you?</p>
                         <div class="support-options">
-                            <div class="support-card" onclick="openSupport()">
+                            <div class="support-card" onclick="openSupportPopup()">
                                 <div class="support-icon">📧</div>
                                 <div class="support-label">Email Support</div>
                                 <div class="support-desc">Send us a message</div>
@@ -1211,7 +1212,7 @@
                                 <div class="support-label">WhatsApp</div>
                                 <div class="support-desc">Chat with us</div>
                             </div>
-                            <div class="support-card" onclick="openSupport()">
+                            <div class="support-card" onclick="openSupportPopup()">
                                 <div class="support-icon">❓</div>
                                 <div class="support-label">FAQ</div>
                                 <div class="support-desc">Common questions</div>
@@ -1409,9 +1410,15 @@
         }
 
         // ============================================================
-        // 🎫 SUPPORT FUNCTIONS ⭐
+        // 🎫 SUPPORT POPUP ⭐
         // ============================================================
         function openSupportPopup() {
+            // Check if user is logged in
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+
             // Create support popup dynamically
             const supportPopup = document.createElement('div');
             supportPopup.className = 'popup-overlay show';
