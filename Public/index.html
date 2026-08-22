@@ -403,6 +403,40 @@
             transform: scale(1.2);
         }
 
+        .support-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .support-options .support-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #eee;
+        }
+        .support-options .support-card:hover {
+            background: #fdf2f2;
+            border-color: #e74c3c;
+            transform: translateY(-2px);
+        }
+        .support-options .support-card .support-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        .support-options .support-card .support-label {
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        .support-options .support-card .support-desc {
+            font-size: 0.7em;
+            color: #b2bec3;
+            margin-top: 3px;
+        }
+
         @media (max-width: 600px) {
             .sidebar { width: 75px; }
             .category-item .cat-icon { font-size: 1.2em; }
@@ -418,6 +452,7 @@
             .bottom-nav .nav-item .nav-icon { font-size: 1.1em; }
             .deal-item .deal-icons { font-size: 1.2em; }
             .star-btn { font-size: 1.8em; }
+            .support-options { grid-template-columns: 1fr; }
         }
         @media (max-width: 400px) {
             .sidebar { width: 60px; }
@@ -465,7 +500,7 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <button class="nav-item active" data-panel="menu" onclick="showPanel('menu')">
+        <button class="nav-item" data-panel="menu" onclick="showPanel('menu')">
             <span class="nav-icon">🍽️</span> Menu
         </button>
         <button class="nav-item" data-panel="orders" onclick="showPanel('orders')">
@@ -477,6 +512,9 @@
         </button>
         <button class="nav-item" data-panel="feedback" onclick="showPanel('feedback')">
             <span class="nav-icon">⭐</span> Feedback
+        </button>
+        <button class="nav-item" data-panel="support" onclick="showPanel('support')">
+            <span class="nav-icon">🎫</span> Support
         </button>
         <button class="nav-item" data-panel="settings" onclick="showPanel('settings')">
             <span class="nav-icon">⚙️</span> Settings
@@ -518,7 +556,7 @@
             <button class="popup-close" onclick="closeLoginRequired()">✕</button>
             <div style="font-size:3em; margin-bottom:10px;">🔐</div>
             <div class="popup-title">Login Required</div>
-            <div class="popup-subtitle">Please login to place an order</div>
+            <div class="popup-subtitle">Please login to continue</div>
             <a href="/auth/google" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:25px; text-decoration:none; font-weight:600; margin-top:10px;">
                 Sign in with Google
             </a>
@@ -544,29 +582,6 @@
             <textarea id="feedbackComment" placeholder="Share your feedback (optional)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em; margin-bottom:10px; resize:vertical; min-height:60px;"></textarea>
             <button class="order-submit-btn" onclick="submitFeedback()">💬 Submit Feedback</button>
             <button style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeFeedback()">Maybe Later</button>
-            <div style="margin-top:15px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
-                <p style="font-size:0.8em; color:#b2bec3;">Need help? <a href="#" onclick="openSupport()" style="color:#e74c3c; text-decoration:none; font-weight:600;">Contact Support</a></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ⭐ SUPPORT POPUP ⭐ -->
-    <div class="popup-overlay" id="supportPopup">
-        <div class="popup-content">
-            <button class="popup-close" onclick="closeSupport()">✕</button>
-            <div class="popup-title">🎫 Customer Support</div>
-            <div class="popup-subtitle">We're here to help!</div>
-            <form id="supportForm" onsubmit="submitSupport(event)">
-                <select id="supportPriority" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
-                    <option value="low">🟢 Low Priority</option>
-                    <option value="normal" selected>🟡 Normal Priority</option>
-                    <option value="high">🔴 High Priority</option>
-                </select>
-                <input type="text" id="supportSubject" placeholder="Subject" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;" />
-                <textarea id="supportMessage" placeholder="Describe your issue..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; min-height:100px; resize:vertical; font-size:0.9em;"></textarea>
-                <button type="submit" class="order-submit-btn">📤 Submit Ticket</button>
-                <button type="button" style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeSupport()">Cancel</button>
-            </form>
         </div>
     </div>
 
@@ -951,26 +966,40 @@
         }
 
         // ============================================================
-        // PANEL NAVIGATION
+        // PANEL NAVIGATION - FIXED
         // ============================================================
+        let currentPanel = 'menu';
+
         function showPanel(panel) {
+            // Don't switch if already on same panel
+            if (currentPanel === panel) {
+                // Just refresh the content
+                if (panel === 'menu') renderMenu();
+                else if (panel === 'orders') { loadOrders(); renderOrders(); }
+                else if (panel === 'account') renderAccount();
+                else if (panel === 'feedback') renderFeedbackSection();
+                else if (panel === 'support') renderSupportSection();
+                else if (panel === 'settings') renderSettings();
+                return;
+            }
+
+            currentPanel = panel;
+            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.nav-item[data-panel="${panel}"]`)?.classList.add('active');
 
             if (panel === 'menu') {
-                document.querySelector('.nav-item[data-panel="menu"]').classList.add('active');
                 loadMenu();
             } else if (panel === 'orders') {
-                document.querySelector('.nav-item[data-panel="orders"]').classList.add('active');
                 loadOrders();
                 renderOrders();
             } else if (panel === 'account') {
-                document.querySelector('.nav-item[data-panel="account"]').classList.add('active');
                 renderAccount();
             } else if (panel === 'feedback') {
-                document.querySelector('.nav-item[data-panel="feedback"]').classList.add('active');
                 renderFeedbackSection();
+            } else if (panel === 'support') {
+                renderSupportSection();
             } else if (panel === 'settings') {
-                document.querySelector('.nav-item[data-panel="settings"]').classList.add('active');
                 renderSettings();
             }
         }
@@ -1075,11 +1104,28 @@
         }
 
         // ============================================================
-        // ⭐ RENDER FEEDBACK SECTION (Customer) ⭐
+        // ⭐ FEEDBACK SECTION (Customer) - REQUIRES LOGIN ⭐
         // ============================================================
         let customerSelectedRating = 0;
 
         function renderFeedbackSection() {
+            // Check if user is logged in
+            if (!isLoggedIn) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="font-size:4em; margin-bottom:15px;">🔐</div>
+                        <h3 style="color:#2d3436;">Login Required</h3>
+                        <p style="color:#b2bec3; margin-bottom:20px;">Please login to submit feedback</p>
+                        <a href="/auth/google" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                            Sign in with Google
+                        </a>
+                        <br>
+                        <button onclick="showPanel('menu')" style="margin-top:15px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Back to Menu</button>
+                    </div>
+                `;
+                return;
+            }
+
             let html = `
                 <div style="padding:10px 5px;">
                     <div class="section-title">⭐ Rate & Review</div>
@@ -1138,6 +1184,46 @@
                 }
             })
             .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // 🎫 SUPPORT SECTION (Customer)
+        // ============================================================
+        function renderSupportSection() {
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">🎫 Customer Support</div>
+                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <p style="color:#636e72; margin-bottom:15px;">How can we help you?</p>
+                        <div class="support-options">
+                            <div class="support-card" onclick="openSupport()">
+                                <div class="support-icon">📧</div>
+                                <div class="support-label">Email Support</div>
+                                <div class="support-desc">Send us a message</div>
+                            </div>
+                            <div class="support-card" onclick="window.location.href='tel:+923001234567'">
+                                <div class="support-icon">📞</div>
+                                <div class="support-label">Call Us</div>
+                                <div class="support-desc">0300-1234567</div>
+                            </div>
+                            <div class="support-card" onclick="window.location.href='https://wa.me/923001234567'">
+                                <div class="support-icon">💬</div>
+                                <div class="support-label">WhatsApp</div>
+                                <div class="support-desc">Chat with us</div>
+                            </div>
+                            <div class="support-card" onclick="openSupport()">
+                                <div class="support-icon">❓</div>
+                                <div class="support-label">FAQ</div>
+                                <div class="support-desc">Common questions</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
+                            <p style="font-size:0.8em; color:#b2bec3;">Response time: <span style="color:#27ae60;">Usually within 1 hour</span></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
         }
 
         // ============================================================
@@ -1325,15 +1411,33 @@
         // ============================================================
         // 🎫 SUPPORT FUNCTIONS ⭐
         // ============================================================
-        function openSupport() {
-            document.getElementById('supportPopup').classList.add('show');
+        function openSupportPopup() {
+            // Create support popup dynamically
+            const supportPopup = document.createElement('div');
+            supportPopup.className = 'popup-overlay show';
+            supportPopup.id = 'supportPopup';
+            supportPopup.innerHTML = `
+                <div class="popup-content">
+                    <button class="popup-close" onclick="this.closest('.popup-overlay').remove()">✕</button>
+                    <div class="popup-title">📧 Send Message</div>
+                    <div class="popup-subtitle">We'll get back to you soon!</div>
+                    <form onsubmit="submitSupportForm(event)">
+                        <select id="supportPriority" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
+                            <option value="low">🟢 Low Priority</option>
+                            <option value="normal" selected>🟡 Normal Priority</option>
+                            <option value="high">🔴 High Priority</option>
+                        </select>
+                        <input type="text" id="supportSubject" placeholder="Subject" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;" />
+                        <textarea id="supportMessage" placeholder="Describe your issue..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; min-height:100px; resize:vertical; font-size:0.9em;"></textarea>
+                        <button type="submit" class="order-submit-btn">📤 Submit Ticket</button>
+                        <button type="button" style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="this.closest('.popup-overlay').remove()">Cancel</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(supportPopup);
         }
 
-        function closeSupport() {
-            document.getElementById('supportPopup').classList.remove('show');
-        }
-
-        function submitSupport(event) {
+        function submitSupportForm(event) {
             event.preventDefault();
             const subject = document.getElementById('supportSubject').value;
             const message = document.getElementById('supportMessage').value;
@@ -1353,8 +1457,9 @@
             .then(data => {
                 if (data.success) {
                     showToast('✅ Support ticket submitted! We\'ll get back to you.');
-                    closeSupport();
-                    document.getElementById('supportForm').reset();
+                    const popup = document.getElementById('supportPopup');
+                    if (popup) popup.remove();
+                    showPanel('support');
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to submit'));
                 }
