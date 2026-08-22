@@ -65,9 +65,6 @@ let deals = [
     { id: 4, name: 'Wing Wednesday', desc: '12 Wings + Dip', price: 899, original: 1399, icons: ['🍗', '🔥', '🧀'] }
 ];
 
-// ============================================
-// ⭐ CUSTOM LAYERS STORAGE ⭐
-// ============================================
 let availableLayers = [
     '🧀 Cheese',
     '🥬 Lettuce',
@@ -250,12 +247,10 @@ app.put('/api/support/:id/status', (req, res) => {
 // ⭐ LAYERS ROUTES ⭐
 // ============================================
 
-// Get all available layers
 app.get('/api/layers', (req, res) => {
     res.json(availableLayers);
 });
 
-// Add a new layer (admin)
 app.post('/api/layers', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const { layer } = req.body;
@@ -271,7 +266,6 @@ app.post('/api/layers', (req, res) => {
     }
 });
 
-// Delete a layer (admin)
 app.delete('/api/layers/:layer', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const layer = decodeURIComponent(req.params.layer);
@@ -284,7 +278,6 @@ app.delete('/api/layers/:layer', (req, res) => {
     res.json({ success: true, layers: availableLayers });
 });
 
-// Update menu item layers (admin)
 app.put('/api/menu/:id/layers', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const item = menuItems.find(i => i.id === parseInt(req.params.id));
@@ -454,12 +447,15 @@ app.put('/api/orders/:id/status', (req, res) => {
 });
 
 // ============================================
-// SERVE HTML PAGES
+// ⭐ SERVE HTML PAGES ⭐
 // ============================================
+
+// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
+// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
