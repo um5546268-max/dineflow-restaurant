@@ -357,7 +357,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ⭐ SERVE HTML PAGES ⭐
+// ⭐ SERVE HTML PAGES - THIS IS THE FIX ⭐
 // ============================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
