@@ -147,7 +147,7 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================
-// ⭐ FEEDBACK ROUTES ⭐
+// FEEDBACK ROUTES
 // ============================================
 
 app.post('/api/feedback', (req, res) => {
@@ -197,7 +197,7 @@ app.delete('/api/feedback/:id', (req, res) => {
 });
 
 // ============================================
-// ⭐ SUPPORT TICKET ROUTES ⭐
+// SUPPORT TICKET ROUTES
 // ============================================
 
 app.post('/api/support', (req, res) => {
@@ -244,7 +244,7 @@ app.put('/api/support/:id/status', (req, res) => {
 });
 
 // ============================================
-// ⭐ LAYERS ROUTES ⭐
+// LAYERS ROUTES
 // ============================================
 
 app.get('/api/layers', (req, res) => {
@@ -447,7 +447,7 @@ app.put('/api/orders/:id/status', (req, res) => {
 });
 
 // ============================================
-// ⭐ SERVE HTML PAGES ⭐
+// ⭐ SERVE HTML PAGES - THIS IS THE FIX ⭐
 // ============================================
 
 // Customer Panel
