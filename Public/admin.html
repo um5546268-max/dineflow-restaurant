@@ -408,7 +408,44 @@
             transform: scale(1.1);
         }
 
-        /* Calculator Section */
+        /* Layer Icons */
+        .layer-icon-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            border: 1px solid #dfe6e9;
+            font-size: 0.85em;
+            margin: 3px;
+        }
+        .layer-icon-item .layer-icon {
+            font-size: 1.2em;
+        }
+
+        /* Layer checkboxes in edit mode */
+        .layer-checkbox-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 8px;
+            padding: 2px 8px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 1px solid #dfe6e9;
+            font-size: 0.8em;
+        }
+        .layer-checkbox-wrapper input[type="checkbox"] {
+            margin: 0;
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+        .layer-checkbox-wrapper label {
+            cursor: pointer;
+        }
+
         .calculator-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -474,7 +511,6 @@
             text-align: center;
         }
 
-        /* Today's Orders */
         .today-orders-card {
             background: white;
             padding: 15px;
@@ -802,6 +838,13 @@
                             <span id="menuSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
                         </div>
                     </div>
+                    <!-- ⭐ LAYERS SELECTION FOR ADD MENU ⭐ -->
+                    <div id="menuAddLayersContainer" style="margin-bottom:10px;">
+                        <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Available Layers:</label>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px;" id="menuAddLayersList">
+                            <span style="color:#b2bec3; font-size:0.85em;">Loading layers...</span>
+                        </div>
+                    </div>
                     <button class="admin-submit-btn" onclick="adminAddItem()">Add Item</button>
                     <button class="admin-cancel-btn" onclick="toggleAdminForm('menuForm')">Cancel</button>
                 </div>
@@ -1070,6 +1113,7 @@
         // Icon picker state
         let currentPickerTarget = 'menu';
         let selectedIcons = { menu: [], deal: [] };
+        let selectedAddLayers = [];
 
         // ============================================================
         // EMOJI DATA
@@ -1121,6 +1165,7 @@
             renderAdminFeedback();
             renderAdminSupport();
             renderAdminLayers();
+            renderAddLayers();
         }
 
         function checkNewOrders() {
@@ -1235,19 +1280,30 @@
         }
 
         // ============================================================
-        // ADMIN MENU
+        // ADMIN MENU - FIXED EDIT
         // ============================================================
         function renderAdminMenu() {
             if (menuItems.length === 0) {
                 document.getElementById('adminMenuTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No menu items</p>';
                 return;
             }
-            let html = `<table><tr><th>Icon</th><th>Name</th><th>Category</th><th>Price</th><th>Layers</th><th>Actions</th></tr>`;
+            let html = `<table>
+                <tr>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Layers</th>
+                    <th>Actions</th>
+                </tr>
+            `;
             menuItems.forEach(item => {
                 const icons = item.icons ? item.icons.join(' ') : (item.icon || '🍽️');
-                const layers = item.layers && item.layers.length ? item.layers.join(', ') : '-';
+                const layers = item.layers && item.layers.length ? 
+                    item.layers.map(l => `<span class="layer-icon-item"><span class="layer-icon">${l.split(' ')[0]}</span> ${l}</span>`).join('') : 
+                    '<span style="color:#b2bec3; font-size:0.8em;">-</span>';
                 html += `
-                    <tr>
+                    <tr id="menu-row-${item.id}">
                         <td style="font-size:1.5em;">${icons}</td>
                         <td>${item.name}</td>
                         <td>${item.category}</td>
@@ -1274,19 +1330,21 @@
                     const row = document.getElementById(`menu-row-${id}`);
                     if (!row) return;
 
+                    // Build layer checkboxes with icons
                     let layersHtml = '';
                     if (layers && layers.length > 0) {
                         layersHtml = layers.map(layer => {
                             const isChecked = item.layers && item.layers.includes(layer);
+                            const icon = layer.split(' ')[0] || '🧅';
                             return `
-                                <label style="font-size:0.75em; margin-right:6px;">
+                                <span class="layer-checkbox-wrapper">
                                     <input type="checkbox" class="layer-checkbox-${id}" value="${layer}" ${isChecked ? 'checked' : ''}>
-                                    ${layer}
-                                </label>
+                                    <label>${icon} ${layer}</label>
+                                </span>
                             `;
                         }).join('');
                     } else {
-                        layersHtml = '<span style="color:#b2bec3; font-size:0.75em;">No layers available</span>';
+                        layersHtml = '<span style="color:#b2bec3; font-size:0.85em;">No layers available. Add layers in Layers section.</span>';
                     }
 
                     row.innerHTML = `
@@ -1308,7 +1366,7 @@
                         </td>
                         <td><input type="number" id="edit-price-${id}" value="${item.price}" step="0.01" style="width:80px; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
                         <td>
-                            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px; max-width:120px;">
+                            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
                                 ${layersHtml}
                             </div>
                         </td>
@@ -1373,11 +1431,53 @@
                 .then(() => { showToast('✅ Item deleted!'); loadAdminData(); });
         }
 
+        // ============================================================
+        // RENDER ADD LAYERS
+        // ============================================================
+        function renderAddLayers() {
+            fetch('/api/layers')
+                .then(r => r.json())
+                .then(layers => {
+                    const container = document.getElementById('menuAddLayersList');
+                    if (!layers || layers.length === 0) {
+                        container.innerHTML = '<span style="color:#b2bec3; font-size:0.85em;">No layers available. Add layers in Layers section.</span>';
+                        return;
+                    }
+                    selectedAddLayers = [];
+                    let html = '';
+                    layers.forEach(layer => {
+                        const icon = layer.split(' ')[0] || '🧅';
+                        html += `
+                            <span class="layer-checkbox-wrapper" style="cursor:pointer;" onclick="toggleAddLayer(this, '${layer}')">
+                                <span style="font-size:1.1em;">${icon}</span>
+                                <span>${layer}</span>
+                            </span>
+                        `;
+                    });
+                    container.innerHTML = html;
+                })
+                .catch(() => {});
+        }
+
+        function toggleAddLayer(element, layer) {
+            element.classList.toggle('selected');
+            element.style.borderColor = element.classList.contains('selected') ? '#e74c3c' : '#dfe6e9';
+            element.style.background = element.classList.contains('selected') ? '#fdf2f2' : '#f8f9fa';
+            
+            const index = selectedAddLayers.indexOf(layer);
+            if (index === -1) {
+                selectedAddLayers.push(layer);
+            } else {
+                selectedAddLayers.splice(index, 1);
+            }
+        }
+
         function adminAddItem() {
             const name = document.getElementById('adminItemName').value;
             const price = parseFloat(document.getElementById('adminItemPrice').value);
             const category = document.getElementById('adminItemCategory').value;
             const icons = selectedIcons.menu;
+            const layers = selectedAddLayers;
 
             if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
             if (icons.length === 0) { showToast('⚠️ Please add at least one icon'); return; }
@@ -1385,7 +1485,7 @@
             fetch('/api/menu', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, price, category, icons: icons })
+                body: JSON.stringify({ name, price, category, icons: icons, layers: layers })
             })
             .then(r => r.json())
             .then(() => {
@@ -1393,7 +1493,9 @@
                 document.getElementById('adminItemName').value = '';
                 document.getElementById('adminItemPrice').value = '';
                 selectedIcons.menu = [];
+                selectedAddLayers = [];
                 updateIconDisplay('menu');
+                renderAddLayers();
                 toggleAdminForm('menuForm');
                 loadAdminData();
             });
@@ -1595,6 +1697,9 @@
             if (form.classList.contains('show')) {
                 const target = formId === 'menuForm' ? 'menu' : 'deal';
                 updateIconDisplay(target);
+                if (formId === 'menuForm') {
+                    renderAddLayers();
+                }
             }
         }
 
@@ -1916,9 +2021,10 @@
                     `;
                     
                     layers.forEach(layer => {
+                        const icon = layer.split(' ')[0] || '🧅';
                         html += `
                             <tr>
-                                <td style="font-size:1.1em;">${layer}</td>
+                                <td style="font-size:1.1em;">${icon} ${layer}</td>
                                 <td>
                                     <button class="admin-action-btn btn-delete" onclick="deleteLayer('${encodeURIComponent(layer)}')">🗑️</button>
                                 </td>
@@ -1950,6 +2056,7 @@
                     showToast('✅ Layer added successfully!');
                     input.value = '';
                     renderAdminLayers();
+                    renderAddLayers();
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to add layer'));
                 }
@@ -1969,6 +2076,7 @@
                 if (data.success) {
                     showToast('✅ Layer deleted!');
                     renderAdminLayers();
+                    renderAddLayers();
                 } else {
                     showToast('❌ ' + (data.error || 'Delete failed'));
                 }
@@ -2048,6 +2156,7 @@
             
             updateIconDisplay('menu');
             updateIconDisplay('deal');
+            renderAddLayers();
             
             document.getElementById('iconPickerPopup').addEventListener('click', function(e) {
                 if (e.target === this) {
