@@ -154,6 +154,33 @@ app.post('/api/restaurant/create', (req, res) => {
 });
 
 // ============================================
+// ⭐ RESTAURANTS MANAGEMENT PANEL API ⭐
+// ============================================
+
+// Get all restaurants (for management panel)
+app.get('/api/restaurants/all', (req, res) => {
+    // If user is not logged in, return empty array
+    if (!req.user) {
+        return res.json([]);
+    }
+    res.json(restaurants);
+});
+
+// Save restaurants data (for management panel)
+app.post('/api/restaurants/all', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    const { restaurants: newRestaurants } = req.body;
+    if (newRestaurants && Array.isArray(newRestaurants)) {
+        // This is for sync with localStorage
+        res.json({ success: true, message: 'Restaurants data synced' });
+    } else {
+        res.status(400).json({ error: 'Invalid data' });
+    }
+});
+
+// ============================================
 // WHATSAPP NUMBER API
 // ============================================
 app.get('/api/whatsapp-number', (req, res) => {
@@ -324,7 +351,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ⭐ ORDER ROUTES WITH DELIVERY/TAKEAWAY ⭐
+// ORDER ROUTES
 // ============================================
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
@@ -665,18 +692,55 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================
-// SERVE HTML PAGES
+// ⭐ SERVE HTML PAGES ⭐
 // ============================================
+
+// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
+// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
+// Restaurant Creation Page
 app.get('/create-restaurant', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'create-restaurant.html'));
+});
+
+// ⭐ PixelPanel - Secret Restaurant Management Panel ⭐
+app.get('/pixelpanel', (req, res) => {
+    // Secret panel - only accessible to admin
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(404).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>404 - Page Not Found</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
+                    h1 { color: #e74c3c; font-size: 4em; }
+                    .container { max-width: 500px; margin: 0 auto; }
+                    .btn { display: inline-block; padding: 12px 30px; background: #e74c3c; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+                    .btn:hover { background: #c0392b; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>404</h1>
+                    <h2>Page Not Found</h2>
+                    <p>The page you are looking for does not exist or has been moved.</p>
+                    <a href="/" class="btn">Go Home</a>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+    res.sendFile(path.join(__dirname, 'Public', 'pixelpanel.html'));
 });
 
 // ============================================
@@ -691,6 +755,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
     console.log(`🏪 Create Restaurant: http://localhost:${PORT}/create-restaurant`);
+    console.log(`⬛ PixelPanel: http://localhost:${PORT}/pixelpanel`);
     console.log('========================================');
     console.log(`📱 WhatsApp Number: ${WHATSAPP_NUMBER}`);
     console.log('========================================');
