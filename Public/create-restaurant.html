@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Restaurant - DineFlow</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 { color: #2d3436; margin-bottom: 5px; }
+        .subtitle { color: #636e72; margin-bottom: 25px; font-size: 0.9em; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; font-size: 0.9em; margin-bottom: 5px; color: #2d3436; }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+        input:focus { outline: none; border-color: #667eea; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 5px;
+        }
+        button:hover { background: #1e8449; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.success {
+            display: block;
+            background: #e8f8f0;
+            border: 1px solid #27ae60;
+            color: #1e8449;
+        }
+        .result.error {
+            display: block;
+            background: #fdf2f2;
+            border: 1px solid #e74c3c;
+            color: #c0392b;
+        }
+        .result .url-box {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            word-break: break-all;
+            font-size: 0.9em;
+            border: 1px solid #dfe6e9;
+        }
+        .result .url-box a { color: #667eea; text-decoration: none; }
+        .result .url-box a:hover { text-decoration: underline; }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #636e72;
+            text-decoration: none;
+            font-size: 0.85em;
+        }
+        .back-link:hover { color: #2d3436; }
+        .loading { 
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            color: #636e72;
+        }
+        .loading.show { display: block; }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #dfe6e9;
+            border-top-color: #27ae60;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🏪 Create Restaurant</h2>
+        <p class="subtitle">Register a new restaurant in DineFlow</p>
+        
+        <form id="createForm">
+            <div class="form-group">
+                <label for="restName">Restaurant Name *</label>
+                <input type="text" id="restName" placeholder="e.g., Tasty Bites" required />
+            </div>
+            <div class="form-group">
+                <label for="ownerName">Owner Name *</label>
+                <input type="text" id="ownerName" placeholder="e.g., Ali Ahmed" required />
+            </div>
+            <div class="form-group">
+                <label for="ownerEmail">Owner Email *</label>
+                <input type="email" id="ownerEmail" placeholder="owner@restaurant.com" required />
+            </div>
+            <button type="submit" id="submitBtn">🏪 Create Restaurant</button>
+            <div class="loading" id="loading">
+                <span class="spinner"></span> Creating restaurant...
+            </div>
+        </form>
+        
+        <div class="result" id="result"></div>
+        <a href="/" class="back-link">← Back to Customer Panel</a>
+        <a href="/admin" class="back-link" style="margin-top:5px;">← Back to Admin Panel</a>
+    </div>
+
+    <script>
+        document.getElementById('createForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('restName').value.trim();
+            const ownerName = document.getElementById('ownerName').value.trim();
+            const ownerEmail = document.getElementById('ownerEmail').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            
+            if (!name || !ownerName || !ownerEmail) {
+                showResult('error', '⚠️ Please fill in all fields');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/restaurant/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, ownerName, ownerEmail })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const baseUrl = window.location.origin;
+                    const customerUrl = `${baseUrl}/?restaurant=${data.restaurantId}`;
+                    const adminUrl = `${baseUrl}/admin?restaurant=${data.restaurantId}`;
+                    
+                    showResult('success', `
+                        ✅ <strong>Restaurant Created Successfully!</strong><br><br>
+                        <strong>🏪 Restaurant ID:</strong> ${data.restaurantId}<br>
+                        <strong>👤 Owner:</strong> ${data.restaurant.ownerName}<br><br>
+                        <strong>📱 Customer URL:</strong><br>
+                        <div class="url-box"><a href="${customerUrl}" target="_blank">${customerUrl}</a></div>
+                        <strong>👑 Admin URL:</strong><br>
+                        <div class="url-box"><a href="${adminUrl}" target="_blank">${adminUrl}</a></div>
+                        <br>
+                        <em style="font-size:0.85em;">Share these URLs with the restaurant owner!</em>
+                    `);
+                    
+                    // Reset form
+                    document.getElementById('restName').value = '';
+                    document.getElementById('ownerName').value = '';
+                    document.getElementById('ownerEmail').value = '';
+                } else {
+                    showResult('error', '❌ Error: ' + (data.error || 'Something went wrong'));
+                }
+            } catch (error) {
+                showResult('error', '❌ Network error: Could not connect to server. Make sure your server is running.');
+                console.error('Error:', error);
+            }
+            
+            submitBtn.disabled = false;
+            loading.classList.remove('show');
+        });
+        
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
