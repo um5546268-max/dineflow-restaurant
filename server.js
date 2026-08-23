@@ -9,6 +9,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ============================================
+// ⭐ WHATSAPP NUMBER CONFIGURATION ⭐
+// ============================================
+// CHANGE THIS TO YOUR WHATSAPP NUMBER
+const WHATSAPP_NUMBER = '923001234567'; // Format: CountryCode + Number (e.g., 923001234567)
+// ============================================
+
 // Middleware
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
@@ -31,7 +38,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ============================================
-// DATABASE - WITH MULTI-RESTAURANT SUPPORT
+// DATABASE
 // ============================================
 const users = [];
 const restaurants = [];
@@ -79,9 +86,6 @@ function getDefaultDeals() {
     ];
 }
 
-// ============================================
-// CREATE DEFAULT RESTAURANT IF NONE EXISTS
-// ============================================
 function createDefaultRestaurant() {
     if (restaurants.length === 0) {
         const defaultRestaurant = {
@@ -98,61 +102,46 @@ function createDefaultRestaurant() {
             status: 'active'
         };
         restaurants.push(defaultRestaurant);
-        console.log('🏪 Default restaurant created: DineFlow Restaurant (restaurant-1)');
+        console.log('🏪 Default restaurant created');
     }
 }
 
 // ============================================
-// RESTAURANT ID MIDDLEWARE - FIXED
+// RESTAURANT ID MIDDLEWARE
 // ============================================
 app.use((req, res, next) => {
-    // Check query parameter: ?restaurant=restaurant-1
     if (req.query.restaurant) {
         req.restaurantId = req.query.restaurant;
-    }
-    // Check session
-    else if (req.session && req.session.restaurantId) {
+    } else if (req.session && req.session.restaurantId) {
         req.restaurantId = req.session.restaurantId;
-    }
-    // Default
-    else {
+    } else {
         req.restaurantId = 'restaurant-1';
     }
-    
-    // Store in session
     if (req.session) {
         req.session.restaurantId = req.restaurantId;
     }
-    
-    console.log(`🏪 Restaurant ID: ${req.restaurantId} - ${req.path}`);
     next();
 });
 
 // ============================================
-// RESTAURANT MANAGEMENT API
+// RESTAURANT API
 // ============================================
-
-// Create a new restaurant
 app.post('/api/restaurant/create', (req, res) => {
-    const { name, ownerName, ownerEmail, password } = req.body;
+    const { name, ownerName, ownerEmail } = req.body;
     if (!name || !ownerName || !ownerEmail) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
-    
     const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
     if (existing) {
         return res.status(400).json({ error: 'Restaurant already exists with this email' });
     }
-    
     const restaurantId = 'restaurant-' + (restaurants.length + 1);
-    
     const newRestaurant = {
         id: restaurants.length + 1,
         restaurantId: restaurantId,
         name: name,
         ownerName: ownerName,
         ownerEmail: ownerEmail,
-        password: password || 'default123',
         createdAt: new Date().toLocaleString(),
         menu: getDefaultMenu(),
         deals: getDefaultDeals(),
@@ -160,72 +149,40 @@ app.post('/api/restaurant/create', (req, res) => {
         restaurantName: name,
         status: 'active'
     };
-    
     restaurants.push(newRestaurant);
-    
-    console.log(`🏪 New restaurant created: ${name} (${restaurantId})`);
-    res.json({ 
-        success: true, 
-        restaurant: newRestaurant,
-        restaurantId: restaurantId
-    });
-});
-
-// Get restaurant by ID
-app.get('/api/restaurant/:restaurantId', (req, res) => {
-    const restaurant = restaurants.find(r => r.restaurantId === req.params.restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
-    res.json(restaurant);
-});
-
-// Get all restaurants (admin only)
-app.get('/api/restaurants/all', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    res.json(restaurants);
+    res.json({ success: true, restaurant: newRestaurant, restaurantId: restaurantId });
 });
 
 // ============================================
-// ⭐ FIXED MENU ROUTES ⭐
+// WHATSAPP NUMBER API
 // ============================================
+app.get('/api/whatsapp-number', (req, res) => {
+    res.json({ number: WHATSAPP_NUMBER });
+});
 
-// Get menu for specific restaurant - FIXED
+// ============================================
+// MENU ROUTES
+// ============================================
 app.get('/api/menu', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
-    console.log(`📋 Fetching menu for: ${restaurantId}`);
-    
-    // Find the restaurant
     let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    
-    // If not found, try to find by ID
     if (!restaurant) {
         const id = parseInt(restaurantId.replace('restaurant-', ''));
         restaurant = restaurants.find(r => r.id === id);
     }
-    
-    // If still not found, use default
     if (!restaurant) {
-        console.log(`⚠️ Restaurant ${restaurantId} not found, using default`);
         createDefaultRestaurant();
         restaurant = restaurants[0];
     }
-    
-    // Return menu
     if (restaurant && restaurant.menu) {
         res.json(restaurant.menu);
     } else {
-        // Return default menu if restaurant has no menu
-        const defaultMenu = getDefaultMenu();
-        res.json(defaultMenu);
+        res.json(getDefaultMenu());
     }
 });
 
-// Get deals for specific restaurant - FIXED
 app.get('/api/deals', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
-    console.log(`📋 Fetching deals for: ${restaurantId}`);
-    
     let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         const id = parseInt(restaurantId.replace('restaurant-', ''));
@@ -235,7 +192,6 @@ app.get('/api/deals', (req, res) => {
         createDefaultRestaurant();
         restaurant = restaurants[0];
     }
-    
     if (restaurant && restaurant.deals) {
         res.json(restaurant.deals);
     } else {
@@ -243,10 +199,8 @@ app.get('/api/deals', (req, res) => {
     }
 });
 
-// Get restaurant name - FIXED
 app.get('/api/restaurant-name', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
-    
     let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         const id = parseInt(restaurantId.replace('restaurant-', ''));
@@ -256,26 +210,31 @@ app.get('/api/restaurant-name', (req, res) => {
         createDefaultRestaurant();
         restaurant = restaurants[0];
     }
-    
-    const name = restaurant ? restaurant.restaurantName : 'DineFlow';
-    res.json({ name: name });
+    res.json({ name: restaurant ? restaurant.restaurantName : 'DineFlow' });
 });
 
-// Add menu item to specific restaurant
+app.post('/api/restaurant-name', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const { name } = req.body;
+    if (name) {
+        restaurant.restaurantName = name;
+        res.json({ success: true, name: restaurant.restaurantName });
+    } else {
+        res.status(400).json({ error: 'Name required' });
+    }
+});
+
 app.post('/api/menu', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
     const { name, price, category, icons, layers } = req.body;
-    if (!name || !price || !category) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    if (!icons || !icons.length) {
-        return res.status(400).json({ error: 'Please add at least one icon' });
-    }
+    if (!name || !price || !category) return res.status(400).json({ error: 'Missing required fields' });
+    if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
     const newItem = {
         id: restaurant.menu.length + 1,
         name,
@@ -288,34 +247,24 @@ app.post('/api/menu', (req, res) => {
     res.status(201).json({ success: true, item: newItem });
 });
 
-// Delete menu item
 app.delete('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
     const index = restaurant.menu.findIndex(i => i.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Item not found' });
-    }
+    if (index === -1) return res.status(404).json({ error: 'Item not found' });
     restaurant.menu.splice(index, 1);
     res.json({ success: true });
 });
 
-// Update menu item
 app.put('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
     const item = restaurant.menu.find(i => i.id === parseInt(req.params.id));
-    if (!item) {
-        return res.status(404).json({ error: 'Item not found' });
-    }
+    if (!item) return res.status(404).json({ error: 'Item not found' });
     const { name, price, category, icon } = req.body;
     if (name) item.name = name;
     if (price) item.price = parseFloat(price);
@@ -324,18 +273,13 @@ app.put('/api/menu/:id', (req, res) => {
     res.json({ success: true, item });
 });
 
-// Update menu item layers
 app.put('/api/menu/:id/layers', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
     const item = restaurant.menu.find(i => i.id === parseInt(req.params.id));
-    if (!item) {
-        return res.status(404).json({ error: 'Item not found' });
-    }
+    if (!item) return res.status(404).json({ error: 'Item not found' });
     const { layers } = req.body;
     if (layers && Array.isArray(layers)) {
         item.layers = layers;
@@ -346,24 +290,16 @@ app.put('/api/menu/:id/layers', (req, res) => {
 });
 
 // ============================================
-// DEAL ROUTES WITH restaurant_id
+// DEAL ROUTES
 // ============================================
-
-// Add deal to specific restaurant
 app.post('/api/deals', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
     const { name, desc, price, original, icons } = req.body;
-    if (!name || !price) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    if (!icons || !icons.length) {
-        return res.status(400).json({ error: 'Please add at least one icon' });
-    }
+    if (!name || !price) return res.status(400).json({ error: 'Missing required fields' });
+    if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
     const newDeal = {
         id: restaurant.deals.length + 1,
         name,
@@ -376,27 +312,20 @@ app.post('/api/deals', (req, res) => {
     res.status(201).json({ success: true, deal: newDeal });
 });
 
-// Delete deal
 app.delete('/api/deals/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
     const index = restaurant.deals.findIndex(d => d.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Deal not found' });
-    }
+    if (index === -1) return res.status(404).json({ error: 'Deal not found' });
     restaurant.deals.splice(index, 1);
     res.json({ success: true });
 });
 
 // ============================================
-// ORDER ROUTES WITH restaurant_id
+// ⭐ ORDER ROUTES WITH DELIVERY/TAKEAWAY ⭐
 // ============================================
-
-// Place order (saves with restaurant_id)
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -405,7 +334,7 @@ app.post('/api/orders', (req, res) => {
         return res.status(404).json({ error: 'Restaurant not found' });
     }
     
-    const { items, total, name, phone, address, layers } = req.body;
+    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -420,18 +349,40 @@ app.post('/api/orders', (req, res) => {
         layers: layers || {},
         total: parseFloat(total),
         status: 'pending',
+        orderType: orderType || 'delivery',
+        paymentMethod: paymentMethod || 'cash',
         date: new Date().toLocaleString(),
         createdAt: new Date(),
-        restaurantId: restaurantId
+        restaurantId: restaurantId,
+        lat: orderType === 'delivery' ? (lat || null) : null,
+        lng: orderType === 'delivery' ? (lng || null) : null,
+        locationShared: orderType === 'delivery' && !!(lat && lng)
     };
     
     restaurant.orders.push(newOrder);
     
-    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} at ${restaurant.name}`);
+    // Save location for delivery orders
+    if (orderType === 'delivery' && lat && lng) {
+        customerLocations.push({
+            id: customerLocations.length + 1,
+            userId: req.user.id,
+            userName: req.user.displayName,
+            userEmail: req.user.email,
+            restaurantId: restaurantId,
+            orderId: newOrder.id,
+            lat: lat,
+            lng: lng,
+            address: address || '',
+            phone: phone || '',
+            timestamp: new Date().toLocaleString(),
+            updatedAt: new Date()
+        });
+    }
+    
+    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} (${orderType}) at ${restaurant.name}`);
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
-// Get orders for specific restaurant
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -442,7 +393,6 @@ app.get('/api/orders/all', (req, res) => {
     res.json(restaurant.orders);
 });
 
-// Get user's orders for specific restaurant
 app.get('/api/orders/myorders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -454,7 +404,6 @@ app.get('/api/orders/myorders', (req, res) => {
     res.json(userOrders);
 });
 
-// Update order status
 app.put('/api/orders/:id/status', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -474,103 +423,59 @@ app.put('/api/orders/:id/status', (req, res) => {
 });
 
 // ============================================
-// RESTAURANT NAME UPDATE
+// LOCATION ROUTES
 // ============================================
+app.post('/api/location', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Please login first' });
+    const { lat, lng, address, orderId } = req.body;
+    if (!lat || !lng) {
+        return res.status(400).json({ error: 'Latitude and longitude required' });
+    }
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const existing = customerLocations.find(l => l.userId === req.user.id && l.restaurantId === restaurantId);
+    if (existing) {
+        existing.lat = lat;
+        existing.lng = lng;
+        existing.address = address || '';
+        existing.orderId = orderId || null;
+        existing.updatedAt = new Date();
+    } else {
+        customerLocations.push({
+            id: customerLocations.length + 1,
+            userId: req.user.id,
+            userName: req.user.displayName,
+            userEmail: req.user.email,
+            restaurantId: restaurantId,
+            orderId: orderId || null,
+            lat: lat,
+            lng: lng,
+            address: address || '',
+            phone: req.user.phone || '',
+            timestamp: new Date().toLocaleString(),
+            updatedAt: new Date()
+        });
+    }
+    res.json({ success: true, message: 'Location saved' });
+});
 
-app.post('/api/restaurant-name', (req, res) => {
+app.get('/api/locations/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
-    const { name } = req.body;
-    if (name) {
-        restaurant.restaurantName = name;
-        res.json({ success: true, name: restaurant.restaurantName });
-    } else {
-        res.status(400).json({ error: 'Name required' });
-    }
+    const locations = customerLocations.filter(l => l.restaurantId === restaurantId);
+    res.json(locations);
 });
 
-// ============================================
-// GOOGLE OAUTH
-// ============================================
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/callback'
-  },
-  function(accessToken, refreshToken, profile, done) {
-    let user = users.find(u => u.googleId === profile.id);
-    if (!user) {
-        user = {
-            id: users.length + 1,
-            googleId: profile.id,
-            displayName: profile.displayName,
-            email: profile.emails[0].value,
-            photo: profile.photos[0].value,
-            role: users.length === 0 ? 'admin' : 'customer'
-        };
-        users.push(user);
-        console.log(`✅ New user: ${user.displayName} (${user.role})`);
-    }
-    return done(null, user);
-  }
-));
-
-passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser((id, done) => {
-    const user = users.find(u => u.id === id);
-    done(null, user);
-});
-
-// ============================================
-// AUTH ROUTES - FIXED
-// ============================================
-app.get('/auth/google',
-    passport.authenticate('google', { 
-        scope: ['profile', 'email'],
-        accessType: 'offline',
-        prompt: 'select_account'
-    })
-);
-
-app.get('/callback',
-    passport.authenticate('google', { failureRedirect: '/login-failed' }),
-    function(req, res) {
-        req.session.save(function(err) {
-            if (err) {
-                console.error('Session save error:', err);
-                return res.redirect('/login-failed');
-            }
-            // Get restaurant from session or default
-            const restaurantId = req.session.restaurantId || 'restaurant-1';
-            if (req.user && req.user.role === 'admin') {
-                res.redirect('/admin?restaurant=' + restaurantId);
-            } else {
-                res.redirect('/?restaurant=' + restaurantId);
-            }
-        });
-    }
-);
-
-app.get('/login-failed', (req, res) => {
-    res.send('Login failed. <a href="/auth/google">Try again</a>');
-});
-
-app.get('/logout', (req, res) => {
-    req.logout(() => {
-        req.session.destroy(() => {
-            res.redirect('/');
-        });
-    });
+app.delete('/api/location/:id', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const index = customerLocations.findIndex(l => l.id === parseInt(req.params.id));
+    if (index === -1) return res.status(404).json({ error: 'Location not found' });
+    customerLocations.splice(index, 1);
+    res.json({ success: true });
 });
 
 // ============================================
 // FEEDBACK ROUTES
 // ============================================
-
 app.post('/api/feedback', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const { rating, comment } = req.body;
@@ -607,9 +512,8 @@ app.delete('/api/feedback/:id', (req, res) => {
 });
 
 // ============================================
-// SUPPORT TICKET ROUTES
+// SUPPORT ROUTES
 // ============================================
-
 app.post('/api/support', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const { subject, message, priority } = req.body;
@@ -652,7 +556,6 @@ app.put('/api/support/:id/status', (req, res) => {
 // ============================================
 // LAYERS ROUTES
 // ============================================
-
 app.get('/api/layers', (req, res) => {
     res.json(availableLayers);
 });
@@ -681,7 +584,6 @@ app.delete('/api/layers/:layer', (req, res) => {
 // ============================================
 // USER ROUTES
 // ============================================
-
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
@@ -693,71 +595,86 @@ app.get('/api/users', (req, res) => {
 });
 
 // ============================================
-// LOCATION ROUTES
+// GOOGLE OAUTH
 // ============================================
-
-app.post('/api/location', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Please login first' });
-    const { lat, lng, address, orderId } = req.body;
-    if (!lat || !lng) {
-        return res.status(400).json({ error: 'Latitude and longitude required' });
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/callback'
+  },
+  function(accessToken, refreshToken, profile, done) {
+    let user = users.find(u => u.googleId === profile.id);
+    if (!user) {
+        user = {
+            id: users.length + 1,
+            googleId: profile.id,
+            displayName: profile.displayName,
+            email: profile.emails[0].value,
+            photo: profile.photos[0].value,
+            role: users.length === 0 ? 'admin' : 'customer'
+        };
+        users.push(user);
+        console.log(`✅ New user: ${user.displayName} (${user.role})`);
     }
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const existing = customerLocations.find(l => l.userId === req.user.id && l.restaurantId === restaurantId);
-    if (existing) {
-        existing.lat = lat;
-        existing.lng = lng;
-        existing.address = address || '';
-        existing.orderId = orderId || null;
-        existing.updatedAt = new Date();
-    } else {
-        customerLocations.push({
-            id: customerLocations.length + 1,
-            userId: req.user.id,
-            userName: req.user.displayName,
-            userEmail: req.user.email,
-            restaurantId: restaurantId,
-            lat: lat,
-            lng: lng,
-            address: address || '',
-            orderId: orderId || null,
-            timestamp: new Date().toLocaleString(),
-            updatedAt: new Date()
+    return done(null, user);
+  }
+));
+
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser((id, done) => {
+    const user = users.find(u => u.id === id);
+    done(null, user);
+});
+
+app.get('/auth/google',
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        accessType: 'offline',
+        prompt: 'select_account'
+    })
+);
+
+app.get('/callback',
+    passport.authenticate('google', { failureRedirect: '/login-failed' }),
+    function(req, res) {
+        req.session.save(function(err) {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.redirect('/login-failed');
+            }
+            const restaurantId = req.session.restaurantId || 'restaurant-1';
+            if (req.user && req.user.role === 'admin') {
+                res.redirect('/admin?restaurant=' + restaurantId);
+            } else {
+                res.redirect('/?restaurant=' + restaurantId);
+            }
         });
     }
-    res.json({ success: true, message: 'Location saved' });
+);
+
+app.get('/login-failed', (req, res) => {
+    res.send('Login failed. <a href="/auth/google">Try again</a>');
 });
 
-app.get('/api/locations/all', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const locations = customerLocations.filter(l => l.restaurantId === restaurantId);
-    res.json(locations);
-});
-
-app.delete('/api/location/:id', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const index = customerLocations.findIndex(l => l.id === parseInt(req.params.id));
-    if (index === -1) return res.status(404).json({ error: 'Location not found' });
-    customerLocations.splice(index, 1);
-    res.json({ success: true });
+app.get('/logout', (req, res) => {
+    req.logout(() => {
+        req.session.destroy(() => {
+            res.redirect('/');
+        });
+    });
 });
 
 // ============================================
 // SERVE HTML PAGES
 // ============================================
-
-// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
-// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
-// Restaurant Creation Page
 app.get('/create-restaurant', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'create-restaurant.html'));
 });
@@ -765,7 +682,6 @@ app.get('/create-restaurant', (req, res) => {
 // ============================================
 // START SERVER
 // ============================================
-// Create default restaurant if none exists
 createDefaultRestaurant();
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -775,6 +691,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
     console.log(`🏪 Create Restaurant: http://localhost:${PORT}/create-restaurant`);
+    console.log('========================================');
+    console.log(`📱 WhatsApp Number: ${WHATSAPP_NUMBER}`);
     console.log('========================================');
     console.log(`🏪 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);

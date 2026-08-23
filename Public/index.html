@@ -366,6 +366,28 @@
             margin-bottom: 15px; 
         }
 
+        /* ⭐ ORDER TYPE BUTTONS ⭐ */
+        .order-type-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            background: white;
+            color: #2d3436;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+        .order-type-btn.active {
+            border-color: #e74c3c;
+            background: #e74c3c;
+            color: white;
+        }
+        .order-type-btn:hover {
+            transform: scale(1.02);
+        }
+
         /* Layer Selection */
         .layer-options {
             display: flex;
@@ -587,21 +609,44 @@
         </div>
     </div>
 
-    <!-- Order Form Popup -->
+    <!-- ⭐ Order Form Popup - UPDATED ⭐ -->
     <div class="popup-overlay" id="orderPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeOrderPopup()">✕</button>
             <div class="popup-title">📝 Place Order</div>
-            <div class="popup-subtitle">Fill in your delivery details</div>
+            <div class="popup-subtitle">Fill in your details</div>
             <div class="order-total-display" id="orderTotalDisplay">Total: Rs 0.00</div>
             <form class="order-form" id="orderForm" onsubmit="submitOrder(event)">
                 <input type="text" id="orderName" placeholder="Full Name" required />
                 <input type="tel" id="orderPhone" placeholder="Phone Number" required />
-                <input type="text" id="orderAddress" placeholder="Delivery Address" required />
-                <input type="text" id="orderCity" placeholder="City" required />
+                
+                <!-- ⭐ ORDER TYPE SELECTION ⭐ -->
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <button type="button" class="order-type-btn active" id="deliveryBtn" onclick="selectOrderType('delivery')" style="flex:1; padding:10px; border:2px solid #e74c3c; border-radius:10px; background:#e74c3c; color:white; font-weight:700; cursor:pointer;">
+                        🚚 Delivery
+                    </button>
+                    <button type="button" class="order-type-btn" id="takeawayBtn" onclick="selectOrderType('takeaway')" style="flex:1; padding:10px; border:2px solid #dfe6e9; border-radius:10px; background:white; color:#2d3436; font-weight:700; cursor:pointer;">
+                        🏪 Takeaway
+                    </button>
+                </div>
+                
+                <!-- ⭐ PAYMENT METHOD ⭐ -->
+                <select id="paymentMethod" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
+                    <option value="cash">💵 Cash on Delivery</option>
+                    <option value="easypaisa">📱 Easypaisa</option>
+                    <option value="jazzcash">📱 JazzCash</option>
+                    <option value="card">💳 Credit Card</option>
+                </select>
+                
+                <!-- ⭐ DELIVERY FIELDS ⭐ -->
+                <div id="deliveryFields">
+                    <input type="text" id="orderAddress" placeholder="Delivery Address" required />
+                    <input type="text" id="orderCity" placeholder="City" required />
+                </div>
                 <div id="layerContainer"></div>
                 <input type="hidden" id="orderItems" />
                 <input type="hidden" id="orderTotal" />
+                <input type="hidden" id="orderType" value="delivery" />
                 <button type="submit" class="order-submit-btn">✅ Confirm Order</button>
             </form>
         </div>
@@ -702,6 +747,9 @@
         let restaurantName = 'DineFlow';
         let currentPanel = 'menu';
         let selectedLayers = [];
+        let selectedOrderType = 'delivery';
+        let orderLocation = { lat: null, lng: null, address: '' };
+        let pendingOrderData = null;
 
         // ============================================================
         // DOM REFS
@@ -1007,10 +1055,47 @@
         }
 
         // ============================================================
+        // ⭐ ORDER TYPE SELECTION ⭐
+        // ============================================================
+        function selectOrderType(type) {
+            selectedOrderType = type;
+            const deliveryBtn = document.getElementById('deliveryBtn');
+            const takeawayBtn = document.getElementById('takeawayBtn');
+            const deliveryFields = document.getElementById('deliveryFields');
+            
+            if (type === 'delivery') {
+                deliveryBtn.classList.add('active');
+                deliveryBtn.style.background = '#e74c3c';
+                deliveryBtn.style.color = 'white';
+                deliveryBtn.style.borderColor = '#e74c3c';
+                takeawayBtn.classList.remove('active');
+                takeawayBtn.style.background = 'white';
+                takeawayBtn.style.color = '#2d3436';
+                takeawayBtn.style.borderColor = '#dfe6e9';
+                deliveryFields.style.display = 'block';
+                document.getElementById('orderType').value = 'delivery';
+            } else {
+                takeawayBtn.classList.add('active');
+                takeawayBtn.style.background = '#e74c3c';
+                takeawayBtn.style.color = 'white';
+                takeawayBtn.style.borderColor = '#e74c3c';
+                deliveryBtn.classList.remove('active');
+                deliveryBtn.style.background = 'white';
+                deliveryBtn.style.color = '#2d3436';
+                deliveryBtn.style.borderColor = '#dfe6e9';
+                deliveryFields.style.display = 'none';
+                document.getElementById('orderType').value = 'takeaway';
+            }
+        }
+
+        // ============================================================
         // ORDER FORM
         // ============================================================
         function openOrderForm() {
             if (!pendingOrder) return;
+            
+            // Reset order type to delivery
+            selectOrderType('delivery');
             
             const itemId = pendingOrder.items[0]?.id;
             const menuItem = menuItems.find(i => i.id === itemId);
@@ -1030,6 +1115,7 @@
             }
             
             selectedLayers = [];
+            orderLocation = { lat: null, lng: null, address: '' };
             
             document.getElementById('orderTotalDisplay').textContent = `Total: Rs ${pendingOrder.total.toFixed(2)}`;
             document.getElementById('orderItems').value = JSON.stringify(pendingOrder.items);
@@ -1056,11 +1142,8 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION FUNCTIONS ⭐
+        // ⭐ LOCATION FUNCTIONS FOR DELIVERY ⭐
         // ============================================================
-        let orderLocation = { lat: null, lng: null, address: '' };
-        let pendingOrderData = null;
-
         function showLocationPopup(orderData) {
             pendingOrderData = orderData;
             document.getElementById('locationPopup').classList.add('show');
@@ -1129,6 +1212,12 @@
             
             const { name, phone, address, city, items, total, layers } = pendingOrderData;
             const fullAddress = address + ', ' + city;
+            const orderType = document.getElementById('orderType').value;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            
+            // Only send location if delivery
+            const sendLat = orderType === 'delivery' ? orderLocation.lat : null;
+            const sendLng = orderType === 'delivery' ? orderLocation.lng : null;
             
             fetch('/api/orders', {
                 method: 'POST',
@@ -1140,8 +1229,10 @@
                     phone: phone,
                     address: fullAddress,
                     layers: layers || [],
-                    lat: orderLocation.lat,
-                    lng: orderLocation.lng
+                    orderType: orderType,
+                    paymentMethod: paymentMethod,
+                    lat: sendLat,
+                    lng: sendLng
                 })
             })
             .then(r => r.json())
@@ -1180,15 +1271,30 @@
             const items = JSON.parse(document.getElementById('orderItems').value);
             const total = parseFloat(document.getElementById('orderTotal').value);
             const layers = selectedLayers || [];
+            const orderType = document.getElementById('orderType').value;
 
-            if (!name || !phone || !address || !city) {
-                showToast('⚠️ Please fill all fields');
+            if (!name || !phone) {
+                showToast('⚠️ Please fill name and phone');
+                return;
+            }
+
+            if (orderType === 'delivery' && (!address || !city)) {
+                showToast('⚠️ Please fill delivery address');
                 return;
             }
 
             const orderData = { name, phone, address, city, items, total, layers };
             closeOrderPopup();
-            showLocationPopup(orderData);
+            
+            // Show location popup only for delivery
+            if (orderType === 'delivery') {
+                showLocationPopup(orderData);
+            } else {
+                // For takeaway, submit directly
+                pendingOrderData = orderData;
+                orderLocation = { lat: null, lng: null, address: '' };
+                submitOrderWithLocation();
+            }
         }
 
         // ============================================================
@@ -1308,10 +1414,11 @@
 
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
                 html += `
                     <div style="background:white; border-radius:12px; padding:12px 15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
                         <div>
-                            <div style="font-weight:700;">Order #${order.id}</div>
+                            <div style="font-weight:700;">Order #${order.id} ${orderTypeIcon} ${order.orderType || 'Delivery'}</div>
                             <div style="font-size:0.75em; color:#636e72;">🕐 ${order.date || 'Today'}</div>
                             ${order.layers && order.layers.length ? `<div style="font-size:0.7em; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
                             <span class="order-status ${statusClass}" style="font-size:0.7em; font-weight:600; padding:2px 12px; border-radius:12px; display:inline-block; margin-top:4px;">${order.status.toUpperCase()}</span>
@@ -1320,6 +1427,7 @@
                             </div>
                             ${order.address ? `<div style="font-size:0.7em; color:#b2bec3;">📍 ${order.address}</div>` : ''}
                             ${order.phone ? `<div style="font-size:0.7em; color:#b2bec3;">📞 ${order.phone}</div>` : ''}
+                            <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
                         </div>
                         <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">Rs ${order.total.toFixed(2)}</div>
                     </div>

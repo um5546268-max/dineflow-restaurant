@@ -408,6 +408,26 @@
             transform: scale(1.1);
         }
 
+        /* ⭐ WHATSAPP NUMBER DISPLAY ⭐ */
+        .whatsapp-number-box {
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .whatsapp-number-box a {
+            color: white;
+            text-decoration: none;
+        }
+        .whatsapp-number-box a:hover {
+            text-decoration: underline;
+        }
+
         /* Calculator Section */
         .calculator-section {
             display: grid;
@@ -933,6 +953,18 @@
             <!-- ⭐ DELIVERY TRACKING SECTION ⭐ -->
             <div class="admin-section" id="adminDelivery">
                 <h3 style="margin-bottom:15px;">📍 Live Delivery Tracking</h3>
+                
+                <!-- ⭐ WHATSAPP NUMBER DISPLAY ⭐ -->
+                <div style="background:#25D366; color:white; padding:12px 20px; border-radius:12px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <span style="font-size:1.1em; font-weight:700;">📱 WhatsApp Number:</span>
+                        <span id="whatsappNumberDisplay" style="font-size:1.1em;">Loading...</span>
+                    </div>
+                    <a href="#" onclick="openWhatsApp()" target="_blank" style="background:white; color:#25D366; padding:6px 16px; border-radius:20px; text-decoration:none; font-weight:700; font-size:0.85em;">
+                        💬 Open WhatsApp
+                    </a>
+                </div>
+                
                 <div class="admin-stats" style="margin-bottom:15px;">
                     <div class="admin-stat-card">
                         <div class="stat-icon">📍</div>
@@ -945,6 +977,7 @@
                         <div class="stat-label">Today's Shares</div>
                     </div>
                 </div>
+                
                 <div style="background:white; border-radius:12px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:15px;">
                     <div id="deliveryMap" style="width:100%; height:450px; border-radius:8px; background:#f1f2f6; overflow:hidden;">
                         <iframe id="deliveryMapIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
@@ -955,6 +988,7 @@
                         <span id="mapStatus" style="color:#b2bec3; font-size:0.85em; padding:6px;">Loading locations...</span>
                     </div>
                 </div>
+                
                 <div class="admin-table" id="deliveryLocationsList">
                     <p style="color:#b2bec3; padding:15px;">Loading customer locations...</p>
                 </div>
@@ -1103,6 +1137,7 @@
         let lastOrderCount = 0;
         let restaurantName = 'DineFlow';
         let currencySymbol = 'Rs';
+        let whatsappNumber = '';
 
         // Icon picker state
         let currentPickerTarget = 'menu';
@@ -1137,6 +1172,17 @@
                     } else {
                         window.location.href = '/auth/google';
                     }
+                });
+
+            // Load WhatsApp number
+            fetch('/api/whatsapp-number')
+                .then(r => r.json())
+                .then(data => {
+                    whatsappNumber = data.number || '923001234567';
+                    document.getElementById('whatsappNumberDisplay').textContent = whatsappNumber;
+                })
+                .catch(() => {
+                    document.getElementById('whatsappNumberDisplay').textContent = '923001234567';
                 });
 
             fetch('/api/menu?t=' + Date.now()).then(r => r.json()).then(data => { menuItems = data; renderAdminMenu(); });
@@ -1183,10 +1229,28 @@
         }
 
         // ============================================================
+        // ⭐ WHATSAPP FUNCTIONS ⭐
+        // ============================================================
+        function openWhatsApp() {
+            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            window.open('https://wa.me/' + number, '_blank');
+        }
+
+        function getWhatsAppLink(phone, message) {
+            const number = phone || document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            const encodedMessage = encodeURIComponent(message || '');
+            return 'https://wa.me/' + number + '?text=' + encodedMessage;
+        }
+
+        // ============================================================
         // RECEIPT
         // ============================================================
         function showReceipt(order) {
             const orderTime = order.date || new Date(order.createdAt).toLocaleString();
+            const orderType = order.orderType || 'Delivery';
+            const orderTypeIcon = orderType === 'takeaway' ? '🏪' : '🚚';
+            const paymentMethod = order.paymentMethod || 'Cash';
+            
             const html = `
                 <div id="receiptPrint">
                     <div class="receipt-header">
@@ -1194,6 +1258,7 @@
                         <p>Order Receipt</p>
                         <p style="font-weight:bold;">🕐 Order Time: ${orderTime}</p>
                         <p style="font-weight:bold;">Order #${order.id}</p>
+                        <p>${orderTypeIcon} ${orderType} • 💳 ${paymentMethod}</p>
                     </div>
                     <div class="receipt-order-info">
                         <p><strong>Customer:</strong> ${order.userName || 'Guest'}</p>
@@ -1261,13 +1326,25 @@
                 return;
             }
 
-            let html = `<table><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>📍 Location</th></tr>`;
+            let html = `<table>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Payment</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>📍 Location</th>
+                </tr>
+            `;
             orders.slice().reverse().slice(0, 10).forEach(order => {
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
                 html += `
                     <tr>
                         <td>#${order.id}</td>
                         <td>${order.userName || 'Guest'}</td>
-                        <td>${order.items.map(i => i.name).join(', ')}</td>
+                        <td>${orderTypeIcon}</td>
+                        <td>${order.paymentMethod || 'Cash'}</td>
                         <td>${currencySymbol} ${order.total.toFixed(2)}</td>
                         <td><span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span></td>
                         <td>
@@ -1346,7 +1423,7 @@
                             `;
                         }).join('');
                     } else {
-                        layersHtml = '<span style="color:#b2bec3; font-size:0.85em;">No layers available. Add layers in Layers section.</span>';
+                        layersHtml = '<span style="color:#b2bec3; font-size:0.85em;">No layers available.</span>';
                     }
 
                     row.innerHTML = `
@@ -1562,7 +1639,7 @@
         }
 
         // ============================================================
-        // ADMIN ORDERS - WITH LOCATION
+        // ADMIN ORDERS - WITH LOCATION AND WHATSAPP
         // ============================================================
         function renderAdminAllOrders() {
             if (orders.length === 0) {
@@ -1575,7 +1652,8 @@
                     <th>#</th>
                     <th>Customer</th>
                     <th>Phone</th>
-                    <th>Address</th>
+                    <th>Type</th>
+                    <th>Payment</th>
                     <th>Items</th>
                     <th>Layers</th>
                     <th>Total</th>
@@ -1589,10 +1667,11 @@
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
                 const layers = order.layers && order.layers.length ? order.layers.join(', ') : '-';
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
                 const locationHtml = order.lat && order.lng ? `
                     <div style="display:flex; flex-direction:column; gap:4px;">
                         <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">🗺️ Map</a>
-                        <a href="https://wa.me/${order.phone || '923001234567'}?text=📍%20Customer%20Location:%20https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-edit" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">📤 WhatsApp</a>
+                        <a href="https://wa.me/${whatsappNumber || '923001234567'}?text=📍%20Customer%20Location:%20https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-edit" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">📤 WhatsApp</a>
                     </div>
                 ` : '<span style="color:#b2bec3;">Not shared</span>';
                 html += `
@@ -1600,7 +1679,8 @@
                         <td><strong>#${order.id}</strong></td>
                         <td>${order.userName || 'Guest'}</td>
                         <td>${order.phone || '-'}</td>
-                        <td style="max-width:120px; word-break:break-word;">${order.address || 'Pickup'}</td>
+                        <td>${orderTypeIcon} ${order.orderType || 'Delivery'}</td>
+                        <td>${order.paymentMethod || 'Cash'}</td>
                         <td style="max-width:150px;">${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}</td>
                         <td style="font-size:0.7em; max-width:100px;">${layers}</td>
                         <td><strong>${currencySymbol} ${order.total.toFixed(2)}</strong></td>
@@ -1678,11 +1758,13 @@
             todayOrders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
                 const layers = order.layers && order.layers.length ? '🧅 ' + order.layers.join(', ') : '';
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
                 html += `
                     <div class="order-item">
                         <div>
-                            <div class="order-id">#${order.id} - ${order.userName || 'Guest'}</div>
+                            <div class="order-id">#${order.id} - ${order.userName || 'Guest'} ${orderTypeIcon}</div>
                             <div class="order-customer">${order.items.map(i => i.name).join(', ')} ${layers}</div>
+                            <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
                             ${order.lat && order.lng ? `<div style="font-size:0.7em; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db; text-decoration:none;">View Location</a></div>` : ''}
                         </div>
                         <div style="text-align:right;">
@@ -2126,6 +2208,8 @@
                 return;
             }
             
+            const whatsappNum = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            
             let html = `<table>
                 <tr>
                     <th>Customer</th>
@@ -2141,7 +2225,8 @@
             
             allLocations.slice().reverse().forEach(loc => {
                 const mapUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
-                const whatsappUrl = `https://wa.me/${loc.phone || '923001234567'}?text=📍%20Customer%20Location:%20${mapUrl}`;
+                const whatsappMsg = `📍 Customer Location:%0Ahttps://www.google.com/maps?q=${loc.lat},${loc.lng}%0A%0A🧑 Customer: ${loc.userName}%0A📞 Phone: ${loc.phone || 'N/A'}%0A📍 Address: ${loc.address || 'N/A'}`;
+                const whatsappUrl = `https://wa.me/${whatsappNum}?text=${whatsappMsg}`;
                 html += `
                     <tr>
                         <td><strong>${loc.userName}</strong></td>
