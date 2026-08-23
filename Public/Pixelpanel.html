@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>PixelPanel - Restaurant Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.light-mode {
+            background: #f5f5f5;
+            color: #2d3436;
+        }
+        body.light-mode .header {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            border-bottom: 1px solid #ddd;
+        }
+        body.light-mode .header h1 { color: #2d3436; }
+        body.light-mode .header-actions a { color: #636e72; border-color: #ddd; }
+        body.light-mode .header-actions a:hover { background: #e74c3c; color: white; border-color: #e74c3c; }
+        body.light-mode .stats-container { background: #ffffff; border-bottom: 1px solid #eee; }
+        body.light-mode .stat-card { background: #f8f9fa; border-color: #eee; }
+        body.light-mode .stat-card .stat-number { color: #2d3436; }
+        body.light-mode .stat-card .stat-label { color: #636e72; }
+        body.light-mode .restaurant-card { background: #ffffff; border-color: #eee; }
+        body.light-mode .restaurant-card .card-header .restaurant-name { color: #2d3436; }
+        body.light-mode .restaurant-card .card-body .info-item .value { color: #2d3436; }
+        body.light-mode .restaurant-card .card-body .info-item .label { color: #b2bec3; }
+        body.light-mode .restaurant-card .card-footer { border-color: #eee; }
+        body.light-mode .restaurant-card .card-footer .subscription-info { color: #636e72; }
+        body.light-mode .controls .search-box input { background: #ffffff; color: #2d3436; border-color: #ddd; }
+        body.light-mode .controls .search-box input::placeholder { color: #b2bec3; }
+        body.light-mode .modal-content { background: #ffffff; border-color: #eee; }
+        body.light-mode .modal-title { color: #2d3436; }
+        body.light-mode .modal-subtitle { color: #636e72; }
+        body.light-mode .form-group label { color: #2d3436; }
+        body.light-mode .form-group input, body.light-mode .form-group select, body.light-mode .form-group textarea {
+            background: #f8f9fa;
+            color: #2d3436;
+            border-color: #ddd;
+        }
+        body.light-mode .form-group input::placeholder, body.light-mode .form-group textarea::placeholder { color: #b2bec3; }
+        body.light-mode .form-actions { border-color: #eee; }
+        body.light-mode .form-actions .btn-cancel { background: #f1f2f6; color: #636e72; border-color: #ddd; }
+        body.light-mode .form-actions .btn-cancel:hover { background: #dfe6e9; }
+        body.light-mode .empty-state h3 { color: #2d3436; }
+        body.light-mode .empty-state p { color: #636e72; }
+        body.light-mode .secret-indicator { color: #b2bec3; }
+        body.light-mode .settings-card { background: #ffffff; border-color: #eee; }
+        body.light-mode .settings-card .settings-label { color: #2d3436; }
+        body.light-mode .settings-card .settings-desc { color: #636e72; }
+        body.light-mode .settings-card select, body.light-mode .settings-card input {
+            background: #f8f9fa;
+            color: #2d3436;
+            border-color: #ddd;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 100%);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #2d1b4e;
+            box-shadow: 0 2px 30px rgba(231, 76, 60, 0.15);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .header h1 {
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1 .pixel { color: #e74c3c; font-weight: 300; }
+        .header h1 .panel { color: #e74c3c; font-weight: 700; }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .header-actions a {
+            color: #b8b8d0;
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .header-actions a:hover {
+            background: rgba(231, 76, 60, 0.2);
+            border-color: #e74c3c;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.2);
+        }
+        .header-actions .btn-primary {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-color: #e74c3c;
+            color: white;
+        }
+        .header-actions .btn-primary:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+            box-shadow: 0 4px 25px rgba(231, 76, 60, 0.4);
+        }
+        .header-actions .btn-danger {
+            background: rgba(231, 76, 60, 0.15);
+            border-color: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+        .header-actions .btn-danger:hover {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+        }
+
+        /* Stats */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            padding: 20px 25px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid #1a1a2e;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 25px rgba(231, 76, 60, 0.08);
+            border-color: rgba(231, 76, 60, 0.2);
+        }
+        .stat-card .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8em;
+            color: #8888aa;
+            margin-top: 3px;
+        }
+        .stat-card .stat-icon {
+            font-size: 1.8em;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .controls .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+        .controls .search-box input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #2a2a4a;
+            border-radius: 10px;
+            font-size: 0.95em;
+            transition: border 0.3s;
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+        }
+        .controls .search-box input:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .controls .search-box input::placeholder {
+            color: #555577;
+        }
+        .controls .search-box button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .controls .search-box button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        .controls .add-btn {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #27ae60, #1e8449);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+        .controls .add-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Restaurant Grid */
+        .restaurant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+        }
+        .restaurant-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+        }
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 40px rgba(231, 76, 60, 0.1);
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+        .restaurant-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .restaurant-card .card-header .restaurant-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .restaurant-card .card-header .restaurant-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+        .restaurant-card .card-header .status-active {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+        }
+        .restaurant-card .card-header .status-inactive {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+        .restaurant-card .card-header .status-suspended {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+            border: 1px solid rgba(241, 196, 15, 0.3);
+        }
+        .restaurant-card .card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 15px;
+            margin-bottom: 12px;
+        }
+        .restaurant-card .card-body .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .restaurant-card .card-body .info-item .label {
+            font-size: 0.7em;
+            color: #8888aa;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .restaurant-card .card-body .info-item .value {
+            font-size: 0.9em;
+            color: #c8c8e0;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .restaurant-card .card-body .info-item .value a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .restaurant-card .card-body .info-item .value a:hover {
+            text-decoration: underline;
+            color: #5dade2;
+        }
+        .restaurant-card .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .restaurant-card .card-footer .subscription-info {
+            font-size: 0.75em;
+            color: #8888aa;
+        }
+        .restaurant-card .card-footer .subscription-info .expired {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .restaurant-card .card-footer .subscription-info .active-sub {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .restaurant-card .card-footer .subscription-info .expiring {
+            color: #f1c40f;
+            font-weight: 600;
+        }
+        .restaurant-card .card-footer .url-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .restaurant-card .card-footer .url-links a {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.7em;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .restaurant-card .card-footer .url-links .url-customer {
+            background: rgba(39, 174, 96, 0.15);
+            color: #27ae60;
+            border: 1px solid rgba(39, 174, 96, 0.2);
+        }
+        .restaurant-card .card-footer .url-links .url-customer:hover {
+            background: rgba(39, 174, 96, 0.3);
+            transform: scale(1.05);
+        }
+        .restaurant-card .card-footer .url-links .url-admin {
+            background: rgba(52, 152, 219, 0.15);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+        .restaurant-card .card-footer .url-links .url-admin:hover {
+            background: rgba(52, 152, 219, 0.3);
+            transform: scale(1.05);
+        }
+        .restaurant-card .card-footer .card-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .restaurant-card .card-footer .card-actions button {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.75em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .restaurant-card .card-footer .card-actions .btn-edit {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+        .restaurant-card .card-footer .card-actions .btn-edit:hover {
+            background: rgba(52, 152, 219, 0.3);
+            transform: scale(1.05);
+        }
+        .restaurant-card .card-footer .card-actions .btn-delete {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.2);
+        }
+        .restaurant-card .card-footer .card-actions .btn-delete:hover {
+            background: rgba(231, 76, 60, 0.3);
+            transform: scale(1.05);
+        }
+        .restaurant-card .card-footer .card-actions .btn-view {
+            background: rgba(255,255,255,0.05);
+            color: #b8b8d0;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .restaurant-card .card-footer .card-actions .btn-view:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.05);
+        }
+
+        /* ⭐ URL Fields in Form ⭐ */
+        .url-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .url-fields .form-group {
+            grid-column: span 1;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #555577;
+        }
+        .empty-state .empty-icon {
+            font-size: 5em;
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            color: #e0e0e0;
+            margin-bottom: 8px;
+        }
+        .empty-state .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .empty-state .btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        /* ⭐ Modal Form ⭐ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-content {
+            background: #12121f;
+            border-radius: 20px;
+            max-width: 750px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px 35px;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        .modal-content::-webkit-scrollbar { width: 5px; }
+        .modal-content::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 10px; }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.6em;
+            cursor: pointer;
+            color: #555577;
+            transition: all 0.3s;
+            background: none;
+            border: none;
+        }
+        .modal-close:hover {
+            color: #e74c3c;
+            transform: rotate(90deg);
+        }
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+        .modal-title .highlight {
+            color: #e74c3c;
+        }
+        .modal-subtitle {
+            color: #8888aa;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-grid .full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #c8c8e0;
+            margin-bottom: 4px;
+        }
+        .form-group label .required {
+            color: #e74c3c;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px 14px;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: border 0.3s;
+            font-family: inherit;
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: #555577;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .form-group .input-hint {
+            font-size: 0.7em;
+            color: #555577;
+            margin-top: 3px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding-top: 20px;
+        }
+        .form-actions button {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+        .form-actions .btn-submit {
+            background: linear-gradient(135deg, #27ae60, #1e8449);
+            color: white;
+        }
+        .form-actions .btn-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+        .form-actions .btn-cancel {
+            background: rgba(255,255,255,0.05);
+            color: #8888aa;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .form-actions .btn-cancel:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.02);
+        }
+
+        /* Settings */
+        .settings-tab {
+            display: none;
+            padding: 20px 0;
+        }
+        .settings-tab.active {
+            display: block;
+        }
+        .settings-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .settings-card .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .settings-card .settings-label {
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        .settings-card .settings-desc {
+            font-size: 0.8em;
+            color: #8888aa;
+        }
+        .settings-card select, .settings-card input[type="text"], .settings-card input[type="password"] {
+            padding: 8px 14px;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+            font-size: 0.9em;
+            min-width: 150px;
+        }
+        .settings-card select:focus, .settings-card input:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .settings-card .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: #2a2a4a;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .settings-card .toggle-switch .toggle-dot {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .settings-card .toggle-switch.active {
+            background: #27ae60;
+        }
+        .settings-card .toggle-switch.active .toggle-dot {
+            left: 25px;
+        }
+
+        /* ⭐ Password Protection ⭐ */
+        .password-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .password-overlay.show {
+            display: flex;
+        }
+        .password-box {
+            background: #12121f;
+            border-radius: 20px;
+            padding: 40px 35px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+        .password-box .lock-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+        .password-box h2 {
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+        .password-box p {
+            color: #8888aa;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        .password-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #2a2a4a;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        .password-box input:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .password-box .password-error {
+            color: #e74c3c;
+            font-size: 0.85em;
+            display: none;
+            margin-bottom: 10px;
+        }
+        .password-box .password-error.show {
+            display: block;
+        }
+        .password-box .btn-unlock {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .password-box .btn-unlock:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+        }
+        .password-box .password-hint {
+            font-size: 0.75em;
+            color: #555577;
+            margin-top: 10px;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(39, 174, 96, 0.2); color: #27ae60; }
+        .badge-danger { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .badge-warning { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+        .badge-info { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1a1a2e;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 9999;
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast.success { border-left: 4px solid #27ae60; }
+        .toast.error { border-left: 4px solid #e74c3c; }
+        .toast.info { border-left: 4px solid #3498db; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Secret Panel Indicator */
+        .secret-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.6em;
+            color: #2a2a4a;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            opacity: 0.3;
+            user-select: none;
+        }
+        .secret-indicator:hover {
+            opacity: 0.8;
+            color: #e74c3c;
+            transition: opacity 0.3s;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 10px;
+        }
+        .tab-nav .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #8888aa;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 8px;
+        }
+        .tab-nav .tab-btn:hover {
+            color: #e0e0e0;
+            background: rgba(255,255,255,0.05);
+        }
+        .tab-nav .tab-btn.active {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.2em; }
+            .header-actions a { font-size: 0.75em; padding: 6px 12px; }
+            .stats-container { grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+            .restaurant-grid { grid-template-columns: 1fr; }
+            .restaurant-card .card-body { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .controls .search-box { max-width: 100%; }
+            .modal-content { padding: 20px; margin: 10px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid .full-width { grid-column: 1; }
+            .form-actions { flex-direction: column; }
+            .form-actions button { width: 100%; }
+            .toast { right: 10px; left: 10px; bottom: 10px; max-width: none; }
+            .url-fields { grid-template-columns: 1fr; }
+            .url-fields .form-group { grid-column: 1; }
+            .tab-nav { flex-wrap: wrap; }
+            .tab-nav .tab-btn { flex: 1; text-align: center; padding: 8px 10px; font-size: 0.8em; }
+        }
+        @media (max-width: 400px) {
+            .stats-container { grid-template-columns: 1fr; }
+            .restaurant-card .card-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+            .restaurant-card .card-footer .card-actions { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ⭐ Password Protection Overlay ⭐ -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-box">
+            <div class="lock-icon">🔒</div>
+            <h2>PixelPanel</h2>
+            <p>Enter your password to access the panel</p>
+            <div class="password-error" id="passwordError">❌ Incorrect password. Please try again.</div>
+            <input type="password" id="passwordInput" placeholder="Enter password..." onkeydown="if(event.key==='Enter') checkPassword()" />
+            <button class="btn-unlock" onclick="checkPassword()">🔓 Unlock Panel</button>
+            <div class="password-hint">First time? Set your password below</div>
+            <div style="margin-top:10px; display:flex; gap:10px;">
+                <input type="password" id="setPasswordInput" placeholder="Set new password" style="width:100%; padding:10px; border:1px solid #2a2a4a; border-radius:8px; background:rgba(255,255,255,0.05); color:#e0e0e0;" />
+                <button onclick="setPassword()" style="padding:10px 20px; background:#27ae60; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Set</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>⬛ Pixel<span class="pixel">Panel</span></h1>
+        <div class="header-actions">
+            <a href="/admin">👑 Admin Panel</a>
+            <a href="/">📱 Customer Panel</a>
+            <a href="#" class="btn-primary" onclick="openAddModal()">➕ Add Restaurant</a>
+            <a href="/logout" class="btn-danger">🚪 Logout</a>
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-container" id="statsContainer">
+        <div class="stat-card">
+            <span class="stat-icon">🏪</span>
+            <div class="stat-number" id="totalRestaurants">0</div>
+            <div class="stat-label">Total Restaurants</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <div class="stat-number" id="activeRestaurants">0</div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">⏳</span>
+            <div class="stat-number" id="expiringRestaurants">0</div>
+            <div class="stat-label">Expiring Soon (30 days)</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <div class="stat-number" id="totalRevenue">Rs 0</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('restaurants')">🏪 Restaurants</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- Restaurants Tab -->
+        <div id="restaurantsTab" class="settings-tab active">
+            <!-- Controls -->
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name, owner, email, or location..." oninput="searchRestaurants()" />
+                    <button onclick="searchRestaurants()">Search</button>
+                </div>
+                <button class="add-btn" onclick="openAddModal()">➕ Add New Restaurant</button>
+            </div>
+
+            <!-- Restaurant Grid -->
+            <div class="restaurant-grid" id="restaurantGrid">
+                <!-- Cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="settings-tab">
+            <h3 style="margin-bottom:15px;">⚙️ Panel Settings</h3>
+
+            <!-- Theme Settings -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <div>
+                        <div class="settings-label">🎨 Theme Mode</div>
+                        <div class="settings-desc">Switch between light and dark theme</div>
+                    </div>
+                    <div class="toggle-switch" id="themeToggle" onclick="toggleTheme()">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currency Settings -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <div>
+                        <div class="settings-label">💰 Currency</div>
+                        <div class="settings-desc">Choose your preferred currency</div>
+                    </div>
+                    <select id="currencySelect" onchange="saveSettings()">
+                        <option value="Rs">Rs (PKR)</option>
+                        <option value="$">$ (USD)</option>
+                        <option value="€">€ (EUR)</option>
+                        <option value="£">£ (GBP)</option>
+                        <option value="₹">₹ (INR)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Language Settings -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <div>
+                        <div class="settings-label">🌐 Language</div>
+                        <div class="settings-desc">Choose your preferred language</div>
+                    </div>
+                    <select id="languageSelect" onchange="saveSettings()">
+                        <option value="en">English</option>
+                        <option value="ur">Urdu</option>
+                        <option value="ar">Arabic</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <div>
+                        <div class="settings-label">🔔 Notifications</div>
+                        <div class="settings-desc">Enable or disable notifications</div>
+                    </div>
+                    <div class="toggle-switch active" id="notificationToggle" onclick="toggleNotification()">
+                        <div class="toggle-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Settings -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <div>
+                        <div class="settings-label">🔑 Change Password</div>
+                        <div class="settings-desc">Update your PixelPanel password</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                    <input type="password" id="newPasswordInput" placeholder="New password" style="flex:1; min-width:200px; padding:10px; border:1px solid #2a2a4a; border-radius:8px; background:rgba(255,255,255,0.05); color:#e0e0e0;" />
+                    <input type="password" id="confirmPasswordInput" placeholder="Confirm password" style="flex:1; min-width:200px; padding:10px; border:1px solid #2a2a4a; border-radius:8px; background:rgba(255,255,255,0.05); color:#e0e0e0;" />
+                    <button onclick="changePassword()" style="padding:10px 25px; background:linear-gradient(135deg, #e74c3c, #c0392b); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Update Password</button>
+                </div>
+            </div>
+
+            <!-- About -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <div>
+                        <div class="settings-label">📱 About PixelPanel</div>
+                        <div class="settings-desc">Version 2.0.0 • DineFlow Restaurant Management</div>
+                    </div>
+                    <span style="color:#27ae60;">✅ Up to date</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⭐ Add/Edit Modal -->
+    <div class="modal-overlay" id="restaurantModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="modal-title" id="modalTitle">🏪 Add New <span class="highlight">Restaurant</span></div>
+            <div class="modal-subtitle">Fill in the restaurant details below</div>
+            
+            <form id="restaurantForm" onsubmit="saveRestaurant(event)">
+                <input type="hidden" id="editId" value="" />
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Restaurant Name <span class="required">*</span></label>
+                        <input type="text" id="restName" placeholder="e.g., Tasty Bites" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Owner Name <span class="required">*</span></label>
+                        <input type="text" id="ownerName" placeholder="e.g., Ali Ahmed" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Owner Email <span class="required">*</span></label>
+                        <input type="email" id="ownerEmail" placeholder="owner@restaurant.com" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Owner WhatsApp <span class="required">*</span></label>
+                        <input type="text" id="ownerWhatsapp" placeholder="e.g., 923001234567" required />
+                        <span class="input-hint">Format: CountryCode + Number (e.g., 923001234567)</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Owner CNIC <span class="required">*</span></label>
+                        <input type="text" id="ownerCnic" placeholder="e.g., 12345-6789012-3" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Restaurant Location <span class="required">*</span></label>
+                        <input type="text" id="restLocation" placeholder="e.g., Main Street, Karachi" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="restStatus">
+                            <option value="active">✅ Active</option>
+                            <option value="inactive">⛔ Inactive</option>
+                            <option value="suspended">⚠️ Suspended</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Subscription Plan</label>
+                        <select id="subscriptionPlan">
+                            <option value="Basic">Basic (Rs 5,000/month)</option>
+                            <option value="Pro">Pro (Rs 10,000/month)</option>
+                            <option value="Premium">Premium (Rs 15,000/month)</option>
+                            <option value="Enterprise">Enterprise (Custom)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width url-fields">
+                        <div class="form-group">
+                            <label>Customer URL <span class="required">*</span></label>
+                            <input type="url" id="customerUrl" placeholder="https://dineflow.com?restaurant=restaurant-1" required />
+                            <span class="input-hint">URL for customers to place orders</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Admin URL <span class="required">*</span></label>
+                            <input type="url" id="adminUrl" placeholder="https://dineflow.com/admin?restaurant=restaurant-1" required />
+                            <span class="input-hint">URL for restaurant admin panel</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Subscription Start Date</label>
+                        <input type="date" id="subStart" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Subscription End Date</label>
+                        <input type="date" id="subEnd" />
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Notes / Additional Info</label>
+                        <textarea id="restNotes" placeholder="Any additional information about this restaurant..." rows="3"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-submit">💾 Save Restaurant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Secret Panel Indicator -->
+    <div class="secret-indicator">⚡ PixelPanel v2.0</div>
+
+    <script>
+        // ============================================================
+        // ⭐ PASSWORD PROTECTION ⭐
+        // ============================================================
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            const savedPassword = localStorage.getItem('pixelpanel_password');
+            
+            if (!savedPassword) {
+                // No password set yet - first time
+                document.getElementById('passwordOverlay').classList.remove('show');
+                return;
+            }
+            
+            if (input.value === savedPassword) {
+                document.getElementById('passwordOverlay').classList.remove('show');
+                input.value = '';
+                error.classList.remove('show');
+            } else {
+                error.classList.add('show');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function setPassword() {
+            const input = document.getElementById('setPasswordInput');
+            const newPassword = input.value.trim();
+            
+            if (!newPassword || newPassword.length < 4) {
+                showToast('⚠️ Password must be at least 4 characters', 'error');
+                return;
+            }
+            
+            localStorage.setItem('pixelpanel_password', newPassword);
+            showToast('✅ Password set successfully!', 'success');
+            document.getElementById('passwordOverlay').classList.remove('show');
+            input.value = '';
+        }
+
+        function changePassword() {
+            const newPass = document.getElementById('newPasswordInput').value;
+            const confirmPass = document.getElementById('confirmPasswordInput').value;
+            
+            if (!newPass || newPass.length < 4) {
+                showToast('⚠️ Password must be at least 4 characters', 'error');
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                showToast('⚠️ Passwords do not match', 'error');
+                return;
+            }
+            
+            localStorage.setItem('pixelpanel_password', newPass);
+            showToast('✅ Password updated successfully!', 'success');
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+        }
+
+        // Check password on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedPassword = localStorage.getItem('pixelpanel_password');
+            if (savedPassword) {
+                document.getElementById('passwordOverlay').classList.add('show');
+                document.getElementById('passwordInput').focus();
+            }
+            loadRestaurants();
+            loadSettings();
+        });
+
+        // ============================================================
+        // DATA
+        // ============================================================
+        let restaurants = [];
+        let editId = null;
+        let currencySymbol = 'Rs';
+
+        // ============================================================
+        // LOAD DATA
+        // ============================================================
+        function loadRestaurants() {
+            fetch('/api/restaurants/all')
+                .then(r => r.json())
+                .then(data => {
+                    restaurants = data || [];
+                    renderStats();
+                    renderRestaurants();
+                })
+                .catch(() => {
+                    const saved = localStorage.getItem('pixelpanel_restaurants');
+                    if (saved) {
+                        restaurants = JSON.parse(saved);
+                    } else {
+                        restaurants = [];
+                    }
+                    renderStats();
+                    renderRestaurants();
+                });
+        }
+
+        function saveRestaurantsToStorage() {
+            localStorage.setItem('pixelpanel_restaurants', JSON.stringify(restaurants));
+        }
+
+        // ============================================================
+        // SETTINGS
+        // ============================================================
+        function loadSettings() {
+            const theme = localStorage.getItem('pixelpanel_theme') || 'dark';
+            const currency = localStorage.getItem('pixelpanel_currency') || 'Rs';
+            const language = localStorage.getItem('pixelpanel_language') || 'en';
+            const notifications = localStorage.getItem('pixelpanel_notifications') !== 'false';
+            
+            // Theme
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('themeToggle').classList.add('active');
+            }
+            
+            // Currency
+            document.getElementById('currencySelect').value = currency;
+            currencySymbol = currency;
+            
+            // Language
+            document.getElementById('languageSelect').value = language;
+            
+            // Notifications
+            if (!notifications) {
+                document.getElementById('notificationToggle').classList.remove('active');
+            }
+        }
+
+        function saveSettings() {
+            const currency = document.getElementById('currencySelect').value;
+            const language = document.getElementById('languageSelect').value;
+            
+            localStorage.setItem('pixelpanel_currency', currency);
+            localStorage.setItem('pixelpanel_language', language);
+            currencySymbol = currency;
+            
+            renderStats();
+            renderRestaurants();
+            showToast('✅ Settings saved!', 'success');
+        }
+
+        function toggleTheme() {
+            const toggle = document.getElementById('themeToggle');
+            toggle.classList.toggle('active');
+            document.body.classList.toggle('light-mode');
+            localStorage.setItem('pixelpanel_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        }
+
+        function toggleNotification() {
+            const toggle = document.getElementById('notificationToggle');
+            toggle.classList.toggle('active');
+            localStorage.setItem('pixelpanel_notifications', toggle.classList.contains('active'));
+        }
+
+        // ============================================================
+        // TAB SWITCHING
+        // ============================================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'restaurants') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('restaurantsTab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('settingsTab').classList.add('active');
+            }
+        }
+
+        // ============================================================
+        // RENDER STATS
+        // ============================================================
+        function renderStats() {
+            const total = restaurants.length;
+            const active = restaurants.filter(r => r.status === 'active').length;
+            const expiring = restaurants.filter(r => {
+                if (!r.subEnd) return false;
+                const endDate = new Date(r.subEnd);
+                const today = new Date();
+                const diffTime = endDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays <= 30 && diffDays > 0;
+            }).length;
+            const totalRevenue = restaurants.reduce((sum, r) => sum + (r.subscriptionPrice || 0), 0);
+
+            document.getElementById('totalRestaurants').textContent = total;
+            document.getElementById('activeRestaurants').textContent = active;
+            document.getElementById('expiringRestaurants').textContent = expiring;
+            document.getElementById('totalRevenue').textContent = `${currencySymbol} ${totalRevenue.toLocaleString()}`;
+        }
+
+        // ============================================================
+        // RENDER RESTAURANTS
+        // ============================================================
+        function renderRestaurants(filter = '') {
+            const grid = document.getElementById('restaurantGrid');
+            let filtered = restaurants;
+
+            if (filter) {
+                const search = filter.toLowerCase();
+                filtered = restaurants.filter(r => 
+                    r.name?.toLowerCase().includes(search) ||
+                    r.ownerName?.toLowerCase().includes(search) ||
+                    r.ownerEmail?.toLowerCase().includes(search) ||
+                    r.restLocation?.toLowerCase().includes(search) ||
+                    r.customerUrl?.toLowerCase().includes(search) ||
+                    r.adminUrl?.toLowerCase().includes(search)
+                );
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <div class="empty-icon">🏪</div>
+                        <h3>${filter ? 'No restaurants found' : 'No Restaurants Added Yet'}</h3>
+                        <p>${filter ? 'Try adjusting your search' : 'Start by adding your first restaurant'}</p>
+                        ${!filter ? `<button class="btn" onclick="openAddModal()">➕ Add Your First Restaurant</button>` : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(r => `
+                <div class="restaurant-card" data-id="${r.id}">
+                    <div class="card-header">
+                        <div class="restaurant-name">${r.name || 'Unnamed Restaurant'}</div>
+                        <span class="restaurant-status status-${r.status || 'active'}">${r.status || 'Active'}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <span class="label">👤 Owner</span>
+                            <span class="value">${r.ownerName || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">📧 Email</span>
+                            <span class="value">${r.ownerEmail || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">📱 WhatsApp</span>
+                            <span class="value">${r.ownerWhatsapp ? `<a href="https://wa.me/${r.ownerWhatsapp}" target="_blank">${r.ownerWhatsapp}</a>` : '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">🪪 CNIC</span>
+                            <span class="value">${r.ownerCnic || '-'}</span>
+                        </div>
+                        <div class="info-item full-width" style="grid-column:1/-1;">
+                            <span class="label">📍 Location</span>
+                            <span class="value">${r.restLocation || '-'}</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="subscription-info">
+                            ${r.subStart && r.subEnd ? `
+                                📅 ${r.subscriptionPlan || 'Basic'} 
+                                (${formatDate(r.subStart)} - ${formatDate(r.subEnd)})
+                                ${isExpired(r.subEnd) ? '<span class="expired">⚠️ Expired</span>' : 
+                                  isExpiringSoon(r.subEnd) ? '<span class="expiring">⏳ Expiring Soon</span>' :
+                                  '<span class="active-sub">✅ Active</span>'}
+                            ` : '📅 No subscription info'}
+                        </div>
+                        <div class="url-links">
+                            ${r.customerUrl ? `<a href="${r.customerUrl}" target="_blank" class="url-customer">📱 Customer</a>` : ''}
+                            ${r.adminUrl ? `<a href="${r.adminUrl}" target="_blank" class="url-admin">👑 Admin</a>` : ''}
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick="editRestaurant('${r.id}')">✏️ Edit</button>
+                            <button class="btn-view" onclick="viewRestaurant('${r.id}')">👁️ View</button>
+                            <button class="btn-delete" onclick="deleteRestaurant('${r.id}')">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // HELPER FUNCTIONS
+        // ============================================================
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function isExpired(dateStr) {
+            if (!dateStr) return false;
+            const endDate = new Date(dateStr);
+            const today = new Date();
+            return endDate < today;
+        }
+
+        function isExpiringSoon(dateStr) {
+            if (!dateStr) return false;
+            const endDate = new Date(dateStr);
+            const today = new Date();
+            const diffTime = endDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 30 && diffDays > 0;
+        }
+
+        // ============================================================
+        // SEARCH
+        // ============================================================
+        function searchRestaurants() {
+            const search = document.getElementById('searchInput').value;
+            renderRestaurants(search);
+        }
+
+        // ============================================================
+        // ⭐ ADD / EDIT RESTAURANT ⭐
+        // ============================================================
+        function openAddModal() {
+            editId = null;
+            document.getElementById('modalTitle').innerHTML = '🏪 Add New <span class="highlight">Restaurant</span>';
+            document.getElementById('editId').value = '';
+            document.getElementById('restaurantForm').reset();
+            document.getElementById('restaurantModal').classList.add('show');
+            
+            const today = new Date().toISOString().split('T')[0];
+            const nextYear = new Date();
+            nextYear.setFullYear(nextYear.getFullYear() + 1);
+            document.getElementById('subStart').value = today;
+            document.getElementById('subEnd').value = nextYear.toISOString().split('T')[0];
+            
+            // Set default URLs
+            const baseUrl = window.location.origin;
+            document.getElementById('customerUrl').value = baseUrl + '/?restaurant=restaurant-' + (restaurants.length + 1);
+            document.getElementById('adminUrl').value = baseUrl + '/admin?restaurant=restaurant-' + (restaurants.length + 1);
+        }
+
+        function editRestaurant(id) {
+            const r = restaurants.find(rest => rest.id === id);
+            if (!r) return;
+
+            editId = id;
+            document.getElementById('modalTitle').innerHTML = '✏️ Edit <span class="highlight">Restaurant</span>';
+            document.getElementById('editId').value = id;
+            document.getElementById('restName').value = r.name || '';
+            document.getElementById('ownerName').value = r.ownerName || '';
+            document.getElementById('ownerEmail').value = r.ownerEmail || '';
+            document.getElementById('ownerWhatsapp').value = r.ownerWhatsapp || '';
+            document.getElementById('ownerCnic').value = r.ownerCnic || '';
+            document.getElementById('restLocation').value = r.restLocation || '';
+            document.getElementById('restStatus').value = r.status || 'active';
+            document.getElementById('subscriptionPlan').value = r.subscriptionPlan || 'Basic';
+            document.getElementById('subStart').value = r.subStart || '';
+            document.getElementById('subEnd').value = r.subEnd || '';
+            document.getElementById('restNotes').value = r.notes || '';
+            document.getElementById('customerUrl').value = r.customerUrl || '';
+            document.getElementById('adminUrl').value = r.adminUrl || '';
+            
+            document.getElementById('restaurantModal').classList.add('show');
+        }
+
+        function viewRestaurant(id) {
+            const r = restaurants.find(rest => rest.id === id);
+            if (!r) return;
+
+            const msg = `
+╔══════════════════════════════════════╗
+║         🏪 RESTAURANT DETAILS        ║
+╠══════════════════════════════════════╣
+║ 📛 Name: ${r.name || '-'}
+║ 👤 Owner: ${r.ownerName || '-'}
+║ 📧 Email: ${r.ownerEmail || '-'}
+║ 📱 WhatsApp: ${r.ownerWhatsapp || '-'}
+║ 🪪 CNIC: ${r.ownerCnic || '-'}
+║ 📍 Location: ${r.restLocation || '-'}
+║ 📱 Customer URL: ${r.customerUrl || '-'}
+║ 👑 Admin URL: ${r.adminUrl || '-'}
+║ 📊 Status: ${r.status || 'Active'}
+║ 📋 Plan: ${r.subscriptionPlan || 'Basic'}
+║ 📅 Start: ${formatDate(r.subStart)}
+║ 📅 End: ${formatDate(r.subEnd)}
+║ 💰 Price: ${currencySymbol} ${r.subscriptionPrice || 0}
+║ 📝 Notes: ${r.notes || 'None'}
+╚══════════════════════════════════════╝
+            `;
+            alert(msg);
+        }
+
+        function closeModal() {
+            document.getElementById('restaurantModal').classList.remove('show');
+        }
+
+        // ============================================================
+        // SAVE RESTAURANT
+        // ============================================================
+        function saveRestaurant(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('editId').value;
+            const name = document.getElementById('restName').value.trim();
+            const ownerName = document.getElementById('ownerName').value.trim();
+            const ownerEmail = document.getElementById('ownerEmail').value.trim();
+            const ownerWhatsapp = document.getElementById('ownerWhatsapp').value.trim();
+            const ownerCnic = document.getElementById('ownerCnic').value.trim();
+            const restLocation = document.getElementById('restLocation').value.trim();
+            const status = document.getElementById('restStatus').value;
+            const subscriptionPlan = document.getElementById('subscriptionPlan').value;
+            const subStart = document.getElementById('subStart').value;
+            const subEnd = document.getElementById('subEnd').value;
+            const notes = document.getElementById('restNotes').value.trim();
+            const customerUrl = document.getElementById('customerUrl').value.trim();
+            const adminUrl = document.getElementById('adminUrl').value.trim();
+
+            const priceMap = {
+                'Basic': 5000,
+                'Pro': 10000,
+                'Premium': 15000,
+                'Enterprise': 25000
+            };
+            const subscriptionPrice = priceMap[subscriptionPlan] || 0;
+
+            if (!name || !ownerName || !ownerEmail || !ownerWhatsapp || !ownerCnic || !restLocation || !customerUrl || !adminUrl) {
+                showToast('⚠️ Please fill in all required fields', 'error');
+                return;
+            }
+
+            const restaurantData = {
+                name,
+                ownerName,
+                ownerEmail,
+                ownerWhatsapp,
+                ownerCnic,
+                restLocation,
+                customerUrl,
+                adminUrl,
+                status,
+                subscriptionPlan,
+                subscriptionPrice,
+                subStart,
+                subEnd,
+                notes,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (id) {
+                const index = restaurants.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    restaurants[index] = { ...restaurants[index], ...restaurantData };
+                    showToast('✅ Restaurant updated successfully!', 'success');
+                }
+            } else {
+                const newRestaurant = {
+                    id: 'rest-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
+                    ...restaurantData,
+                    createdAt: new Date().toISOString()
+                };
+                restaurants.push(newRestaurant);
+                showToast('✅ Restaurant added successfully!', 'success');
+            }
+
+            saveRestaurantsToStorage();
+
+            fetch('/api/restaurants/all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ restaurants: restaurants })
+            }).catch(() => {});
+
+            closeModal();
+            renderStats();
+            renderRestaurants();
+        }
+
+        // ============================================================
+        // DELETE RESTAURANT
+        // ============================================================
+        function deleteRestaurant(id) {
+            if (!confirm('⚠️ Are you sure you want to delete this restaurant?\nThis action cannot be undone!')) return;
+
+            restaurants = restaurants.filter(r => r.id !== id);
+            saveRestaurantsToStorage();
+            renderStats();
+            renderRestaurants();
+            showToast('🗑️ Restaurant deleted successfully!', 'info');
+        }
+
+        // ============================================================
+        // TOAST NOTIFICATION
+        // ============================================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            if (e.key === 'Enter' && document.getElementById('restaurantModal').classList.contains('show')) {
+                document.getElementById('restaurantForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // ============================================================
+        // CLOSE MODAL ON CLICK OUTSIDE
+        // ============================================================
+        document.getElementById('restaurantModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // ============================================================
+        // SET PASSWORD ON FIRST LOAD
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedPassword = localStorage.getItem('pixelpanel_password');
+            if (!savedPassword) {
+                document.getElementById('passwordOverlay').classList.add('show');
+                document.getElementById('setPasswordInput').focus();
+            } else {
+                document.getElementById('passwordOverlay').classList.add('show');
+                document.getElementById('passwordInput').focus();
+            }
+        });
+    </script>
+</body>
+</html>
