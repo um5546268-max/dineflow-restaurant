@@ -408,44 +408,7 @@
             transform: scale(1.1);
         }
 
-        /* Layer Icons */
-        .layer-icon-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            background: #f8f9fa;
-            border-radius: 20px;
-            border: 1px solid #dfe6e9;
-            font-size: 0.85em;
-            margin: 3px;
-        }
-        .layer-icon-item .layer-icon {
-            font-size: 1.2em;
-        }
-
-        /* Layer checkboxes in edit mode */
-        .layer-checkbox-wrapper {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-right: 8px;
-            padding: 2px 8px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            border: 1px solid #dfe6e9;
-            font-size: 0.8em;
-        }
-        .layer-checkbox-wrapper input[type="checkbox"] {
-            margin: 0;
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-        }
-        .layer-checkbox-wrapper label {
-            cursor: pointer;
-        }
-
+        /* Calculator Section */
         .calculator-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -511,6 +474,7 @@
             text-align: center;
         }
 
+        /* Today's Orders */
         .today-orders-card {
             background: white;
             padding: 15px;
@@ -777,6 +741,7 @@
             <a class="admin-nav-item" data-admin="feedback" onclick="showAdminSection('feedback')">⭐ Feedback</a>
             <a class="admin-nav-item" data-admin="support" onclick="showAdminSection('support')">🎫 Support</a>
             <a class="admin-nav-item" data-admin="layers" onclick="showAdminSection('layers')">🧅 Layers</a>
+            <a class="admin-nav-item" data-admin="delivery" onclick="showAdminSection('delivery')">📍 Delivery</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
         </div>
 
@@ -838,7 +803,6 @@
                             <span id="menuSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
                         </div>
                     </div>
-                    <!-- ⭐ LAYERS SELECTION FOR ADD MENU ⭐ -->
                     <div id="menuAddLayersContainer" style="margin-bottom:10px;">
                         <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Available Layers:</label>
                         <div style="display:flex; flex-wrap:wrap; gap:6px;" id="menuAddLayersList">
@@ -922,7 +886,7 @@
                 </div>
             </div>
 
-            <!-- ⭐ Feedback Section -->
+            <!-- Feedback Section -->
             <div class="admin-section" id="adminFeedback">
                 <h3 style="margin-bottom:15px;">⭐ Customer Feedback</h3>
                 <div class="admin-stats" style="margin-bottom:15px;">
@@ -942,7 +906,7 @@
                 </div>
             </div>
 
-            <!-- 🎫 Support Section -->
+            <!-- Support Section -->
             <div class="admin-section" id="adminSupport">
                 <h3 style="margin-bottom:15px;">🎫 Support Tickets</h3>
                 <div class="admin-table" id="supportList">
@@ -950,7 +914,7 @@
                 </div>
             </div>
 
-            <!-- 🧅 Layers Management -->
+            <!-- Layers Management -->
             <div class="admin-section" id="adminLayers">
                 <h3 style="margin-bottom:15px;">🧅 Manage Layers</h3>
                 <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
@@ -962,7 +926,37 @@
                 </div>
                 <div style="margin-top:15px; background:#fef9e7; padding:15px; border-radius:12px; border-left:4px solid #f39c12;">
                     <h4 style="color:#f39c12;">💡 Tip</h4>
-                    <p style="font-size:0.85em; color:#636e72;">Layers added here will be available for burger-type items. To assign layers to a menu item, edit the item in the Menu section.</p>
+                    <p style="font-size:0.85em; color:#636e72;">Layers added here will be available for burger-type items.</p>
+                </div>
+            </div>
+
+            <!-- ⭐ DELIVERY TRACKING SECTION ⭐ -->
+            <div class="admin-section" id="adminDelivery">
+                <h3 style="margin-bottom:15px;">📍 Live Delivery Tracking</h3>
+                <div class="admin-stats" style="margin-bottom:15px;">
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">📍</div>
+                        <div class="stat-number" id="totalLocations">0</div>
+                        <div class="stat-label">Active Locations</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">🕐</div>
+                        <div class="stat-number" id="todayLocations">0</div>
+                        <div class="stat-label">Today's Shares</div>
+                    </div>
+                </div>
+                <div style="background:white; border-radius:12px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:15px;">
+                    <div id="deliveryMap" style="width:100%; height:450px; border-radius:8px; background:#f1f2f6; overflow:hidden;">
+                        <iframe id="deliveryMapIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="admin-add-btn" onclick="refreshDeliveryMap()" style="margin:0; padding:6px 16px; font-size:0.85em;">🔄 Refresh Map</button>
+                        <button class="admin-add-btn" onclick="centerAllMarkers()" style="margin:0; padding:6px 16px; font-size:0.85em; background:#3498db;">📍 Center All</button>
+                        <span id="mapStatus" style="color:#b2bec3; font-size:0.85em; padding:6px;">Loading locations...</span>
+                    </div>
+                </div>
+                <div class="admin-table" id="deliveryLocationsList">
+                    <p style="color:#b2bec3; padding:15px;">Loading customer locations...</p>
                 </div>
             </div>
 
@@ -1165,6 +1159,7 @@
             renderAdminFeedback();
             renderAdminSupport();
             renderAdminLayers();
+            renderAdminDelivery();
             renderAddLayers();
         }
 
@@ -1182,6 +1177,7 @@
                         renderAdminDashboard();
                         renderAdminAllOrders();
                         renderTodayOrders();
+                        renderAdminDelivery();
                     }
                 });
         }
@@ -1204,6 +1200,7 @@
                         <p><strong>Phone:</strong> ${order.phone || '-'}</p>
                         <p><strong>Address:</strong> ${order.address || 'Pickup'}</p>
                         ${order.layers && order.layers.length ? `<p><strong>🧅 Layers:</strong> ${order.layers.join(', ')}</p>` : ''}
+                        ${order.lat && order.lng ? `<p><strong>📍 Location:</strong> <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank">View Map</a></p>` : ''}
                     </div>
                     <table class="receipt-items">
                         <tr><th>Item</th><th>Qty</th><th style="text-align:right;">Price</th></tr>
@@ -1243,6 +1240,7 @@
             if (section === 'feedback') renderAdminFeedback();
             if (section === 'support') renderAdminSupport();
             if (section === 'layers') renderAdminLayers();
+            if (section === 'delivery') renderAdminDelivery();
         }
 
         // ============================================================
@@ -1263,7 +1261,7 @@
                 return;
             }
 
-            let html = `<table><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr>`;
+            let html = `<table><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>📍 Location</th></tr>`;
             orders.slice().reverse().slice(0, 10).forEach(order => {
                 html += `
                     <tr>
@@ -1272,6 +1270,11 @@
                         <td>${order.items.map(i => i.name).join(', ')}</td>
                         <td>${currencySymbol} ${order.total.toFixed(2)}</td>
                         <td><span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span></td>
+                        <td>
+                            ${order.lat && order.lng ? `
+                                <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 10px;">📍 Map</a>
+                            ` : '<span style="color:#b2bec3;">-</span>'}
+                        </td>
                     </tr>
                 `;
             });
@@ -1280,7 +1283,7 @@
         }
 
         // ============================================================
-        // ADMIN MENU - FIXED EDIT
+        // ADMIN MENU
         // ============================================================
         function renderAdminMenu() {
             if (menuItems.length === 0) {
@@ -1330,7 +1333,6 @@
                     const row = document.getElementById(`menu-row-${id}`);
                     if (!row) return;
 
-                    // Build layer checkboxes with icons
                     let layersHtml = '';
                     if (layers && layers.length > 0) {
                         layersHtml = layers.map(layer => {
@@ -1431,9 +1433,6 @@
                 .then(() => { showToast('✅ Item deleted!'); loadAdminData(); });
         }
 
-        // ============================================================
-        // RENDER ADD LAYERS
-        // ============================================================
         function renderAddLayers() {
             fetch('/api/layers')
                 .then(r => r.json())
@@ -1563,7 +1562,7 @@
         }
 
         // ============================================================
-        // ADMIN ORDERS
+        // ADMIN ORDERS - WITH LOCATION
         // ============================================================
         function renderAdminAllOrders() {
             if (orders.length === 0) {
@@ -1582,6 +1581,7 @@
                     <th>Total</th>
                     <th>Status</th>
                     <th>Time</th>
+                    <th>📍 Location</th>
                     <th>Action</th>
                 </tr>
             `;
@@ -1589,6 +1589,12 @@
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
                 const layers = order.layers && order.layers.length ? order.layers.join(', ') : '-';
+                const locationHtml = order.lat && order.lng ? `
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">🗺️ Map</a>
+                        <a href="https://wa.me/${order.phone || '923001234567'}?text=📍%20Customer%20Location:%20https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-edit" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">📤 WhatsApp</a>
+                    </div>
+                ` : '<span style="color:#b2bec3;">Not shared</span>';
                 html += `
                     <tr>
                         <td><strong>#${order.id}</strong></td>
@@ -1600,6 +1606,7 @@
                         <td><strong>${currencySymbol} ${order.total.toFixed(2)}</strong></td>
                         <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
                         <td style="font-size:0.7em;">${order.date || 'Today'}</td>
+                        <td style="min-width:90px;">${locationHtml}</td>
                         <td>
                             <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
                                 <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
@@ -1676,6 +1683,7 @@
                         <div>
                             <div class="order-id">#${order.id} - ${order.userName || 'Guest'}</div>
                             <div class="order-customer">${order.items.map(i => i.name).join(', ')} ${layers}</div>
+                            ${order.lat && order.lng ? `<div style="font-size:0.7em; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db; text-decoration:none;">View Location</a></div>` : ''}
                         </div>
                         <div style="text-align:right;">
                             <div class="order-total">${currencySymbol} ${order.total.toFixed(2)}</div>
@@ -1783,7 +1791,7 @@
         }
 
         // ============================================================
-        // CALCULATOR WITH KEYBOARD SUPPORT
+        // CALCULATOR
         // ============================================================
         let calcDisplay = document.getElementById('calcDisplay');
         let calcExpression = '';
@@ -1809,7 +1817,6 @@
             }
         }
 
-        // Keyboard support for calculator
         document.addEventListener('keydown', function(e) {
             const calcSection = document.getElementById('adminCalculator');
             if (!calcSection.classList.contains('active')) return;
@@ -1856,7 +1863,7 @@
         });
 
         // ============================================================
-        // ⭐ FEEDBACK FUNCTIONS ⭐
+        // FEEDBACK FUNCTIONS
         // ============================================================
         function renderAdminFeedback() {
             fetch('/api/feedback/all')
@@ -1919,7 +1926,7 @@
         }
 
         // ============================================================
-        // 🎫 SUPPORT FUNCTIONS ⭐
+        // SUPPORT FUNCTIONS
         // ============================================================
         function renderAdminSupport() {
             fetch('/api/support/all')
@@ -2001,7 +2008,7 @@
         }
 
         // ============================================================
-        // 🧅 LAYERS FUNCTIONS ⭐
+        // LAYERS FUNCTIONS
         // ============================================================
         function renderAdminLayers() {
             fetch('/api/layers')
@@ -2083,6 +2090,141 @@
             })
             .catch(() => showToast('❌ Network error'));
         }
+
+        // ============================================================
+        // ⭐ DELIVERY TRACKING FUNCTIONS ⭐
+        // ============================================================
+        let allLocations = [];
+
+        function renderAdminDelivery() {
+            fetch('/api/locations/all')
+                .then(r => r.json())
+                .then(data => {
+                    allLocations = data || [];
+                    document.getElementById('totalLocations').textContent = allLocations.length;
+                    
+                    const today = new Date().toDateString();
+                    const todayLocations = allLocations.filter(l => {
+                        const date = l.updatedAt ? new Date(l.updatedAt) : new Date();
+                        return date.toDateString() === today;
+                    });
+                    document.getElementById('todayLocations').textContent = todayLocations.length;
+                    
+                    renderDeliveryList();
+                    updateDeliveryMap();
+                })
+                .catch(() => {
+                    document.getElementById('deliveryLocationsList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No locations available</p>';
+                });
+        }
+
+        function renderDeliveryList() {
+            const container = document.getElementById('deliveryLocationsList');
+            
+            if (allLocations.length === 0) {
+                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No customer locations shared yet</p>';
+                return;
+            }
+            
+            let html = `<table>
+                <tr>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Order</th>
+                    <th>Address</th>
+                    <th>Coordinates</th>
+                    <th>Shared</th>
+                    <th>📍 Location</th>
+                    <th>Action</th>
+                </tr>
+            `;
+            
+            allLocations.slice().reverse().forEach(loc => {
+                const mapUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
+                const whatsappUrl = `https://wa.me/${loc.phone || '923001234567'}?text=📍%20Customer%20Location:%20${mapUrl}`;
+                html += `
+                    <tr>
+                        <td><strong>${loc.userName}</strong></td>
+                        <td>${loc.phone || '-'}</td>
+                        <td>${loc.orderId ? `#${loc.orderId}` : '-'}</td>
+                        <td style="max-width:150px; word-break:break-word;">${loc.address || 'No address'}</td>
+                        <td style="font-size:0.7em;">${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</td>
+                        <td style="font-size:0.7em;">${loc.timestamp || 'Today'}</td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                <a href="${mapUrl}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">🗺️ Map</a>
+                                <a href="${whatsappUrl}" target="_blank" class="admin-action-btn btn-edit" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">📤 WhatsApp</a>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="admin-action-btn btn-delete" onclick="deleteLocation(${loc.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</table>`;
+            container.innerHTML = html;
+        }
+
+        function updateDeliveryMap() {
+            const iframe = document.getElementById('deliveryMapIframe');
+            const status = document.getElementById('mapStatus');
+            
+            if (allLocations.length === 0) {
+                iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=66.9%2C24.7%2C67.2%2C25.0&layer=mapnik&marker=24.9%2C67.05';
+                status.textContent = '📍 No locations to show';
+                return;
+            }
+            
+            const validLocations = allLocations.filter(l => l.lat && l.lng);
+            if (validLocations.length === 0) {
+                iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=66.9%2C24.7%2C67.2%2C25.0&layer=mapnik&marker=24.9%2C67.05';
+                status.textContent = '📍 No valid locations';
+                return;
+            }
+            
+            const avgLat = validLocations.reduce((sum, l) => sum + l.lat, 0) / validLocations.length;
+            const avgLng = validLocations.reduce((sum, l) => sum + l.lng, 0) / validLocations.length;
+            
+            let markersParam = '';
+            validLocations.forEach(l => {
+                markersParam += `&marker=${l.lat}%2C${l.lng}`;
+            });
+            
+            const bbox = `${avgLng-0.1}%2C${avgLat-0.1}%2C${avgLng+0.1}%2C${avgLat+0.1}`;
+            iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markersParam}`;
+            
+            status.textContent = `📍 Showing ${validLocations.length} customer locations`;
+        }
+
+        function refreshDeliveryMap() {
+            document.getElementById('mapStatus').textContent = '🔄 Refreshing...';
+            renderAdminDelivery();
+            showToast('✅ Map refreshed!');
+        }
+
+        function centerAllMarkers() {
+            updateDeliveryMap();
+            showToast('📍 Centered all markers');
+        }
+
+        function deleteLocation(id) {
+            if (!confirm('Remove this location from tracking?')) return;
+            fetch(`/api/location/${id}`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(() => {
+                    showToast('✅ Location removed!');
+                    renderAdminDelivery();
+                })
+                .catch(() => showToast('❌ Network error'));
+        }
+
+        // Auto-refresh locations every 10 seconds
+        setInterval(function() {
+            if (document.getElementById('adminDelivery')?.classList.contains('active')) {
+                renderAdminDelivery();
+            }
+        }, 10000);
 
         // ============================================================
         // THEME SETTINGS
