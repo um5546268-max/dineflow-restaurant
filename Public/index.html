@@ -553,6 +553,9 @@
         <button class="nav-item" data-panel="support" onclick="showPanel('support')">
             <span class="nav-icon">🎫</span> Support
         </button>
+        <button class="nav-item" data-panel="location" onclick="showPanel('location')">
+            <span class="nav-icon">📍</span> Location
+        </button>
         <button class="nav-item" data-panel="settings" onclick="showPanel('settings')">
             <span class="nav-icon">⚙️</span> Settings
         </button>
@@ -595,7 +598,7 @@
             <div style="font-size:3em; margin-bottom:10px;">🔐</div>
             <div class="popup-title">Login Required</div>
             <div class="popup-subtitle">Please login to continue</div>
-            <a href="/auth/google" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:25px; text-decoration:none; font-weight:600; margin-top:10px;">
+            <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:25px; text-decoration:none; font-weight:600; margin-top:10px;">
                 Sign in with Google
             </a>
             <br>
@@ -624,6 +627,16 @@
     </div>
 
     <script>
+        // ============================================================
+        // GET RESTAURANT ID FROM URL
+        // ============================================================
+        function getRestaurantId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('restaurant') || 'default';
+        }
+
+        const RESTAURANT_ID = getRestaurantId();
+
         // ============================================================
         // DATA
         // ============================================================
@@ -668,7 +681,11 @@
         // SPLASH SCREEN
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('/api/restaurant-name?t=' + Date.now())
+            // Check if user is already logged in (persistent login)
+            checkPersistentLogin();
+            
+            // Load restaurant name
+            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     restaurantName = data.name || 'DineFlow';
@@ -689,6 +706,94 @@
         });
 
         // ============================================================
+        // PERSISTENT LOGIN (Remember Me)
+        // ============================================================
+        function checkPersistentLogin() {
+            // Check if user session exists in localStorage
+            const savedUser = localStorage.getItem('dineflow_user');
+            const savedSession = localStorage.getItem('dineflow_session');
+            
+            if (savedUser && savedSession) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    const sessionData = JSON.parse(savedSession);
+                    
+                    // Check if session is still valid (24 hours)
+                    const now = new Date().getTime();
+                    if (now - sessionData.timestamp < 24 * 60 * 60 * 1000) {
+                        // Restore user session
+                        isLoggedIn = true;
+                        user = userData;
+                        
+                        // Verify with server
+                        fetch('/api/user/profile')
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.user) {
+                                    isLoggedIn = true;
+                                    user = data.user;
+                                    // Update stored session
+                                    localStorage.setItem('dineflow_user', JSON.stringify(user));
+                                    localStorage.setItem('dineflow_session', JSON.stringify({
+                                        timestamp: new Date().getTime()
+                                    }));
+                                } else {
+                                    // Server says not logged in, clear local storage
+                                    localStorage.removeItem('dineflow_user');
+                                    localStorage.removeItem('dineflow_session');
+                                    isLoggedIn = false;
+                                    user = null;
+                                }
+                            })
+                            .catch(() => {
+                                // Network error, but keep local session
+                                console.log('Network error, using cached session');
+                            });
+                    } else {
+                        // Session expired
+                        localStorage.removeItem('dineflow_user');
+                        localStorage.removeItem('dineflow_session');
+                        isLoggedIn = false;
+                        user = null;
+                    }
+                } catch (e) {
+                    localStorage.removeItem('dineflow_user');
+                    localStorage.removeItem('dineflow_session');
+                    isLoggedIn = false;
+                    user = null;
+                }
+            }
+        }
+
+        function handleGoogleLogin() {
+            // Store current restaurant ID before redirect
+            localStorage.setItem('dineflow_restaurant', RESTAURANT_ID);
+            window.location.href = '/auth/google';
+        }
+
+        // Check if redirected from Google login
+        function checkAuthRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('auth') === 'success') {
+                // Remove the param
+                window.history.replaceState({}, document.title, window.location.pathname + '?restaurant=' + RESTAURANT_ID);
+                // Reload user data
+                loadAuthStatus();
+            }
+        }
+
+        // Override login function
+        function loginUser(userData) {
+            isLoggedIn = true;
+            user = userData;
+            // Store in localStorage for persistence
+            localStorage.setItem('dineflow_user', JSON.stringify(userData));
+            localStorage.setItem('dineflow_session', JSON.stringify({
+                timestamp: new Date().getTime()
+            }));
+        }
+
+        // ============================================================
         // LOAD ALL DATA
         // ============================================================
         function loadAllData() {
@@ -697,10 +802,11 @@
             loadDeals();
             loadOrders();
             loadAuthStatus();
+            checkAuthRedirect();
         }
 
         function loadRestaurantName() {
-            fetch('/api/restaurant-name?t=' + Date.now())
+            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     restaurantName = data.name || 'DineFlow';
@@ -728,7 +834,7 @@
         }
 
         function loadMenu() {
-            fetch('/api/menu?t=' + Date.now())
+            fetch('/api/menu?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     menuItems = data;
@@ -737,11 +843,13 @@
                         renderMenu();
                     }
                 })
-                .catch(() => {});
+                .catch(() => {
+                    console.log('Menu not loaded yet');
+                });
         }
 
         function loadDeals() {
-            fetch('/api/deals?t=' + Date.now())
+            fetch('/api/deals?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     deals = data;
@@ -750,7 +858,7 @@
         }
 
         function loadOrders() {
-            fetch('/api/orders/myorders')
+            fetch('/api/orders/myorders?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     orders = data;
@@ -769,11 +877,25 @@
                     if (data.user) {
                         isLoggedIn = true;
                         user = data.user;
+                        loginUser(data.user);
                     } else {
                         isLoggedIn = false;
+                        user = null;
+                        localStorage.removeItem('dineflow_user');
+                        localStorage.removeItem('dineflow_session');
                     }
                 })
-                .catch(() => { isLoggedIn = false; });
+                .catch(() => { 
+                    // If server error, check localStorage
+                    const savedUser = localStorage.getItem('dineflow_user');
+                    if (savedUser) {
+                        try {
+                            const userData = JSON.parse(savedUser);
+                            isLoggedIn = true;
+                            user = userData;
+                        } catch(e) {}
+                    }
+                });
         }
 
         // ============================================================
@@ -806,11 +928,13 @@
                 filtered = menuItems.filter(item => item.category === currentCategory);
             }
 
-            if (filtered.length === 0) {
+            if (!filtered || filtered.length === 0) {
                 menuArea.innerHTML = `
                     <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
                         <div style="font-size:3em; margin-bottom:10px;">🍽️</div>
                         <h3 style="color:#2d3436;">No items in this category</h3>
+                        <p style="font-size:0.85em; margin-top:5px;">Menu is being loaded or restaurant has no items</p>
+                        <button onclick="loadMenu()" style="margin-top:10px; background:#e74c3c; color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">🔄 Refresh Menu</button>
                     </div>
                 `;
                 return;
@@ -883,7 +1007,6 @@
         function openOrderForm() {
             if (!pendingOrder) return;
             
-            // Check if the item has layers
             const itemId = pendingOrder.items[0]?.id;
             const menuItem = menuItems.find(i => i.id === itemId);
             
@@ -907,7 +1030,6 @@
             document.getElementById('orderItems').value = JSON.stringify(pendingOrder.items);
             document.getElementById('orderTotal').value = pendingOrder.total;
             
-            // Add layers to form
             const existingLayerContainer = document.getElementById('layerContainer');
             if (existingLayerContainer) {
                 existingLayerContainer.innerHTML = layersHtml;
@@ -958,7 +1080,8 @@
                     name: name,
                     phone: phone,
                     address: fullAddress,
-                    layers: layers
+                    layers: layers,
+                    restaurantId: RESTAURANT_ID
                 })
             })
             .then(r => r.json())
@@ -1007,7 +1130,7 @@
 
         function renderDeals() {
             dealsList.innerHTML = '';
-            if (deals.length === 0) {
+            if (!deals || deals.length === 0) {
                 dealsList.innerHTML = '<p style="color:#b2bec3; text-align:center; padding:20px;">No deals available</p>';
                 return;
             }
@@ -1071,6 +1194,8 @@
                 renderFeedbackSection();
             } else if (panel === 'support') {
                 renderSupportSection();
+            } else if (panel === 'location') {
+                renderLocationSection();
             } else if (panel === 'settings') {
                 renderSettings();
             }
@@ -1080,7 +1205,7 @@
         // RENDER ORDERS
         // ============================================================
         function renderOrders() {
-            if (orders.length === 0) {
+            if (!orders || orders.length === 0) {
                 menuArea.innerHTML = `
                     <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
                         <div style="font-size:4em; margin-bottom:15px;">📦</div>
@@ -1119,7 +1244,7 @@
 
         function updateOrderBadge() {
             const badge = document.getElementById('orderBadge');
-            const count = orders.filter(o => o.status === 'pending').length;
+            const count = orders ? orders.filter(o => o.status === 'pending').length : 0;
             if (count > 0) {
                 badge.style.display = 'inline';
                 badge.textContent = count;
@@ -1151,7 +1276,7 @@
                     `;
             } else {
                 html += `
-                        <a href="/auth/google" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
                             <svg viewBox="0 0 24 24" style="width:20px; height:20px; vertical-align:middle; margin-right:8px;">
                                 <path fill="#FFFFFF" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
                                 <path fill="#FFFFFF" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -1173,7 +1298,9 @@
         }
 
         function logoutUser() {
-            window.location.href = '/logout';
+            localStorage.removeItem('dineflow_user');
+            localStorage.removeItem('dineflow_session');
+            window.location.href = '/logout?restaurant=' + RESTAURANT_ID;
         }
 
         // ============================================================
@@ -1188,7 +1315,7 @@
                         <div style="font-size:4em; margin-bottom:15px;">🔐</div>
                         <h3 style="color:#2d3436;">Login Required</h3>
                         <p style="color:#b2bec3; margin-bottom:20px;">Please login to submit feedback</p>
-                        <a href="/auth/google" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
                             Sign in with Google
                         </a>
                         <br>
@@ -1238,7 +1365,7 @@
             fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: customerSelectedRating, comment: comment })
+                body: JSON.stringify({ rating: customerSelectedRating, comment: comment, restaurantId: RESTAURANT_ID })
             })
             .then(r => r.json())
             .then(data => {
@@ -1294,6 +1421,137 @@
                 </div>
             `;
             menuArea.innerHTML = html;
+        }
+
+        // ============================================================
+        // 📍 LOCATION FUNCTIONS
+        // ============================================================
+        let currentLat = null;
+        let currentLng = null;
+        let currentAddress = '';
+
+        function renderLocationSection() {
+            if (!isLoggedIn) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="font-size:4em; margin-bottom:15px;">🔐</div>
+                        <h3 style="color:#2d3436;">Login Required</h3>
+                        <p style="color:#b2bec3; margin-bottom:20px;">Please login to share your location</p>
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                            Sign in with Google
+                        </a>
+                        <br>
+                        <button onclick="showPanel('menu')" style="margin-top:15px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Back to Menu</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">📍 Share Your Location</div>
+                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <p style="color:#636e72; margin-bottom:15px;">Share your location for faster delivery!</p>
+                        <div style="text-align:center; margin:15px 0;">
+                            <div id="locationStatus" style="padding:15px; background:#f8f9fa; border-radius:10px; color:#636e72;">
+                                ⏳ Click "Get Location" to share
+                            </div>
+                            <div id="locationMap" style="width:100%; height:300px; border-radius:10px; margin-top:10px; background:#f1f2f6; display:none; overflow:hidden;">
+                                <iframe id="locationIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                            </div>
+                            <button class="order-submit-btn" onclick="getCurrentLocation()" style="margin-top:15px; background:#3498db;">
+                                📍 Get My Location
+                            </button>
+                            <button class="order-submit-btn" onclick="shareLocation()" style="margin-top:10px;" id="shareLocationBtn" disabled>
+                                📤 Share Location with Restaurant
+                            </button>
+                        </div>
+                        <div style="margin-top:15px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
+                            <p style="font-size:0.8em; color:#b2bec3;">Your location helps us deliver faster and more accurately.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+        }
+
+        function getCurrentLocation() {
+            const status = document.getElementById('locationStatus');
+            const map = document.getElementById('locationMap');
+            const shareBtn = document.getElementById('shareLocationBtn');
+            
+            if (!navigator.geolocation) {
+                status.innerHTML = '❌ Geolocation is not supported by your browser';
+                return;
+            }
+            
+            status.innerHTML = '⏳ Getting your location...';
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+                    
+                    status.innerHTML = `✅ Location found! (${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})`;
+                    
+                    map.style.display = 'block';
+                    const iframe = document.getElementById('locationIframe');
+                    iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${currentLng-0.01}%2C${currentLat-0.01}%2C${currentLng+0.01}%2C${currentLat+0.01}&layer=mapnik&marker=${currentLat}%2C${currentLng}`;
+                    
+                    shareBtn.disabled = false;
+                    shareBtn.style.opacity = '1';
+                    
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                currentAddress = data.display_name;
+                                status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
+                            }
+                        })
+                        .catch(() => {});
+                    
+                    showToast('✅ Location found!');
+                },
+                function(error) {
+                    status.innerHTML = '❌ Error getting location. Please enable GPS and try again.';
+                    console.error('Location error:', error);
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        function shareLocation() {
+            if (!currentLat || !currentLng) {
+                showToast('⚠️ Please get your location first');
+                return;
+            }
+            
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            
+            fetch('/api/location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat: currentLat,
+                    lng: currentLng,
+                    address: currentAddress,
+                    restaurantId: RESTAURANT_ID
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Location shared successfully!');
+                    document.getElementById('locationStatus').innerHTML = '✅ Location shared with restaurant!';
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to share location'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
         }
 
         // ============================================================
@@ -1464,7 +1722,7 @@
             fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: selectedRating, comment: comment })
+                body: JSON.stringify({ rating: selectedRating, comment: comment, restaurantId: RESTAURANT_ID })
             })
             .then(r => r.json())
             .then(data => {
@@ -1525,7 +1783,7 @@
             fetch('/api/support', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subject, message, priority })
+                body: JSON.stringify({ subject, message, priority, restaurantId: RESTAURANT_ID })
             })
             .then(r => r.json())
             .then(data => {
@@ -1568,7 +1826,7 @@
             loadDeals();
             loadRestaurantName();
             loadOrders();
-        }, 5000);
+        }, 10000);
 
         // ============================================================
         // LOAD THEME ON START
