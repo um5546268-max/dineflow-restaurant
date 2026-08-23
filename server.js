@@ -80,16 +80,34 @@ function getDefaultDeals() {
 }
 
 // ============================================
-// RESTAURANT ID MIDDLEWARE
+// CREATE DEFAULT RESTAURANT IF NONE EXISTS
+// ============================================
+function createDefaultRestaurant() {
+    if (restaurants.length === 0) {
+        const defaultRestaurant = {
+            id: 1,
+            restaurantId: 'restaurant-1',
+            name: 'DineFlow Restaurant',
+            ownerName: 'Admin',
+            ownerEmail: 'admin@dineflow.com',
+            createdAt: new Date().toLocaleString(),
+            menu: getDefaultMenu(),
+            deals: getDefaultDeals(),
+            orders: [],
+            restaurantName: 'DineFlow Restaurant',
+            status: 'active'
+        };
+        restaurants.push(defaultRestaurant);
+        console.log('🏪 Default restaurant created: DineFlow Restaurant (restaurant-1)');
+    }
+}
+
+// ============================================
+// RESTAURANT ID MIDDLEWARE - FIXED
 // ============================================
 app.use((req, res, next) => {
-    // Check URL path: /restaurant/:restaurantId
-    const pathParts = req.path.split('/');
-    if (pathParts[1] === 'restaurant' && pathParts[2]) {
-        req.restaurantId = pathParts[2];
-    }
     // Check query parameter: ?restaurant=restaurant-1
-    else if (req.query.restaurant) {
+    if (req.query.restaurant) {
         req.restaurantId = req.query.restaurant;
     }
     // Check session
@@ -98,14 +116,15 @@ app.use((req, res, next) => {
     }
     // Default
     else {
-        req.restaurantId = 'default';
+        req.restaurantId = 'restaurant-1';
     }
     
-    // Store in session if not set
-    if (req.session && !req.session.restaurantId) {
+    // Store in session
+    if (req.session) {
         req.session.restaurantId = req.restaurantId;
     }
     
+    console.log(`🏪 Restaurant ID: ${req.restaurantId} - ${req.path}`);
     next();
 });
 
@@ -120,7 +139,6 @@ app.post('/api/restaurant/create', (req, res) => {
         return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    // Check if restaurant already exists
     const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
     if (existing) {
         return res.status(400).json({ error: 'Restaurant already exists with this email' });
@@ -168,46 +186,77 @@ app.get('/api/restaurants/all', (req, res) => {
     res.json(restaurants);
 });
 
-// Update restaurant status
-app.put('/api/restaurant/:restaurantId/status', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurant = restaurants.find(r => r.restaurantId === req.params.restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
-    const { status } = req.body;
-    restaurant.status = status;
-    res.json({ success: true, restaurant });
-});
-
 // ============================================
-// ⭐ MENU ROUTES WITH restaurant_id ⭐
+// ⭐ FIXED MENU ROUTES ⭐
 // ============================================
 
-// Get menu for specific restaurant
+// Get menu for specific restaurant - FIXED
 app.get('/api/menu', (req, res) => {
-    const restaurantId = req.restaurantId;
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    console.log(`📋 Fetching menu for: ${restaurantId}`);
+    
+    // Find the restaurant
+    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    
+    // If not found, try to find by ID
     if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
+        const id = parseInt(restaurantId.replace('restaurant-', ''));
+        restaurant = restaurants.find(r => r.id === id);
     }
-    res.json(restaurant.menu);
+    
+    // If still not found, use default
+    if (!restaurant) {
+        console.log(`⚠️ Restaurant ${restaurantId} not found, using default`);
+        createDefaultRestaurant();
+        restaurant = restaurants[0];
+    }
+    
+    // Return menu
+    if (restaurant && restaurant.menu) {
+        res.json(restaurant.menu);
+    } else {
+        // Return default menu if restaurant has no menu
+        const defaultMenu = getDefaultMenu();
+        res.json(defaultMenu);
+    }
 });
 
-// Get deals for specific restaurant
+// Get deals for specific restaurant - FIXED
 app.get('/api/deals', (req, res) => {
-    const restaurantId = req.restaurantId;
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    console.log(`📋 Fetching deals for: ${restaurantId}`);
+    
+    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
+        const id = parseInt(restaurantId.replace('restaurant-', ''));
+        restaurant = restaurants.find(r => r.id === id);
     }
-    res.json(restaurant.deals);
+    if (!restaurant) {
+        createDefaultRestaurant();
+        restaurant = restaurants[0];
+    }
+    
+    if (restaurant && restaurant.deals) {
+        res.json(restaurant.deals);
+    } else {
+        res.json(getDefaultDeals());
+    }
 });
 
-// Get restaurant name
+// Get restaurant name - FIXED
 app.get('/api/restaurant-name', (req, res) => {
-    const restaurantId = req.restaurantId;
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    
+    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    if (!restaurant) {
+        const id = parseInt(restaurantId.replace('restaurant-', ''));
+        restaurant = restaurants.find(r => r.id === id);
+    }
+    if (!restaurant) {
+        createDefaultRestaurant();
+        restaurant = restaurants[0];
+    }
+    
     const name = restaurant ? restaurant.restaurantName : 'DineFlow';
     res.json({ name: name });
 });
@@ -215,7 +264,7 @@ app.get('/api/restaurant-name', (req, res) => {
 // Add menu item to specific restaurant
 app.post('/api/menu', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -242,7 +291,7 @@ app.post('/api/menu', (req, res) => {
 // Delete menu item
 app.delete('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -258,7 +307,7 @@ app.delete('/api/menu/:id', (req, res) => {
 // Update menu item
 app.put('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -278,7 +327,7 @@ app.put('/api/menu/:id', (req, res) => {
 // Update menu item layers
 app.put('/api/menu/:id/layers', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -303,7 +352,7 @@ app.put('/api/menu/:id/layers', (req, res) => {
 // Add deal to specific restaurant
 app.post('/api/deals', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -330,7 +379,7 @@ app.post('/api/deals', (req, res) => {
 // Delete deal
 app.delete('/api/deals/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -350,7 +399,7 @@ app.delete('/api/deals/:id', (req, res) => {
 // Place order (saves with restaurant_id)
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -385,7 +434,7 @@ app.post('/api/orders', (req, res) => {
 // Get orders for specific restaurant
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -396,7 +445,7 @@ app.get('/api/orders/all', (req, res) => {
 // Get user's orders for specific restaurant
 app.get('/api/orders/myorders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -408,7 +457,7 @@ app.get('/api/orders/myorders', (req, res) => {
 // Update order status
 app.put('/api/orders/:id/status', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -430,7 +479,7 @@ app.put('/api/orders/:id/status', (req, res) => {
 
 app.post('/api/restaurant-name', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
@@ -477,7 +526,7 @@ passport.deserializeUser((id, done) => {
 });
 
 // ============================================
-// AUTH ROUTES
+// AUTH ROUTES - FIXED
 // ============================================
 app.get('/auth/google',
     passport.authenticate('google', { 
@@ -495,8 +544,8 @@ app.get('/callback',
                 console.error('Session save error:', err);
                 return res.redirect('/login-failed');
             }
-            // Redirect back to restaurant page
-            const restaurantId = req.session.restaurantId || 'default';
+            // Get restaurant from session or default
+            const restaurantId = req.session.restaurantId || 'restaurant-1';
             if (req.user && req.user.role === 'admin') {
                 res.redirect('/admin?restaurant=' + restaurantId);
             } else {
@@ -511,7 +560,11 @@ app.get('/login-failed', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-    req.logout(() => res.redirect('/'));
+    req.logout(() => {
+        req.session.destroy(() => {
+            res.redirect('/');
+        });
+    });
 });
 
 // ============================================
@@ -522,6 +575,7 @@ app.post('/api/feedback', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const { rating, comment } = req.body;
     if (!rating) return res.status(400).json({ error: 'Rating is required' });
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const newFeedback = {
         id: feedbacks.length + 1,
         userId: req.user.id,
@@ -529,7 +583,7 @@ app.post('/api/feedback', (req, res) => {
         userEmail: req.user.email,
         rating: parseInt(rating),
         comment: comment || '',
-        restaurantId: req.restaurantId || 'default',
+        restaurantId: restaurantId,
         date: new Date().toLocaleString(),
         createdAt: new Date()
     };
@@ -539,7 +593,7 @@ app.post('/api/feedback', (req, res) => {
 
 app.get('/api/feedback/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurantFeedbacks = feedbacks.filter(f => f.restaurantId === restaurantId);
     res.json(restaurantFeedbacks);
 });
@@ -560,6 +614,7 @@ app.post('/api/support', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const { subject, message, priority } = req.body;
     if (!subject || !message) return res.status(400).json({ error: 'Subject and message are required' });
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const newTicket = {
         id: supportTickets.length + 1,
         userId: req.user.id,
@@ -568,7 +623,7 @@ app.post('/api/support', (req, res) => {
         subject, message,
         priority: priority || 'normal',
         status: 'open',
-        restaurantId: req.restaurantId || 'default',
+        restaurantId: restaurantId,
         date: new Date().toLocaleString(),
         createdAt: new Date()
     };
@@ -578,7 +633,7 @@ app.post('/api/support', (req, res) => {
 
 app.get('/api/support/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurantTickets = supportTickets.filter(t => t.restaurantId === restaurantId);
     res.json(restaurantTickets);
 });
@@ -647,7 +702,7 @@ app.post('/api/location', (req, res) => {
     if (!lat || !lng) {
         return res.status(400).json({ error: 'Latitude and longitude required' });
     }
-    const restaurantId = req.restaurantId || 'default';
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const existing = customerLocations.find(l => l.userId === req.user.id && l.restaurantId === restaurantId);
     if (existing) {
         existing.lat = lat;
@@ -675,7 +730,7 @@ app.post('/api/location', (req, res) => {
 
 app.get('/api/locations/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId;
+    const restaurantId = req.restaurantId || 'restaurant-1';
     const locations = customerLocations.filter(l => l.restaurantId === restaurantId);
     res.json(locations);
 });
@@ -710,6 +765,9 @@ app.get('/create-restaurant', (req, res) => {
 // ============================================
 // START SERVER
 // ============================================
+// Create default restaurant if none exists
+createDefaultRestaurant();
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log('🍔 DINEFLOW SERVER RUNNING');
