@@ -4,6 +4,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -25,7 +26,86 @@ const RESTAURANT_CONFIG = {
 // ============================================
 
 // ============================================
-// ⭐ MIDDLEWARE - Increase payload limit ⭐
+// ⭐ DATA PERSISTENCE - SAVE/RESTORE RESTAURANTS ⭐
+// ============================================
+const DATA_FILE = path.join(__dirname, 'data.json');
+
+// Initialize data structure
+let data = {
+    users: [],
+    restaurants: [],
+    feedbacks: [],
+    supportTickets: [],
+    availableLayers: [
+        '🧀 Cheese', '🥬 Lettuce', '🍅 Tomato', '🧅 Onion',
+        '🥩 Extra Patty', '🌶️ Mayo', '🧄 Garlic Sauce',
+        '🌿 Jalapeno', '🍄 Mushroom', '🥓 Bacon'
+    ],
+    customerLocations: [],
+    orderCounter: 1,
+    receiptSettings: {
+        logoIcon: '👨‍🍳',
+        logoUrl: '',
+        tagline: 'PIZZA • BURGER • FAST FOOD',
+        established: RESTAURANT_CONFIG.est,
+        address: RESTAURANT_CONFIG.address,
+        phone: RESTAURANT_CONFIG.phone,
+        qrCodeUrl: '',
+        discountAmount: RESTAURANT_CONFIG.discountAmount,
+        discountThreshold: RESTAURANT_CONFIG.discountThreshold,
+        thankYouMessage: 'Thank You for Your Order!',
+        footerMessage: 'Have a Great Day!'
+    }
+};
+
+// Load data from file
+function loadData() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            const fileContent = fs.readFileSync(DATA_FILE, 'utf8');
+            const loadedData = JSON.parse(fileContent);
+            // Merge loaded data with default structure
+            data = { ...data, ...loadedData };
+            console.log('✅ Data loaded from file');
+            console.log(`📊 Restaurants: ${data.restaurants.length}`);
+            console.log(`👤 Users: ${data.users.length}`);
+            console.log(`📦 Orders: ${data.restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
+            return true;
+        } else {
+            console.log('📝 No data file found, using default data');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error loading data:', error);
+        return false;
+    }
+}
+
+// Save data to file
+function saveData() {
+    try {
+        // Create a backup first
+        if (fs.existsSync(DATA_FILE)) {
+            const backupFile = DATA_FILE + '.backup';
+            fs.copyFileSync(DATA_FILE, backupFile);
+        }
+        
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+        console.log('💾 Data saved to file');
+        return true;
+    } catch (error) {
+        console.error('❌ Error saving data:', error);
+        return false;
+    }
+}
+
+// Auto-save every 30 seconds
+setInterval(() => {
+    saveData();
+}, 30000);
+
+// ============================================
+// ⭐ MIDDLEWARE ⭐
 // ============================================
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -58,36 +138,31 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ============================================
-// DATABASE (In-Memory)
+// ⭐ DATABASE REFERENCES ⭐
 // ============================================
-const users = [];
-const restaurants = [];
-let feedbacks = [];
-let supportTickets = [];
-let availableLayers = [
-    '🧀 Cheese', '🥬 Lettuce', '🍅 Tomato', '🧅 Onion',
-    '🥩 Extra Patty', '🌶️ Mayo', '🧄 Garlic Sauce',
-    '🌿 Jalapeno', '🍄 Mushroom', '🥓 Bacon'
-];
-let customerLocations = [];
-let orderCounter = 1;
+const users = data.users;
+const restaurants = data.restaurants;
+let feedbacks = data.feedbacks;
+let supportTickets = data.supportTickets;
+let availableLayers = data.availableLayers;
+let customerLocations = data.customerLocations;
+let orderCounter = data.orderCounter || 1;
+let receiptSettings = data.receiptSettings;
 
 // ============================================
-// ⭐ RECEIPT SETTINGS ⭐
+// ⭐ SAVE DATA AFTER MODIFICATIONS ⭐
 // ============================================
-let receiptSettings = {
-    logoIcon: '👨‍🍳',
-    logoUrl: '',
-    tagline: 'PIZZA • BURGER • FAST FOOD',
-    established: RESTAURANT_CONFIG.est,
-    address: RESTAURANT_CONFIG.address,
-    phone: RESTAURANT_CONFIG.phone,
-    qrCodeUrl: '',
-    discountAmount: RESTAURANT_CONFIG.discountAmount,
-    discountThreshold: RESTAURANT_CONFIG.discountThreshold,
-    thankYouMessage: 'Thank You for Your Order!',
-    footerMessage: 'Have a Great Day!'
-};
+function syncAndSave() {
+    data.users = users;
+    data.restaurants = restaurants;
+    data.feedbacks = feedbacks;
+    data.supportTickets = supportTickets;
+    data.availableLayers = availableLayers;
+    data.customerLocations = customerLocations;
+    data.orderCounter = orderCounter;
+    data.receiptSettings = receiptSettings;
+    saveData();
+}
 
 // ============================================
 // DEFAULT MENU AND DEALS
@@ -140,6 +215,7 @@ function createDefaultRestaurant() {
             status: 'active'
         };
         restaurants.push(defaultRestaurant);
+        syncAndSave();
         console.log('🏪 Default restaurant created');
     }
 }
@@ -198,6 +274,7 @@ app.post('/api/receipt-settings', (req, res) => {
         if (!receiptSettings.logoIcon) {
             receiptSettings.logoIcon = '👨‍🍳';
         }
+        syncAndSave();
         console.log('✅ Receipt settings saved successfully');
         res.json({ 
             success: true, 
@@ -275,8 +352,10 @@ app.post('/api/restaurant/create', (req, res) => {
         };
         
         restaurants.push(newRestaurant);
+        syncAndSave();
         
         console.log(`🏪 New restaurant created: ${name} (${restaurantId})`);
+        console.log(`📊 Total restaurants: ${restaurants.length}`);
         
         res.json({ 
             success: true, 
@@ -294,13 +373,61 @@ app.post('/api/restaurant/create', (req, res) => {
 });
 
 // ============================================
-// RESTAURANTS MANAGEMENT PANEL API
+// ⭐ GET ALL RESTAURANTS ⭐
 // ============================================
 app.get('/api/restaurants/all', (req, res) => {
     if (!req.user) {
         return res.json([]);
     }
     res.json(restaurants);
+});
+
+// ============================================
+// ⭐ GET RESTAURANT BY ID ⭐
+// ============================================
+app.get('/api/restaurants/:id', (req, res) => {
+    const restaurantId = req.params.id;
+    const restaurant = restaurants.find(r => r.restaurantId === restaurantId || r.id === parseInt(restaurantId));
+    if (!restaurant) {
+        return res.status(404).json({ error: 'Restaurant not found' });
+    }
+    res.json(restaurant);
+});
+
+// ============================================
+// ⭐ DELETE RESTAURANT ⭐
+// ============================================
+app.delete('/api/restaurants/:id', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(401).json({ error: 'Not authorized' });
+    }
+    const index = restaurants.findIndex(r => r.restaurantId === req.params.id || r.id === parseInt(req.params.id));
+    if (index === -1) {
+        return res.status(404).json({ error: 'Restaurant not found' });
+    }
+    const removed = restaurants.splice(index, 1);
+    syncAndSave();
+    res.json({ success: true, message: 'Restaurant deleted', restaurant: removed[0] });
+});
+
+// ============================================
+// ⭐ UPDATE RESTAURANT ⭐
+// ============================================
+app.put('/api/restaurants/:id', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(401).json({ error: 'Not authorized' });
+    }
+    const restaurant = restaurants.find(r => r.restaurantId === req.params.id || r.id === parseInt(req.params.id));
+    if (!restaurant) {
+        return res.status(404).json({ error: 'Restaurant not found' });
+    }
+    const { name, ownerName, ownerEmail, status } = req.body;
+    if (name) restaurant.name = name;
+    if (ownerName) restaurant.ownerName = ownerName;
+    if (ownerEmail) restaurant.ownerEmail = ownerEmail;
+    if (status) restaurant.status = status;
+    syncAndSave();
+    res.json({ success: true, restaurant });
 });
 
 app.post('/api/restaurants/all', (req, res) => {
@@ -376,6 +503,7 @@ app.post('/api/restaurant-name', (req, res) => {
     const { name } = req.body;
     if (name) {
         restaurant.restaurantName = name;
+        syncAndSave();
         res.json({ success: true, name: restaurant.restaurantName });
     } else {
         res.status(400).json({ error: 'Name required' });
@@ -399,6 +527,7 @@ app.post('/api/menu', (req, res) => {
         layers: layers || []
     };
     restaurant.menu.push(newItem);
+    syncAndSave();
     res.status(201).json({ success: true, item: newItem });
 });
 
@@ -410,6 +539,7 @@ app.delete('/api/menu/:id', (req, res) => {
     const index = restaurant.menu.findIndex(i => i.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Item not found' });
     restaurant.menu.splice(index, 1);
+    syncAndSave();
     res.json({ success: true });
 });
 
@@ -425,6 +555,7 @@ app.put('/api/menu/:id', (req, res) => {
     if (price) item.price = parseFloat(price);
     if (category) item.category = category;
     if (icon) item.icon = icon;
+    syncAndSave();
     res.json({ success: true, item });
 });
 
@@ -438,6 +569,7 @@ app.put('/api/menu/:id/layers', (req, res) => {
     const { layers } = req.body;
     if (layers && Array.isArray(layers)) {
         item.layers = layers;
+        syncAndSave();
         res.json({ success: true, item });
     } else {
         res.status(400).json({ error: 'Invalid layers format' });
@@ -464,6 +596,7 @@ app.post('/api/deals', (req, res) => {
         icons: icons.slice(0, 5)
     };
     restaurant.deals.push(newDeal);
+    syncAndSave();
     res.status(201).json({ success: true, deal: newDeal });
 });
 
@@ -475,6 +608,7 @@ app.delete('/api/deals/:id', (req, res) => {
     const index = restaurant.deals.findIndex(d => d.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Deal not found' });
     restaurant.deals.splice(index, 1);
+    syncAndSave();
     res.json({ success: true });
 });
 
@@ -517,6 +651,7 @@ app.post('/api/orders', (req, res) => {
     };
     
     restaurant.orders.push(newOrder);
+    syncAndSave();
     
     if (orderType === 'delivery' && lat && lng) {
         customerLocations.push({
@@ -533,6 +668,7 @@ app.post('/api/orders', (req, res) => {
             timestamp: new Date().toLocaleString(),
             updatedAt: new Date()
         });
+        syncAndSave();
     }
     
     console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} (${orderType})`);
@@ -575,6 +711,7 @@ app.put('/api/orders/:id/status', (req, res) => {
         return res.status(400).json({ error: 'Invalid status' });
     }
     order.status = status;
+    syncAndSave();
     res.json({ success: true, order });
 });
 
@@ -611,6 +748,7 @@ app.post('/api/location', (req, res) => {
             updatedAt: new Date()
         });
     }
+    syncAndSave();
     res.json({ success: true, message: 'Location saved' });
 });
 
@@ -626,6 +764,7 @@ app.delete('/api/location/:id', (req, res) => {
     const index = customerLocations.findIndex(l => l.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Location not found' });
     customerLocations.splice(index, 1);
+    syncAndSave();
     res.json({ success: true });
 });
 
@@ -649,6 +788,7 @@ app.post('/api/feedback', (req, res) => {
         createdAt: new Date()
     };
     feedbacks.push(newFeedback);
+    syncAndSave();
     res.status(201).json({ success: true, feedback: newFeedback });
 });
 
@@ -664,6 +804,7 @@ app.delete('/api/feedback/:id', (req, res) => {
     const index = feedbacks.findIndex(f => f.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Feedback not found' });
     feedbacks.splice(index, 1);
+    syncAndSave();
     res.json({ success: true });
 });
 
@@ -688,6 +829,7 @@ app.post('/api/support', (req, res) => {
         createdAt: new Date()
     };
     supportTickets.push(newTicket);
+    syncAndSave();
     res.status(201).json({ success: true, ticket: newTicket });
 });
 
@@ -706,6 +848,7 @@ app.put('/api/support/:id/status', (req, res) => {
     const validStatuses = ['open', 'in-progress', 'resolved', 'closed'];
     if (!validStatuses.includes(status)) return res.status(400).json({ error: 'Invalid status' });
     ticket.status = status;
+    syncAndSave();
     res.json({ success: true, ticket });
 });
 
@@ -722,6 +865,7 @@ app.post('/api/layers', (req, res) => {
     if (!layer) return res.status(400).json({ error: 'Layer name is required' });
     if (!availableLayers.includes(layer)) {
         availableLayers.push(layer);
+        syncAndSave();
         res.json({ success: true, layers: availableLayers });
     } else {
         res.status(400).json({ error: 'Layer already exists' });
@@ -734,6 +878,7 @@ app.delete('/api/layers/:layer', (req, res) => {
     const index = availableLayers.indexOf(layer);
     if (index === -1) return res.status(404).json({ error: 'Layer not found' });
     availableLayers.splice(index, 1);
+    syncAndSave();
     res.json({ success: true, layers: availableLayers });
 });
 
@@ -771,6 +916,7 @@ passport.use(new GoogleStrategy({
             role: users.length === 0 ? 'admin' : 'customer'
         };
         users.push(user);
+        syncAndSave();
         console.log(`✅ New user: ${user.displayName} (${user.role})`);
     }
     return done(null, user);
@@ -912,13 +1058,39 @@ app.get('/api/test', (req, res) => {
     res.json({ 
         status: 'ok', 
         message: 'Server is running',
-        user: req.user ? req.user.displayName : 'Not logged in'
+        user: req.user ? req.user.displayName : 'Not logged in',
+        restaurants: restaurants.length,
+        dataFile: fs.existsSync(DATA_FILE) ? 'exists' : 'not found'
     });
+});
+
+// ============================================
+// ⭐ GET ALL RESTAURANTS SUMMARY ⭐
+// ============================================
+app.get('/api/restaurants/summary', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    const summary = restaurants.map(r => ({
+        id: r.id,
+        restaurantId: r.restaurantId,
+        name: r.name,
+        ownerName: r.ownerName,
+        ownerEmail: r.ownerEmail,
+        createdAt: r.createdAt,
+        status: r.status,
+        orderCount: r.orders.length,
+        menuCount: r.menu.length,
+        dealsCount: r.deals.length
+    }));
+    res.json(summary);
 });
 
 // ============================================
 // START SERVER
 // ============================================
+// Load data before starting
+loadData();
 createDefaultRestaurant();
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -936,9 +1108,23 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🏪 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
+    console.log(`💾 Data File: ${DATA_FILE}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+    console.log('🛑 Saving data before shutdown...');
+    saveData();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('🛑 Saving data before shutdown...');
+    saveData();
+    process.exit(0);
 });
 
 module.exports = app;
