@@ -108,6 +108,25 @@
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .debug-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.8em;
+            color: #636e72;
+            display: none;
+            border: 1px solid #dfe6e9;
+        }
+        .debug-info.show { display: block; }
+        .debug-info code { 
+            background: #f1f2f6; 
+            padding: 2px 6px; 
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .debug-info.success { border-color: #27ae60; background: #e8f8f0; }
+        .debug-info.error { border-color: #e74c3c; background: #fdf2f2; }
     </style>
 </head>
 <body>
@@ -135,11 +154,70 @@
         </form>
         
         <div class="result" id="result"></div>
+        
+        <!-- Debug Info -->
+        <div class="debug-info" id="debugInfo">
+            <strong>🔍 Debug Info:</strong><br>
+            <span id="debugMessage">Checking server connection...</span>
+        </div>
+        
         <a href="/" class="back-link">← Back to Customer Panel</a>
         <a href="/admin" class="back-link" style="margin-top:5px;">← Back to Admin Panel</a>
     </div>
 
     <script>
+        // ============================================================
+        // CHECK SERVER CONNECTION FIRST
+        // ============================================================
+        async function checkServerConnection() {
+            const debugInfo = document.getElementById('debugInfo');
+            const debugMessage = document.getElementById('debugMessage');
+            
+            debugInfo.classList.add('show');
+            debugMessage.textContent = '⏳ Checking server connection...';
+            
+            try {
+                // Try multiple endpoints
+                const endpoints = ['/api/restaurant-config', '/api/test', '/api/deals'];
+                let connected = false;
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        
+                        if (response.ok) {
+                            connected = true;
+                            debugMessage.textContent = `✅ Server is running! (${endpoint} responded)`;
+                            debugInfo.className = 'debug-info show success';
+                            break;
+                        }
+                    } catch (e) {
+                        // Try next endpoint
+                    }
+                }
+                
+                if (!connected) {
+                    debugMessage.textContent = '⚠️ Server is not responding. Make sure your server is running on Render.';
+                    debugInfo.className = 'debug-info show error';
+                }
+            } catch (error) {
+                debugMessage.textContent = `❌ Cannot connect to server. Error: ${error.message}`;
+                debugInfo.className = 'debug-info show error';
+                console.error('Connection error:', error);
+            }
+        }
+
+        // Check connection on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkServerConnection();
+        });
+
+        // ============================================================
+        // FORM SUBMIT HANDLER
+        // ============================================================
         document.getElementById('createForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -149,6 +227,8 @@
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('loading');
             const resultDiv = document.getElementById('result');
+            const debugMessage = document.getElementById('debugMessage');
+            const debugInfo = document.getElementById('debugInfo');
             
             if (!name || !ownerName || !ownerEmail) {
                 showResult('error', '⚠️ Please fill in all fields');
@@ -159,15 +239,34 @@
             loading.classList.add('show');
             resultDiv.className = 'result';
             resultDiv.style.display = 'none';
+            debugMessage.textContent = '⏳ Sending request to server...';
+            debugInfo.classList.add('show');
+            debugInfo.className = 'debug-info show';
+            
+            const payload = { name, ownerName, ownerEmail };
+            console.log('Sending payload:', payload);
             
             try {
                 const response = await fetch('/api/restaurant/create', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, ownerName, ownerEmail })
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
                 });
                 
-                const data = await response.json();
+                debugMessage.textContent = `📡 Server responded with status: ${response.status}`;
+                
+                // Try to parse response
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    throw new Error('Invalid response from server');
+                }
+                
+                console.log('Server response:', data);
                 
                 if (data.success) {
                     const baseUrl = window.location.origin;
@@ -176,15 +275,20 @@
                     
                     showResult('success', `
                         ✅ <strong>Restaurant Created Successfully!</strong><br><br>
+                        <strong>🏪 Restaurant:</strong> ${data.restaurant.name}<br>
                         <strong>🏪 Restaurant ID:</strong> ${data.restaurantId}<br>
-                        <strong>👤 Owner:</strong> ${data.restaurant.ownerName}<br><br>
+                        <strong>👤 Owner:</strong> ${data.restaurant.ownerName}<br>
+                        <strong>📧 Email:</strong> ${data.restaurant.ownerEmail}<br><br>
                         <strong>📱 Customer URL:</strong><br>
                         <div class="url-box"><a href="${customerUrl}" target="_blank">${customerUrl}</a></div>
                         <strong>👑 Admin URL:</strong><br>
                         <div class="url-box"><a href="${adminUrl}" target="_blank">${adminUrl}</a></div>
                         <br>
-                        <em style="font-size:0.85em;">Share these URLs with the restaurant owner!</em>
+                        <em style="font-size:0.85em;">✅ Share these URLs with the restaurant owner!</em>
                     `);
+                    
+                    debugMessage.textContent = '✅ Restaurant created successfully!';
+                    debugInfo.className = 'debug-info show success';
                     
                     // Reset form
                     document.getElementById('restName').value = '';
@@ -192,10 +296,22 @@
                     document.getElementById('ownerEmail').value = '';
                 } else {
                     showResult('error', '❌ Error: ' + (data.error || 'Something went wrong'));
+                    debugMessage.textContent = `❌ Server error: ${data.error || 'Unknown error'}`;
+                    debugInfo.className = 'debug-info show error';
                 }
             } catch (error) {
-                showResult('error', '❌ Network error: Could not connect to server. Make sure your server is running.');
                 console.error('Error:', error);
+                showResult('error', `
+                    ❌ <strong>Network Error</strong><br><br>
+                    ${error.message || 'Could not connect to server.'}<br><br>
+                    <strong>💡 Possible Solutions:</strong><br>
+                    1. Check if your server is running on Render<br>
+                    2. Check if the API endpoint is correct<br>
+                    3. Try refreshing the page<br>
+                    4. Check your internet connection
+                `);
+                debugMessage.textContent = `❌ Network error: ${error.message}`;
+                debugInfo.className = 'debug-info show error';
             }
             
             submitBtn.disabled = false;
@@ -208,6 +324,16 @@
             resultDiv.innerHTML = message;
             resultDiv.style.display = 'block';
         }
+        
+        // ============================================================
+        // RETRY CONNECTION BUTTON
+        // ============================================================
+        // Add a retry button if needed
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'r' && e.ctrlKey) {
+                checkServerConnection();
+            }
+        });
     </script>
 </body>
 </html>

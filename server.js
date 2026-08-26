@@ -25,14 +25,11 @@ const RESTAURANT_CONFIG = {
 // ============================================
 
 // ============================================
-// ⭐ MIDDLEWARE - FIXED ORDER ⭐
+// ⭐ MIDDLEWARE - Increase payload limit ⭐
 // ============================================
-
-// Increase payload limit for logo uploads (10MB)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS - Must be before routes
 app.use(cors({ 
     origin: process.env.NODE_ENV === 'production' 
         ? ['https://dineflow.onrender.com', 'https://dineflow-admin.onrender.com']
@@ -40,11 +37,10 @@ app.use(cors({
     credentials: true 
 }));
 
-// Static files
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // ============================================
-// ⭐ SESSION - Must be before passport ⭐
+// ⭐ SESSION ⭐
 // ============================================
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dineflow-super-secret-key-2026',
@@ -149,7 +145,7 @@ function createDefaultRestaurant() {
 }
 
 // ============================================
-// RESTAURANT CONFIG API
+// ⭐ RESTAURANT CONFIG API ⭐
 // ============================================
 app.get('/api/restaurant-config', (req, res) => {
     res.json(RESTAURANT_CONFIG);
@@ -160,7 +156,7 @@ app.get('/api/whatsapp-number', (req, res) => {
 });
 
 // ============================================
-// ⭐ RECEIPT SETTINGS API - FIXED ⭐
+// ⭐ RECEIPT SETTINGS API ⭐
 // ============================================
 app.get('/api/receipt-settings', (req, res) => {
     try {
@@ -180,7 +176,7 @@ app.get('/api/receipt-settings', (req, res) => {
         res.json(settings);
     } catch (error) {
         console.error('Error getting receipt settings:', error);
-        res.status(500).json({ error: 'Failed to get settings', details: error.message });
+        res.status(500).json({ error: 'Failed to get settings' });
     }
 });
 
@@ -188,24 +184,20 @@ app.post('/api/receipt-settings', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in. Please login first.' });
     }
-    
     try {
         const allowedFields = [
             'logoIcon', 'logoUrl', 'tagline', 'established', 'address', 'phone',
             'qrCodeUrl', 'discountAmount', 'discountThreshold',
             'thankYouMessage', 'footerMessage'
         ];
-        
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined && req.body[field] !== null) {
                 receiptSettings[field] = req.body[field];
             }
         });
-        
         if (!receiptSettings.logoIcon) {
             receiptSettings.logoIcon = '👨‍🍳';
         }
-        
         console.log('✅ Receipt settings saved successfully');
         res.json({ 
             success: true, 
@@ -239,33 +231,66 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// RESTAURANT API
+// ⭐ RESTAURANT CREATE API ⭐
 // ============================================
 app.post('/api/restaurant/create', (req, res) => {
-    const { name, ownerName, ownerEmail } = req.body;
-    if (!name || !ownerName || !ownerEmail) {
-        return res.status(400).json({ error: 'Missing required fields' });
+    try {
+        const { name, ownerName, ownerEmail } = req.body;
+        
+        console.log('📝 Creating restaurant with:', { name, ownerName, ownerEmail });
+        
+        // Validate input
+        if (!name || !ownerName || !ownerEmail) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields' 
+            });
+        }
+        
+        // Check if restaurant already exists with this email
+        const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
+        if (existing) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Restaurant already exists with this email' 
+            });
+        }
+        
+        // Generate restaurant ID
+        const restaurantId = 'restaurant-' + (restaurants.length + 1);
+        
+        // Create new restaurant
+        const newRestaurant = {
+            id: restaurants.length + 1,
+            restaurantId: restaurantId,
+            name: name,
+            ownerName: ownerName,
+            ownerEmail: ownerEmail,
+            createdAt: new Date().toLocaleString(),
+            menu: getDefaultMenu(),
+            deals: getDefaultDeals(),
+            orders: [],
+            restaurantName: name,
+            status: 'active'
+        };
+        
+        restaurants.push(newRestaurant);
+        
+        console.log(`🏪 New restaurant created: ${name} (${restaurantId})`);
+        
+        res.json({ 
+            success: true, 
+            restaurant: newRestaurant, 
+            restaurantId: restaurantId,
+            message: 'Restaurant created successfully!'
+        });
+    } catch (error) {
+        console.error('Error creating restaurant:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to create restaurant: ' + error.message 
+        });
     }
-    const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
-    if (existing) {
-        return res.status(400).json({ error: 'Restaurant already exists with this email' });
-    }
-    const restaurantId = 'restaurant-' + (restaurants.length + 1);
-    const newRestaurant = {
-        id: restaurants.length + 1,
-        restaurantId: restaurantId,
-        name: name,
-        ownerName: ownerName,
-        ownerEmail: ownerEmail,
-        createdAt: new Date().toLocaleString(),
-        menu: getDefaultMenu(),
-        deals: getDefaultDeals(),
-        orders: [],
-        restaurantName: name,
-        status: 'active'
-    };
-    restaurants.push(newRestaurant);
-    res.json({ success: true, restaurant: newRestaurant, restaurantId: restaurantId });
 });
 
 // ============================================
@@ -726,7 +751,7 @@ app.get('/api/users', (req, res) => {
 });
 
 // ============================================
-// GOOGLE OAUTH - FIXED
+// GOOGLE OAUTH
 // ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -758,7 +783,6 @@ passport.deserializeUser((id, done) => {
     done(null, user);
 });
 
-// ⭐ FIXED: Google Auth Routes with better error handling
 app.get('/auth/google',
     passport.authenticate('google', { 
         scope: ['profile', 'email'],
