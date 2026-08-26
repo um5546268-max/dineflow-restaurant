@@ -157,21 +157,32 @@
             border-bottom: 2px solid #e74c3c; 
             display: inline-block; 
         }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
         .menu-item-card {
             background: white;
             border-radius: 12px;
-            padding: 12px;
+            padding: 15px 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             transition: all 0.3s;
             text-align: center;
             cursor: pointer;
             position: relative;
         }
-        .menu-item-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-        .menu-item-card .item-icons { font-size: 2.2em; display: block; margin-bottom: 5px; letter-spacing: 2px; }
-        .menu-item-card .item-name { font-weight: 700; font-size: 0.9em; color: #2d3436; margin-bottom: 2px; }
-        .menu-item-card .item-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
+        .menu-item-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .menu-item-card .item-icons { 
+            font-size: 3.5em; 
+            display: block; 
+            margin-bottom: 8px; 
+            letter-spacing: 2px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            transition: all 0.3s;
+        }
+        .menu-item-card:hover .item-icons { 
+            transform: scale(1.1) rotate(-5deg);
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+        }
+        .menu-item-card .item-name { font-weight: 700; font-size: 0.95em; color: #2d3436; margin-bottom: 2px; }
+        .menu-item-card .item-price { font-weight: 700; color: #e74c3c; font-size: 1.1em; }
         .menu-item-card .item-category { font-size: 0.65em; color: #b2bec3; margin-bottom: 6px; }
         .menu-item-card .customizable-badge {
             font-size: 0.6em;
@@ -189,7 +200,7 @@
             border: none; 
             padding: 4px 12px; 
             border-radius: 20px; 
-            font-size: 0.65em; 
+            font-size: 0.7em; 
             font-weight: 600; 
             cursor: pointer; 
             transition: all 0.3s; 
@@ -201,7 +212,7 @@
             border: none; 
             padding: 4px 12px; 
             border-radius: 20px; 
-            font-size: 0.65em; 
+            font-size: 0.7em; 
             font-weight: 600; 
             cursor: pointer; 
             transition: all 0.3s; 
@@ -302,7 +313,7 @@
         }
         .deal-item:last-child { border-bottom: none; }
         .deal-item .deal-info { display: flex; flex-direction: column; }
-        .deal-item .deal-icons { font-size: 1.5em; letter-spacing: 2px; }
+        .deal-item .deal-icons { font-size: 2em; letter-spacing: 2px; }
         .deal-item .deal-name { font-weight: 600; color: #2d3436; }
         .deal-item .deal-desc { font-size: 0.75em; color: #636e72; }
         .deal-item .deal-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
@@ -757,12 +768,62 @@
             .receipt-popup .receipt-close { display: none; }
         }
 
+        /* ============================================
+           3D ICON STYLES - REALISTIC & BIG
+           ============================================ */
+        .icon-3d {
+            display: inline-block;
+            font-size: 3.5em;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+            transition: all 0.3s ease;
+            line-height: 1.2;
+            text-shadow: 
+                0 1px 0 rgba(255,255,255,0.3),
+                0 2px 0 rgba(0,0,0,0.1),
+                0 4px 8px rgba(0,0,0,0.2);
+        }
+        .icon-3d:hover {
+            transform: scale(1.15) rotate(-3deg);
+            filter: drop-shadow(0 12px 24px rgba(0,0,0,0.35));
+        }
+        .icon-3d-big {
+            font-size: 5em;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+            text-shadow: 
+                0 2px 0 rgba(255,255,255,0.3),
+                0 4px 0 rgba(0,0,0,0.1),
+                0 8px 16px rgba(0,0,0,0.25);
+        }
+        .icon-3d-big:hover {
+            transform: scale(1.1) rotate(-5deg);
+            filter: drop-shadow(0 16px 32px rgba(0,0,0,0.4));
+        }
+        .icon-3d-xl {
+            font-size: 6em;
+            filter: drop-shadow(0 12px 24px rgba(0,0,0,0.35));
+            text-shadow: 
+                0 3px 0 rgba(255,255,255,0.3),
+                0 6px 0 rgba(0,0,0,0.1),
+                0 12px 24px rgba(0,0,0,0.3);
+        }
+        .icon-3d-xl:hover {
+            transform: scale(1.08) rotate(-5deg);
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.45));
+        }
+        .icon-glow {
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25)); }
+            50% { filter: drop-shadow(0 8px 24px rgba(231, 76, 60, 0.4)); }
+        }
+
         @media (max-width: 600px) {
             .sidebar { width: 75px; }
             .category-item .cat-icon { font-size: 1.2em; }
             .category-item .cat-name { font-size: 0.55em; }
             .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-            .menu-item-card .item-icons { font-size: 1.8em; }
+            .menu-item-card .item-icons { font-size: 2.8em; }
             .top-header { padding: 8px 12px; }
             .restaurant-name { font-size: 1.1em; }
             .top-actions a { font-size: 0.75em; padding: 4px 10px; }
@@ -776,6 +837,9 @@
             .receipt-style { padding: 12px 10px; font-size: 11px; }
             .receipt-style .receipt-header .restaurant-name { font-size: 17px; }
             .receipt-style .receipt-grand-total { font-size: 14px; }
+            .icon-3d { font-size: 2.8em; }
+            .icon-3d-big { font-size: 4em; }
+            .icon-3d-xl { font-size: 5em; }
         }
         @media (max-width: 400px) {
             .sidebar { width: 60px; }
@@ -783,12 +847,15 @@
             .category-item .cat-icon { font-size: 1em; }
             .category-item .cat-name { font-size: 0.5em; }
             .menu-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-            .menu-item-card .item-icons { font-size: 1.5em; }
+            .menu-item-card .item-icons { font-size: 2.2em; }
             .menu-item-card .item-name { font-size: 0.75em; }
             .btn-quick, .btn-cart { font-size: 0.55em; padding: 3px 8px; }
             .star-btn { font-size: 1.5em; }
             .receipt-style { padding: 10px 8px; font-size: 10px; }
             .receipt-style .receipt-header .restaurant-name { font-size: 15px; }
+            .icon-3d { font-size: 2.2em; }
+            .icon-3d-big { font-size: 3.2em; }
+            .icon-3d-xl { font-size: 4em; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -827,6 +894,10 @@
         <button class="nav-item" data-panel="orders" onclick="showPanel('orders')">
             <span class="nav-icon">📦</span> Orders
             <span class="nav-badge" id="orderBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" data-panel="cart" onclick="showPanel('cart')">
+            <span class="nav-icon">🛒</span> Cart
+            <span class="nav-badge" id="cartNavBadge" style="display:none;">0</span>
         </button>
         <button class="nav-item" data-panel="account" onclick="showPanel('account')">
             <span class="nav-icon">👤</span> Account
@@ -956,6 +1027,21 @@
         </div>
     </div>
 
+    <!-- Cart Popup -->
+    <div class="popup-overlay" id="cartPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeCartPopup()">✕</button>
+            <div class="popup-title">🛒 Your Cart</div>
+            <div class="popup-subtitle">Review your items before ordering</div>
+            <div id="cartItemsList"></div>
+            <div style="text-align:center; padding:10px; font-size:1.2em; font-weight:700; color:#e74c3c; border-top:2px solid #eee; margin-top:10px;">
+                Total: <span id="cartTotalPrice">Rs 0.00</span>
+            </div>
+            <button class="order-submit-btn" onclick="checkoutCart()" style="margin-top:10px;">✅ Checkout</button>
+            <button style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeCartPopup()">Continue Shopping</button>
+        </div>
+    </div>
+
     <script>
         // ============================================================
         // GET RESTAURANT ID FROM URL
@@ -987,9 +1073,7 @@
                     restaurantConfig = data;
                     updateRestaurantNameDisplay();
                 })
-                .catch(() => {
-                    // Use default config if server not available
-                });
+                .catch(() => {});
         }
 
         // ============================================================
@@ -1004,7 +1088,10 @@
             { id: 'drinks', name: 'Drinks', icon: '🥤' },
             { id: 'salads', name: 'Salads', icon: '🥗' },
             { id: 'appetizers', name: 'Appetizers', icon: '🍤' },
-            { id: 'desserts', name: 'Desserts', icon: '🍰' }
+            { id: 'desserts', name: 'Desserts', icon: '🍰' },
+            { id: 'pasta', name: 'Pasta', icon: '🍝' },
+            { id: 'broast', name: 'Broast', icon: '🍗' },
+            { id: 'rolls', name: 'Rolls', icon: '🌯' }
         ];
         let menuItems = [];
         let deals = [];
@@ -1032,6 +1119,7 @@
         const loginRequiredPopup = document.getElementById('loginRequiredPopup');
         const locationPopup = document.getElementById('locationPopup');
         const cartBadge = document.getElementById('cartCount');
+        const cartNavBadge = document.getElementById('cartNavBadge');
         const restaurantNameEl = document.getElementById('restaurantName');
         const splashNameEl = document.getElementById('splashName');
 
@@ -1247,7 +1335,7 @@
         }
 
         // ============================================================
-        // RENDER MENU
+        // RENDER MENU WITH 3D ICONS
         // ============================================================
         function renderMenu() {
             let filtered = menuItems;
@@ -1273,7 +1361,7 @@
                 const hasLayers = item.layers && item.layers.length > 0;
                 html += `
                     <div class="menu-item-card">
-                        <span class="item-icons">${icons}</span>
+                        <span class="item-icons icon-3d">${icons}</span>
                         <div class="item-name">${item.name}</div>
                         <div class="item-category">${categories.find(c => c.id === item.category)?.name || ''}</div>
                         <div class="item-price">${currencySymbol} ${item.price.toFixed(2)}</div>
@@ -1290,7 +1378,7 @@
         }
 
         // ============================================================
-        // CART FUNCTIONS
+        // CART FUNCTIONS - MULTI-ORDER SUPPORT
         // ============================================================
         function addToCart(itemId) {
             const item = menuItems.find(i => i.id === itemId);
@@ -1302,7 +1390,105 @@
                 cart.push({ ...item, qty: 1 });
             }
             updateCartBadge();
-            showToast(`✅ ${item.name} added to cart!`);
+            showToast(`✅ ${item.name} added to cart! (${cart.length} items)`);
+        }
+
+        function removeFromCart(itemId) {
+            const index = cart.findIndex(i => i.id === itemId);
+            if (index !== -1) {
+                if (cart[index].qty > 1) {
+                    cart[index].qty--;
+                } else {
+                    cart.splice(index, 1);
+                }
+                updateCartBadge();
+                renderCartPopup();
+                showToast('🛒 Cart updated');
+            }
+        }
+
+        function getCartTotal() {
+            return cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+        }
+
+        function getCartItemCount() {
+            return cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+        }
+
+        function updateCartBadge() {
+            const total = getCartItemCount();
+            cartBadge.textContent = total;
+            cartNavBadge.textContent = total;
+            if (total > 0) {
+                cartNavBadge.style.display = 'inline';
+            } else {
+                cartNavBadge.style.display = 'none';
+            }
+        }
+
+        function renderCartPopup() {
+            const container = document.getElementById('cartItemsList');
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:30px 20px; color:#b2bec3;">
+                        <div style="font-size:3em; margin-bottom:10px;">🛒</div>
+                        <p>Your cart is empty</p>
+                        <button onclick="closeCartPopup()" style="margin-top:10px; background:#e74c3c; color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Browse Menu</button>
+                    </div>
+                `;
+                document.getElementById('cartTotalPrice').textContent = `${currencySymbol} 0.00`;
+                return;
+            }
+
+            let html = '';
+            cart.forEach(item => {
+                const qty = item.qty || 1;
+                const total = item.price * qty;
+                const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f2f6;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:2em;">${icons}</span>
+                            <div>
+                                <div style="font-weight:600;">${item.name}</div>
+                                <div style="font-size:0.8em; color:#636e72;">${currencySymbol} ${item.price.toFixed(2)} x ${qty}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-weight:700; color:#e74c3c;">${currencySymbol} ${total.toFixed(2)}</span>
+                            <button onclick="removeFromCart(${item.id})" style="background:#e74c3c; color:white; border:none; border-radius:50%; width:24px; height:24px; font-size:0.8em; cursor:pointer;">−</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.getElementById('cartTotalPrice').textContent = `${currencySymbol} ${getCartTotal().toFixed(2)}`;
+        }
+
+        function openCartPopup() {
+            renderCartPopup();
+            document.getElementById('cartPopup').classList.add('show');
+        }
+
+        function closeCartPopup() {
+            document.getElementById('cartPopup').classList.remove('show');
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) {
+                showToast('⚠️ Your cart is empty');
+                return;
+            }
+            if (!isLoggedIn) {
+                closeCartPopup();
+                openLoginRequired();
+                return;
+            }
+            const items = cart.map(item => ({ ...item, qty: item.qty || 1 }));
+            const total = getCartTotal();
+            pendingOrder = { items: items, total: total };
+            closeCartPopup();
+            openOrderForm();
         }
 
         function quickBuy(itemId) {
@@ -1314,11 +1500,6 @@
             }
             pendingOrder = { items: [{ ...item, qty: 1, id: itemId }], total: item.price };
             openOrderForm();
-        }
-
-        function updateCartBadge() {
-            const total = cart.reduce((sum, i) => sum + (i.qty || 1), 0);
-            cartBadge.textContent = total;
         }
 
         // ============================================================
@@ -1372,52 +1553,67 @@
         function openOrderForm() {
             if (!pendingOrder) return;
             selectOrderType('delivery');
-            const itemId = pendingOrder.items[0]?.id;
-            const menuItem = menuItems.find(i => i.id === itemId);
+            
+            // Check if any item has layers
+            let hasLayers = false;
             let layersHtml = '';
-            if (menuItem && menuItem.layers && menuItem.layers.length > 0) {
-                layersHtml = `
-                    <div style="margin-bottom:10px;">
-                        <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Select Layers:</label>
-                        <div class="layer-options" id="layerOptions">
-                            ${menuItem.layers.map(layer => `
-                                <span class="layer-option" data-layer="${layer}" onclick="toggleLayer(this)">${layer}</span>
-                            `).join('')}
+            pendingOrder.items.forEach(orderItem => {
+                const menuItem = menuItems.find(i => i.id === orderItem.id);
+                if (menuItem && menuItem.layers && menuItem.layers.length > 0) {
+                    hasLayers = true;
+                    layersHtml += `
+                        <div style="margin-bottom:10px; padding:10px; background:#f8f9fa; border-radius:8px;">
+                            <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Layers for ${menuItem.name}:</label>
+                            <div class="layer-options" data-item="${menuItem.id}">
+                                ${menuItem.layers.map(layer => `
+                                    <span class="layer-option" data-layer="${layer}" onclick="toggleLayer(this, ${menuItem.id})">${layer}</span>
+                                `).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
-            }
+                    `;
+                }
+            });
+            
             selectedLayers = [];
             orderLocation = { lat: null, lng: null, address: '' };
-            document.getElementById('orderTotalDisplay').textContent = `Total: ${currencySymbol} ${pendingOrder.total.toFixed(2)}`;
+            
+            const total = pendingOrder.total || getCartTotal();
+            document.getElementById('orderTotalDisplay').textContent = `Total: ${currencySymbol} ${total.toFixed(2)}`;
             document.getElementById('orderItems').value = JSON.stringify(pendingOrder.items);
-            document.getElementById('orderTotal').value = pendingOrder.total;
+            document.getElementById('orderTotal').value = total;
+            
             const existingLayerContainer = document.getElementById('layerContainer');
             if (existingLayerContainer) {
                 existingLayerContainer.innerHTML = layersHtml;
             }
+            
             document.getElementById('orderForm').reset();
             orderPopup.classList.add('show');
         }
 
-        function toggleLayer(element) {
+        function toggleLayer(element, itemId) {
             element.classList.toggle('selected');
-            const selected = document.querySelectorAll('#layerOptions .layer-option.selected');
-            selectedLayers = Array.from(selected).map(el => el.dataset.layer);
+            // Collect all selected layers for this item
+            const selected = document.querySelectorAll(`#layerContainer .layer-options[data-item="${itemId}"] .layer-option.selected`);
+            const layers = Array.from(selected).map(el => el.dataset.layer);
+            // Store in a global object
+            if (!window.selectedLayersMap) window.selectedLayersMap = {};
+            window.selectedLayersMap[itemId] = layers;
         }
 
         function closeOrderPopup() {
             orderPopup.classList.remove('show');
             pendingOrder = null;
+            window.selectedLayersMap = {};
         }
 
         // ============================================================
-        // LOCATION FUNCTIONS
+        // LOCATION FUNCTIONS - FIXED FOR ANDROID WEBVIEW
         // ============================================================
         function showLocationPopup(orderData) {
             pendingOrderData = orderData;
             document.getElementById('locationPopup').classList.add('show');
-            document.getElementById('locationStatus').innerHTML = '⏳ Click "Get My Location" to share';
+            document.getElementById('locationStatus').innerHTML = '📍 Please allow location access<br><small>Tap "Get My Location" to share</small>';
             document.getElementById('locationMap').style.display = 'none';
         }
 
@@ -1429,21 +1625,33 @@
         function getLocationForOrder() {
             const status = document.getElementById('locationStatus');
             const map = document.getElementById('locationMap');
+            
             if (!navigator.geolocation) {
-                status.innerHTML = '❌ Geolocation is not supported by your browser';
+                status.innerHTML = '❌ Geolocation is not supported. Please enter address manually.';
                 return;
             }
-            status.innerHTML = '⏳ Getting your location...';
+            
+            status.innerHTML = '⏳ Getting your location...<br><small>Please wait...</small>';
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+            
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     orderLocation.lat = lat;
                     orderLocation.lng = lng;
-                    status.innerHTML = `✅ Location found! (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
+                    
+                    status.innerHTML = `✅ Location found!<br><small>(${lat.toFixed(6)}, ${lng.toFixed(6)})</small>`;
+                    
                     map.style.display = 'block';
                     document.getElementById('locationIframe').src = 
                         `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
+                    
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                         .then(r => r.json())
                         .then(data => {
@@ -1453,21 +1661,93 @@
                             }
                         })
                         .catch(() => {});
+                    
                     setTimeout(() => {
                         submitOrderWithLocation();
-                    }, 500);
+                    }, 1000);
                 },
                 function(error) {
-                    status.innerHTML = '❌ Error getting location. Please enable GPS and try again.';
                     console.error('Location error:', error);
+                    let errorMsg = '❌ Error getting location.';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ Location permission denied. Please enable GPS in your browser settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ Location unavailable. Please check your GPS connection.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ Location request timed out. Please try again.';
+                            break;
+                        default:
+                            errorMsg = '❌ Error: ' + error.message;
+                    }
+                    
+                    status.innerHTML = errorMsg + '<br><small>Please enter address manually or use "Skip" button.</small>';
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                options
             );
         }
 
         function skipLocation() {
+            const address = document.getElementById('orderAddress').value;
+            const city = document.getElementById('orderCity').value;
+            if (address && city) {
+                orderLocation.address = address + ', ' + city;
+            }
             closeLocationPopup();
             submitOrderWithLocation();
+        }
+
+        // ============================================================
+        // SUBMIT ORDER
+        // ============================================================
+        function submitOrder(event) {
+            event.preventDefault();
+            const name = document.getElementById('orderName').value;
+            const phone = document.getElementById('orderPhone').value;
+            const address = document.getElementById('orderAddress').value;
+            const city = document.getElementById('orderCity').value;
+            const table = document.getElementById('orderTable')?.value || '';
+            const items = JSON.parse(document.getElementById('orderItems').value);
+            const total = parseFloat(document.getElementById('orderTotal').value);
+            
+            // Get selected layers for each item
+            const layers = [];
+            if (window.selectedLayersMap) {
+                Object.keys(window.selectedLayersMap).forEach(itemId => {
+                    if (window.selectedLayersMap[itemId].length > 0) {
+                        layers.push(...window.selectedLayersMap[itemId]);
+                    }
+                });
+            }
+            
+            const orderType = document.getElementById('orderType').value;
+
+            if (!name || !phone) {
+                showToast('⚠️ Please fill name and phone');
+                return;
+            }
+            if (orderType === 'delivery' && (!address || !city)) {
+                showToast('⚠️ Please fill delivery address');
+                return;
+            }
+            if (orderType === 'dinein' && !table) {
+                showToast('⚠️ Please enter table number');
+                return;
+            }
+
+            const orderData = { name, phone, address, city, items, total, layers, table };
+            closeOrderPopup();
+
+            if (orderType === 'delivery') {
+                showLocationPopup(orderData);
+            } else {
+                pendingOrderData = orderData;
+                orderLocation = { lat: null, lng: null, address: '' };
+                submitOrderWithLocation();
+            }
         }
 
         function submitOrderWithLocation() {
@@ -1505,11 +1785,21 @@
                     closeLocationPopup();
                     closeOrderPopup();
                     showToast('✅ Order placed successfully!');
-                    showReceipt(data.order || { ...orderData, id: data.order?.id || orderCounter - 1, status: 'pending', date: new Date().toLocaleString() });
-                    loadOrders();
-                    const itemIds = items.map(i => i.id);
-                    cart = cart.filter(i => !itemIds.includes(i.id));
+                    
+                    const orderObj = data.order || { 
+                        ...orderData, 
+                        id: data.order?.id || orderCounter - 1, 
+                        status: 'pending', 
+                        date: new Date().toLocaleString() 
+                    };
+                    
+                    showReceipt(orderObj);
+                    
+                    // Clear cart after successful order
+                    cart = [];
                     updateCartBadge();
+                    
+                    loadOrders();
                     showPanel('orders');
                 } else {
                     showToast('❌ ' + (data.error || 'Order failed'));
@@ -1522,47 +1812,7 @@
         }
 
         // ============================================================
-        // SUBMIT ORDER
-        // ============================================================
-        function submitOrder(event) {
-            event.preventDefault();
-            const name = document.getElementById('orderName').value;
-            const phone = document.getElementById('orderPhone').value;
-            const address = document.getElementById('orderAddress').value;
-            const city = document.getElementById('orderCity').value;
-            const table = document.getElementById('orderTable')?.value || '';
-            const items = JSON.parse(document.getElementById('orderItems').value);
-            const total = parseFloat(document.getElementById('orderTotal').value);
-            const layers = selectedLayers || [];
-            const orderType = document.getElementById('orderType').value;
-
-            if (!name || !phone) {
-                showToast('⚠️ Please fill name and phone');
-                return;
-            }
-            if (orderType === 'delivery' && (!address || !city)) {
-                showToast('⚠️ Please fill delivery address');
-                return;
-            }
-            if (orderType === 'dinein' && !table) {
-                showToast('⚠️ Please enter table number');
-                return;
-            }
-
-            const orderData = { name, phone, address, city, items, total, layers, table };
-            closeOrderPopup();
-
-            if (orderType === 'delivery') {
-                showLocationPopup(orderData);
-            } else {
-                pendingOrderData = orderData;
-                orderLocation = { lat: null, lng: null, address: '' };
-                submitOrderWithLocation();
-            }
-        }
-
-        // ============================================================
-        // RECEIPT - EXACT MATCH TO "THE HEAVEN SLICE" IMAGE
+        // RECEIPT - WITH AUTO-PRINT
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -1576,7 +1826,6 @@
 
             const config = restaurantConfig;
 
-            // Calculate totals
             let subtotal = 0;
             let itemRows = '';
             let totalItems = 0;
@@ -1599,14 +1848,12 @@
                 `;
             });
 
-            // Apply discount if subtotal exceeds threshold
             let discount = 0;
             if (subtotal > config.discountThreshold) {
                 discount = config.discountAmount;
             }
             const grandTotal = subtotal - discount;
 
-            // Generate QR code URL for app download
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(window.location.origin)}`;
 
             const html = `
@@ -1679,72 +1926,30 @@
 
             document.getElementById('receiptPrint').innerHTML = html;
             document.getElementById('receiptPopup').classList.add('show');
+            
+            autoPrintReceipt();
+        }
+
+        function autoPrintReceipt() {
+            if (window.print) {
+                try {
+                    setTimeout(() => {
+                        window.print();
+                        setTimeout(() => {
+                            const popup = document.getElementById('receiptPopup');
+                            if (popup && popup.classList.contains('show')) {
+                                console.log('Print cancelled or closed, keeping receipt visible');
+                            }
+                        }, 10000);
+                    }, 800);
+                } catch(e) {
+                    console.log('Print not available, showing popup instead');
+                }
+            }
         }
 
         function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
         function printReceipt() { window.print(); }
-
-        // ============================================================
-        // LOGIN REQUIRED
-        // ============================================================
-        function openLoginRequired() {
-            loginRequiredPopup.classList.add('show');
-        }
-        function closeLoginRequired() {
-            loginRequiredPopup.classList.remove('show');
-        }
-
-        // ============================================================
-        // DEALS
-        // ============================================================
-        function openDeals() {
-            loadDeals();
-            dealsPopup.classList.add('show');
-            renderDeals();
-        }
-        function closeDeals() {
-            dealsPopup.classList.remove('show');
-        }
-        function renderDeals() {
-            dealsList.innerHTML = '';
-            if (!deals || deals.length === 0) {
-                dealsList.innerHTML = '<p style="color:#b2bec3; text-align:center; padding:20px;">No deals available</p>';
-                return;
-            }
-            deals.forEach(deal => {
-                const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
-                const div = document.createElement('div');
-                div.className = 'deal-item';
-                div.innerHTML = `
-                    <div class="deal-info">
-                        <div class="deal-icons">${icons}</div>
-                        <div class="deal-name">${deal.name}</div>
-                        <div class="deal-desc">${deal.desc || ''}</div>
-                        <div style="font-size:0.75em; color:#b2bec3;">
-                            ${deal.original ? `<del>${currencySymbol} ${deal.original.toFixed(2)}</del>` : ''}
-                            <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
-                `;
-                dealsList.appendChild(div);
-            });
-        }
-        function buyDeal(dealId) {
-            if (!isLoggedIn) {
-                closeDeals();
-                openLoginRequired();
-                return;
-            }
-            const deal = deals.find(d => d.id === dealId);
-            if (!deal) return;
-            pendingOrder = {
-                items: [{ name: deal.name, price: deal.price, qty: 1, isDeal: true }],
-                total: deal.price
-            };
-            closeDeals();
-            openOrderForm();
-        }
 
         // ============================================================
         // PANEL NAVIGATION
@@ -1754,12 +1959,15 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             const navItem = document.querySelector(`.nav-item[data-panel="${panel}"]`);
             if (navItem) navItem.classList.add('active');
+            
             if (panel === 'menu') {
                 renderCategories();
                 renderMenu();
             } else if (panel === 'orders') {
                 loadOrders();
                 renderOrders();
+            } else if (panel === 'cart') {
+                openCartPopup();
             } else if (panel === 'account') {
                 renderAccount();
             } else if (panel === 'feedback') {
@@ -2100,21 +2308,34 @@
             const status = document.getElementById('locationStatus2');
             const map = document.getElementById('locationMap2');
             const shareBtn = document.getElementById('shareLocationBtn');
+            
             if (!navigator.geolocation) {
                 status.innerHTML = '❌ Geolocation is not supported by your browser';
                 return;
             }
+            
             status.innerHTML = '⏳ Getting your location...';
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+            
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     currentLat = position.coords.latitude;
                     currentLng = position.coords.longitude;
+                    
                     status.innerHTML = `✅ Location found! (${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})`;
+                    
                     map.style.display = 'block';
                     document.getElementById('locationIframe2').src = 
                         `https://www.openstreetmap.org/export/embed.html?bbox=${currentLng-0.01}%2C${currentLat-0.01}%2C${currentLng+0.01}%2C${currentLat+0.01}&layer=mapnik&marker=${currentLat}%2C${currentLng}`;
+                    
                     shareBtn.disabled = false;
                     shareBtn.style.opacity = '1';
+                    
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLng}`)
                         .then(r => r.json())
                         .then(data => {
@@ -2124,13 +2345,28 @@
                             }
                         })
                         .catch(() => {});
+                    
                     showToast('✅ Location found!');
                 },
                 function(error) {
-                    status.innerHTML = '❌ Error getting location. Please enable GPS and try again.';
                     console.error('Location error:', error);
+                    let errorMsg = '❌ Error getting location.';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ Location permission denied. Please enable GPS.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ Location unavailable. Check GPS.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ Request timed out. Try again.';
+                            break;
+                        default:
+                            errorMsg = '❌ Error: ' + error.message;
+                    }
+                    status.innerHTML = errorMsg;
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                options
             );
         }
 

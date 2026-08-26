@@ -67,8 +67,7 @@ let customerLocations = [];
 let orderCounter = 1;
 
 // ============================================
-// ⭐ RECEIPT SETTINGS (logo, QR code, discount rule, footer text) ⭐
-// Editable from the Admin Panel -> Settings -> Receipt Settings
+// ⭐ RECEIPT SETTINGS ⭐
 // ============================================
 let receiptSettings = {
     logoIcon: '👨‍🍳',
@@ -153,7 +152,7 @@ app.get('/api/whatsapp-number', (req, res) => {
 });
 
 // ============================================
-// ⭐ RECEIPT SETTINGS API (logo, QR code, discount rule, footer text) ⭐
+// ⭐ RECEIPT SETTINGS API ⭐
 // ============================================
 app.get('/api/receipt-settings', (req, res) => {
     res.json(receiptSettings);
