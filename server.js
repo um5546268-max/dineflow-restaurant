@@ -16,13 +16,20 @@ const PORT = process.env.PORT || 5000;
 const WHATSAPP_NUMBER = '923001234567'; // Format: CountryCode + Number (e.g., 923001234567)
 // ============================================
 
-// Middleware
-app.use(cors({ origin: '*', credentials: true }));
+// ============================================
+// MIDDLEWARE - Production Ready
+// ============================================
+app.use(cors({ 
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://dineflow.onrender.com', 'https://dineflow-admin.onrender.com']
+        : '*', 
+    credentials: true 
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'Public')));
 
-// Session
+// Session - Production Ready
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dineflow-super-secret-key-2026',
     resave: false,
@@ -30,7 +37,8 @@ app.use(session({
     proxy: true,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
 }));
 
@@ -38,7 +46,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ============================================
-// DATABASE
+// DATABASE (In-Memory)
 // ============================================
 const users = [];
 const restaurants = [];
@@ -50,6 +58,7 @@ let availableLayers = [
     '🌿 Jalapeno', '🍄 Mushroom', '🥓 Bacon'
 ];
 let customerLocations = [];
+let orderCounter = 1;
 
 // ============================================
 // DEFAULT MENU AND DEALS
@@ -154,26 +163,21 @@ app.post('/api/restaurant/create', (req, res) => {
 });
 
 // ============================================
-// ⭐ RESTAURANTS MANAGEMENT PANEL API ⭐
+// RESTAURANTS MANAGEMENT PANEL API
 // ============================================
-
-// Get all restaurants (for management panel)
 app.get('/api/restaurants/all', (req, res) => {
-    // If user is not logged in, return empty array
     if (!req.user) {
         return res.json([]);
     }
     res.json(restaurants);
 });
 
-// Save restaurants data (for management panel)
 app.post('/api/restaurants/all', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
     const { restaurants: newRestaurants } = req.body;
     if (newRestaurants && Array.isArray(newRestaurants)) {
-        // This is for sync with localStorage
         res.json({ success: true, message: 'Restaurants data synced' });
     } else {
         res.status(400).json({ error: 'Invalid data' });
@@ -351,7 +355,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ORDER ROUTES
+// ORDER ROUTES - Enhanced with Receipt Support
 // ============================================
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
@@ -361,7 +365,7 @@ app.post('/api/orders', (req, res) => {
         return res.status(404).json({ error: 'Restaurant not found' });
     }
     
-    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng } = req.body;
+    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -373,7 +377,7 @@ app.post('/api/orders', (req, res) => {
         phone: phone || '',
         address: address || 'In-store pickup',
         items: items,
-        layers: layers || {},
+        layers: layers || [],
         total: parseFloat(total),
         status: 'pending',
         orderType: orderType || 'delivery',
@@ -383,7 +387,9 @@ app.post('/api/orders', (req, res) => {
         restaurantId: restaurantId,
         lat: orderType === 'delivery' ? (lat || null) : null,
         lng: orderType === 'delivery' ? (lng || null) : null,
-        locationShared: orderType === 'delivery' && !!(lat && lng)
+        locationShared: orderType === 'delivery' && !!(lat && lng),
+        table: table || null,
+        orderNumber: orderCounter++
     };
     
     restaurant.orders.push(newOrder);

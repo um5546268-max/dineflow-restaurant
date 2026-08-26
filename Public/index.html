@@ -15,539 +15,166 @@
             flex-direction: column;
             overflow: hidden;
         }
-
-        /* Splash Screen */
-        #splashScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-        #splashScreen.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
-        #splashScreen .splash-logo { font-size: 5em; animation: pulse 1.5s infinite; }
-        #splashScreen .splash-name { 
-            color: white; 
-            font-size: 2.5em; 
-            font-weight: 700; 
-            margin-top: 10px; 
-            letter-spacing: 2px;
-            text-align: center;
-        }
-        #splashScreen .splash-sub { 
-            color: rgba(255,255,255,0.7); 
-            font-size: 1em; 
-            margin-top: 5px; 
-        }
-        #splashScreen .splash-loader { 
-            margin-top: 30px; 
-            width: 200px; 
-            height: 4px; 
-            background: rgba(255,255,255,0.2); 
-            border-radius: 2px; 
-            overflow: hidden; 
-        }
-        #splashScreen .splash-loader .splash-progress { 
-            height: 100%; 
-            background: white; 
-            border-radius: 2px; 
-            width: 0%; 
-            animation: loadProgress 2s ease-in-out forwards; 
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
-
-        /* Top Header */
-        .top-header {
-            background: white;
-            padding: 12px 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-            z-index: 10;
-        }
-        .restaurant-name { font-size: 1.3em; font-weight: 700; color: #e74c3c; }
-        .restaurant-name span { font-weight: 300; color: #2d3436; }
-        .top-actions { display: flex; gap: 10px; align-items: center; }
-        .top-actions a { 
-            text-decoration: none; 
-            color: #2d3436; 
-            font-weight: 600; 
-            font-size: 0.85em; 
-            padding: 5px 12px; 
-            border-radius: 20px; 
-            transition: all 0.3s; 
-            cursor: pointer; 
-        }
-        .top-actions a:hover { background: #f1f2f6; }
-        .deals-btn { 
-            background: #e74c3c !important; 
-            color: white !important; 
-            padding: 6px 16px !important; 
-            border-radius: 25px !important; 
-            cursor: pointer; 
-        }
-        .deals-btn:hover { background: #c0392b !important; transform: scale(1.02); }
-        .cart-icon { position: relative; font-size: 1.2em; cursor: pointer; }
-        .cart-badge { 
-            position: absolute; 
-            top: -8px; 
-            right: -10px; 
-            background: #e74c3c; 
-            color: white; 
-            font-size: 0.6em; 
-            font-weight: 700; 
-            padding: 2px 8px; 
-            border-radius: 50%; 
-            min-width: 20px; 
-            text-align: center; 
-        }
-
-        /* Main Layout */
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-
-        /* Sidebar */
-        .sidebar {
-            width: 100px;
-            background: white;
-            padding: 12px 0;
-            overflow-y: auto;
-            flex-shrink: 0;
-            border-right: 1px solid #eee;
-            height: 100%;
-        }
-        .sidebar::-webkit-scrollbar { width: 3px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
-        .category-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 3px solid transparent;
-            text-align: center;
-        }
-        .category-item:hover { background: #f8f9fa; }
-        .category-item.active { border-left-color: #e74c3c; background: #fdf2f2; }
-        .category-item .cat-icon { font-size: 1.5em; margin-bottom: 3px; }
-        .category-item .cat-name { font-size: 0.65em; font-weight: 600; color: #636e72; line-height: 1.2; }
-        .category-item.active .cat-name { color: #e74c3c; }
-
-        /* Menu Area */
-        .menu-area {
-            flex: 1;
-            padding: 12px 16px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            height: 100%;
-        }
-        .menu-area::-webkit-scrollbar { width: 5px; }
-        .menu-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
-        .section-title { 
-            font-size: 1em; 
-            font-weight: 700; 
-            color: #2d3436; 
-            margin-bottom: 12px; 
-            padding-bottom: 6px; 
-            border-bottom: 2px solid #e74c3c; 
-            display: inline-block; 
-        }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-        .menu-item-card {
-            background: white;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: all 0.3s;
-            text-align: center;
-            cursor: pointer;
-            position: relative;
-        }
-        .menu-item-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-        .menu-item-card .item-icons { font-size: 2.2em; display: block; margin-bottom: 5px; letter-spacing: 2px; }
-        .menu-item-card .item-name { font-weight: 700; font-size: 0.9em; color: #2d3436; margin-bottom: 2px; }
-        .menu-item-card .item-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
-        .menu-item-card .item-category { font-size: 0.65em; color: #b2bec3; margin-bottom: 6px; }
-        .menu-item-card .customizable-badge {
-            font-size: 0.6em;
-            background: #fef9e7;
-            color: #f39c12;
-            padding: 2px 10px;
-            border-radius: 12px;
-            display: inline-block;
-            margin-top: 4px;
-        }
-        .item-actions { display: flex; gap: 4px; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
-        .btn-quick { 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.65em; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-        }
-        .btn-quick:hover { background: #c0392b; transform: scale(1.05); }
-        .btn-cart { 
-            background: #f1f2f6; 
-            color: #2d3436; 
-            border: none; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.65em; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-        }
-        .btn-cart:hover { background: #dfe6e9; transform: scale(1.05); }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 8px 12px;
-            border-top: 1px solid #eee;
-            flex-shrink: 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #b2bec3;
-            font-size: 0.65em;
-            font-weight: 600;
-            transition: all 0.3s;
-            padding: 4px 12px;
-            border-radius: 10px;
-            position: relative;
-            cursor: pointer;
-            background: none;
-            border: none;
-        }
-        .nav-item .nav-icon { font-size: 1.3em; margin-bottom: 1px; }
-        .nav-item.active { color: #e74c3c; }
-        .nav-item:hover { color: #e74c3c; background: #fdf2f2; }
-        .nav-item .nav-badge { 
-            position: absolute; 
-            top: -2px; 
-            right: 2px; 
-            background: #e74c3c; 
-            color: white; 
-            font-size: 0.6em; 
-            font-weight: 700; 
-            padding: 1px 7px; 
-            border-radius: 50%; 
-            min-width: 18px; 
-            text-align: center; 
-        }
-
-        /* Popups */
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
+        /* ... (keep all existing styles) ... */
+        .receipt-style {
+            font-family: 'Courier New', monospace;
+            background: #fff;
             padding: 20px;
-            animation: fadeIn 0.3s;
+            border-radius: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .popup-overlay.show { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .popup-content {
-            background: white;
-            border-radius: 20px;
-            max-width: 450px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            padding: 25px 20px;
-            position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        .receipt-style .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
         }
-        .popup-close { 
-            position: absolute; 
-            top: 10px; 
-            right: 14px; 
-            font-size: 1.4em; 
-            cursor: pointer; 
-            color: #b2bec3; 
-            transition: all 0.3s; 
-            background: none; 
-            border: none; 
+        .receipt-style .receipt-header h2 {
+            font-size: 20px;
+            margin: 0;
+            color: #e74c3c;
         }
-        .popup-close:hover { color: #e74c3c; transform: rotate(90deg); }
-        .popup-title { font-size: 1.3em; font-weight: 700; color: #2d3436; margin-bottom: 4px; }
-        .popup-subtitle { color: #636e72; margin-bottom: 15px; font-size: 0.85em; }
-
-        .deal-item {
+        .receipt-style .receipt-header .est {
+            font-size: 11px;
+            color: #777;
+        }
+        .receipt-style .receipt-header .address {
+            font-size: 11px;
+            color: #555;
+        }
+        .receipt-style .receipt-divider {
+            border-top: 1px dashed #999;
+            margin: 8px 0;
+        }
+        .receipt-style .receipt-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f1f2f6;
+            font-size: 13px;
+            padding: 2px 0;
         }
-        .deal-item:last-child { border-bottom: none; }
-        .deal-item .deal-info { display: flex; flex-direction: column; }
-        .deal-item .deal-icons { font-size: 1.5em; letter-spacing: 2px; }
-        .deal-item .deal-name { font-weight: 600; color: #2d3436; }
-        .deal-item .deal-desc { font-size: 0.75em; color: #636e72; }
-        .deal-item .deal-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
-        .deal-buy-btn { 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            padding: 5px 16px; 
-            border-radius: 20px; 
-            font-weight: 600; 
-            font-size: 0.8em; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-        }
-        .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
-
-        /* Order Form */
-        .order-form input, .order-form select, .order-form textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #dfe6e9;
-            border-radius: 10px;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-            font-family: inherit;
-            transition: border 0.3s;
-        }
-        .order-form input:focus, .order-form select:focus, .order-form textarea:focus {
-            outline: none;
-            border-color: #e74c3c;
-        }
-        .order-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .order-submit-btn { 
-            width: 100%; 
-            padding: 12px; 
-            background: #27ae60; 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 1em; 
-            font-weight: 700; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-        }
-        .order-submit-btn:hover { background: #1e8449; transform: scale(1.02); }
-        .order-total-display { 
-            text-align: center; 
-            font-size: 1.2em; 
-            font-weight: 700; 
-            color: #e74c3c; 
-            padding: 10px; 
-            background: #fdf2f2; 
-            border-radius: 10px; 
-            margin-bottom: 15px; 
-        }
-
-        /* ⭐ ORDER TYPE BUTTONS ⭐ */
-        .order-type-btn {
+        .receipt-style .receipt-row .item-name {
             flex: 1;
-            padding: 10px;
-            border: 2px solid #dfe6e9;
-            border-radius: 10px;
-            background: white;
-            color: #2d3436;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9em;
         }
-        .order-type-btn.active {
-            border-color: #e74c3c;
-            background: #e74c3c;
-            color: white;
+        .receipt-style .receipt-row .item-qty {
+            width: 40px;
+            text-align: center;
         }
-        .order-type-btn:hover {
-            transform: scale(1.02);
+        .receipt-style .receipt-row .item-price {
+            width: 70px;
+            text-align: right;
         }
-
-        /* Layer Selection */
-        .layer-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+        .receipt-style .receipt-row .item-amount {
+            width: 70px;
+            text-align: right;
+        }
+        .receipt-style .receipt-total {
+            border-top: 2px double #333;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .receipt-style .receipt-footer {
+            text-align: center;
+            border-top: 2px dashed #333;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #555;
+        }
+        .receipt-style .receipt-qr {
+            text-align: center;
             margin: 10px 0;
         }
-        .layer-option {
-            padding: 6px 14px;
-            border: 2px solid #dfe6e9;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.85em;
-            background: white;
-            color: #2d3436;
+        .receipt-style .receipt-qr img {
+            max-width: 100px;
+            height: auto;
         }
-        .layer-option:hover {
-            border-color: #3498db;
-            transform: scale(1.02);
-        }
-        .layer-option.selected {
-            border-color: #e74c3c;
-            background: #fdf2f2;
-            color: #e74c3c;
-            font-weight: 600;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #2d3436;
-            color: white;
-            padding: 10px 22px;
+        .order-status-badge {
+            display: inline-block;
+            padding: 2px 12px;
             border-radius: 12px;
+            font-size: 0.7em;
             font-weight: 600;
-            z-index: 9999;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            animation: fadeIn 0.3s ease;
-            max-width: 90%;
-            text-align: center;
-            font-size: 0.9em;
         }
-
         .status-pending { background: #fdf2f2; color: #e74c3c; }
         .status-confirmed { background: #e8f4fd; color: #3498db; }
         .status-preparing { background: #fef9e7; color: #f39c12; }
         .status-ready { background: #e8f8f0; color: #27ae60; }
         .status-delivered { background: #e8f8f0; color: #27ae60; }
         .status-cancelled { background: #fdf2f2; color: #e74c3c; }
-
-        /* Feedback Stars */
-        .star-btn {
-            font-size: 2.2em;
+        .receipt-popup {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .receipt-popup.show { display: flex; }
+        .receipt-popup .receipt-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+        .receipt-popup .receipt-close {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 1.4em;
+            cursor: pointer;
+            color: #b2bec3;
             background: none;
             border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            padding: 5px;
-            opacity: 0.3;
-            filter: grayscale(100%);
         }
-        .star-btn.active {
-            opacity: 1;
-            filter: grayscale(0%);
-            transform: scale(1.1);
-        }
-        .star-btn:hover {
-            transform: scale(1.2);
-        }
-
-        .support-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .receipt-popup .receipt-close:hover { color: #e74c3c; }
+        .receipt-popup .receipt-actions {
+            display: flex;
+            gap: 10px;
             margin-top: 15px;
+            justify-content: center;
         }
-        .support-options .support-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
+        .receipt-popup .receipt-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            border: 1px solid #eee;
         }
-        .support-options .support-card:hover {
-            background: #fdf2f2;
-            border-color: #e74c3c;
-            transform: translateY(-2px);
+        .receipt-popup .btn-print-receipt { background: #27ae60; color: white; }
+        .receipt-popup .btn-print-receipt:hover { background: #1e8449; }
+        .receipt-popup .btn-close-receipt { background: #b2bec3; color: white; }
+        .receipt-popup .btn-close-receipt:hover { background: #636e72; }
+        @media print {
+            body * { visibility: hidden; }
+            #receiptPrint, #receiptPrint * { visibility: visible; }
+            #receiptPrint {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 80mm;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                background: white;
+                color: black;
+            }
         }
-        .support-options .support-card .support-icon {
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-        .support-options .support-card .support-label {
-            font-weight: 600;
-            font-size: 0.85em;
-        }
-        .support-options .support-card .support-desc {
-            font-size: 0.7em;
-            color: #b2bec3;
-            margin-top: 3px;
-        }
-
-        /* Location Popup */
-        #locationMap {
-            width: 100%;
-            height: 250px;
-            border-radius: 10px;
-            background: #f1f2f6;
-            display: none;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        #locationMap iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-
-        @media (max-width: 600px) {
-            .sidebar { width: 75px; }
-            .category-item .cat-icon { font-size: 1.2em; }
-            .category-item .cat-name { font-size: 0.55em; }
-            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-            .menu-item-card .item-icons { font-size: 1.8em; }
-            .top-header { padding: 8px 12px; }
-            .restaurant-name { font-size: 1.1em; }
-            .top-actions a { font-size: 0.75em; padding: 4px 10px; }
-            .order-form .form-row { grid-template-columns: 1fr; }
-            .popup-content { padding: 18px 14px; margin: 10px; }
-            .bottom-nav .nav-item { font-size: 0.55em; padding: 3px 8px; }
-            .bottom-nav .nav-item .nav-icon { font-size: 1.1em; }
-            .deal-item .deal-icons { font-size: 1.2em; }
-            .star-btn { font-size: 1.8em; }
-            .support-options { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 400px) {
-            .sidebar { width: 60px; }
-            .category-item { padding: 8px 4px; }
-            .category-item .cat-icon { font-size: 1em; }
-            .category-item .cat-name { font-size: 0.5em; }
-            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-            .menu-item-card .item-icons { font-size: 1.5em; }
-            .menu-item-card .item-name { font-size: 0.75em; }
-            .btn-quick, .btn-cart { font-size: 0.55em; padding: 3px 8px; }
-            .star-btn { font-size: 1.5em; }
-        }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        /* ... keep other styles ... */
     </style>
 </head>
 <body>
-
-    <!-- Splash Screen -->
+    <!-- Splash Screen (keep existing) -->
     <div id="splashScreen">
         <div class="splash-logo">🍔</div>
         <div class="splash-name" id="splashName">DineFlow</div>
@@ -609,7 +236,7 @@
         </div>
     </div>
 
-    <!-- ⭐ Order Form Popup - UPDATED ⭐ -->
+    <!-- Order Form Popup -->
     <div class="popup-overlay" id="orderPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeOrderPopup()">✕</button>
@@ -620,7 +247,6 @@
                 <input type="text" id="orderName" placeholder="Full Name" required />
                 <input type="tel" id="orderPhone" placeholder="Phone Number" required />
                 
-                <!-- ⭐ ORDER TYPE SELECTION ⭐ -->
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <button type="button" class="order-type-btn active" id="deliveryBtn" onclick="selectOrderType('delivery')" style="flex:1; padding:10px; border:2px solid #e74c3c; border-radius:10px; background:#e74c3c; color:white; font-weight:700; cursor:pointer;">
                         🚚 Delivery
@@ -628,9 +254,11 @@
                     <button type="button" class="order-type-btn" id="takeawayBtn" onclick="selectOrderType('takeaway')" style="flex:1; padding:10px; border:2px solid #dfe6e9; border-radius:10px; background:white; color:#2d3436; font-weight:700; cursor:pointer;">
                         🏪 Takeaway
                     </button>
+                    <button type="button" class="order-type-btn" id="dineinBtn" onclick="selectOrderType('dinein')" style="flex:1; padding:10px; border:2px solid #dfe6e9; border-radius:10px; background:white; color:#2d3436; font-weight:700; cursor:pointer;">
+                        🍽️ Dine-In
+                    </button>
                 </div>
                 
-                <!-- ⭐ PAYMENT METHOD ⭐ -->
                 <select id="paymentMethod" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
                     <option value="cash">💵 Cash on Delivery</option>
                     <option value="easypaisa">📱 Easypaisa</option>
@@ -638,10 +266,12 @@
                     <option value="card">💳 Credit Card</option>
                 </select>
                 
-                <!-- ⭐ DELIVERY FIELDS ⭐ -->
                 <div id="deliveryFields">
                     <input type="text" id="orderAddress" placeholder="Delivery Address" required />
                     <input type="text" id="orderCity" placeholder="City" required />
+                </div>
+                <div id="dineinFields" style="display:none;">
+                    <input type="text" id="orderTable" placeholder="Table Number (e.g., 2)" />
                 </div>
                 <div id="layerContainer"></div>
                 <input type="hidden" id="orderItems" />
@@ -667,7 +297,7 @@
         </div>
     </div>
 
-    <!-- ⭐ LOCATION POPUP FOR DELIVERY ⭐ -->
+    <!-- Location Popup -->
     <div class="popup-overlay" id="locationPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeLocationPopup()">✕</button>
@@ -690,7 +320,7 @@
         </div>
     </div>
 
-    <!-- ⭐ FEEDBACK POPUP (Auto after order) ⭐ -->
+    <!-- Feedback Popup -->
     <div class="popup-overlay" id="feedbackPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeFeedback()">✕</button>
@@ -710,6 +340,18 @@
         </div>
     </div>
 
+    <!-- Receipt Popup -->
+    <div class="receipt-popup" id="receiptPopup">
+        <div class="receipt-content">
+            <button class="receipt-close" onclick="closeReceipt()">✕</button>
+            <div id="receiptPrint"></div>
+            <div class="receipt-actions">
+                <button class="btn-print-receipt" onclick="printReceipt()">🖨️ Print Receipt</button>
+                <button class="btn-close-receipt" onclick="closeReceipt()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================================
         // GET RESTAURANT ID FROM URL
@@ -718,7 +360,6 @@
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('restaurant') || 'restaurant-1';
         }
-
         const RESTAURANT_ID = getRestaurantId();
 
         // ============================================================
@@ -735,7 +376,6 @@
             { id: 'appetizers', name: 'Appetizers', icon: '🍤' },
             { id: 'desserts', name: 'Desserts', icon: '🍰' }
         ];
-
         let menuItems = [];
         let deals = [];
         let orders = [];
@@ -750,6 +390,9 @@
         let selectedOrderType = 'delivery';
         let orderLocation = { lat: null, lng: null, address: '' };
         let pendingOrderData = null;
+        let currencySymbol = 'Rs';
+        let whatsappNumber = '923001234567';
+        let orderCounter = 1;
 
         // ============================================================
         // DOM REFS
@@ -771,7 +414,6 @@
         function checkPersistentLogin() {
             const savedUser = localStorage.getItem('dineflow_user');
             const savedSession = localStorage.getItem('dineflow_session');
-            
             if (savedUser && savedSession) {
                 try {
                     const userData = JSON.parse(savedUser);
@@ -787,9 +429,7 @@
                                     isLoggedIn = true;
                                     user = data.user;
                                     localStorage.setItem('dineflow_user', JSON.stringify(user));
-                                    localStorage.setItem('dineflow_session', JSON.stringify({
-                                        timestamp: new Date().getTime()
-                                    }));
+                                    localStorage.setItem('dineflow_session', JSON.stringify({ timestamp: new Date().getTime() }));
                                 } else {
                                     localStorage.removeItem('dineflow_user');
                                     localStorage.removeItem('dineflow_session');
@@ -822,9 +462,7 @@
             isLoggedIn = true;
             user = userData;
             localStorage.setItem('dineflow_user', JSON.stringify(userData));
-            localStorage.setItem('dineflow_session', JSON.stringify({
-                timestamp: new Date().getTime()
-            }));
+            localStorage.setItem('dineflow_session', JSON.stringify({ timestamp: new Date().getTime() }));
         }
 
         // ============================================================
@@ -832,7 +470,6 @@
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             checkPersistentLogin();
-            
             fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
@@ -841,14 +478,16 @@
                     updateSplashName();
                 })
                 .catch(() => {});
-
+            fetch('/api/whatsapp-number')
+                .then(r => r.json())
+                .then(data => { whatsappNumber = data.number || '923001234567'; })
+                .catch(() => {});
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('hide');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
                 }, 600);
             }, 2000);
-            
             loadAllData();
             showPanel('menu');
         });
@@ -942,7 +581,7 @@
                         localStorage.removeItem('dineflow_session');
                     }
                 })
-                .catch(() => { 
+                .catch(() => {
                     const savedUser = localStorage.getItem('dineflow_user');
                     if (savedUser) {
                         try {
@@ -983,7 +622,6 @@
             if (currentCategory !== 'all') {
                 filtered = menuItems.filter(item => item.category === currentCategory);
             }
-
             if (!filtered || filtered.length === 0) {
                 menuArea.innerHTML = `
                     <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
@@ -994,12 +632,10 @@
                 `;
                 return;
             }
-
             let html = `
                 <div class="section-title">${categories.find(c => c.id === currentCategory)?.icon || '🍽️'} ${categories.find(c => c.id === currentCategory)?.name || 'All'}</div>
                 <div class="menu-grid">
             `;
-
             filtered.forEach(item => {
                 const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
                 const hasLayers = item.layers && item.layers.length > 0;
@@ -1008,7 +644,7 @@
                         <span class="item-icons">${icons}</span>
                         <div class="item-name">${item.name}</div>
                         <div class="item-category">${categories.find(c => c.id === item.category)?.name || ''}</div>
-                        <div class="item-price">Rs ${item.price.toFixed(2)}</div>
+                        <div class="item-price">${currencySymbol} ${item.price.toFixed(2)}</div>
                         ${hasLayers ? `<div class="customizable-badge">🧅 Customizable</div>` : ''}
                         <div class="item-actions">
                             <button class="btn-quick" onclick="quickBuy(${item.id})">⚡ Quick Buy</button>
@@ -1017,7 +653,6 @@
                     </div>
                 `;
             });
-
             html += `</div>`;
             menuArea.innerHTML = html;
         }
@@ -1055,36 +690,47 @@
         }
 
         // ============================================================
-        // ⭐ ORDER TYPE SELECTION ⭐
+        // ORDER TYPE SELECTION
         // ============================================================
         function selectOrderType(type) {
             selectedOrderType = type;
             const deliveryBtn = document.getElementById('deliveryBtn');
             const takeawayBtn = document.getElementById('takeawayBtn');
+            const dineinBtn = document.getElementById('dineinBtn');
             const deliveryFields = document.getElementById('deliveryFields');
-            
+            const dineinFields = document.getElementById('dineinFields');
+
+            [deliveryBtn, takeawayBtn, dineinBtn].forEach(b => {
+                b.classList.remove('active');
+                b.style.background = 'white';
+                b.style.color = '#2d3436';
+                b.style.borderColor = '#dfe6e9';
+            });
+
             if (type === 'delivery') {
                 deliveryBtn.classList.add('active');
                 deliveryBtn.style.background = '#e74c3c';
                 deliveryBtn.style.color = 'white';
                 deliveryBtn.style.borderColor = '#e74c3c';
-                takeawayBtn.classList.remove('active');
-                takeawayBtn.style.background = 'white';
-                takeawayBtn.style.color = '#2d3436';
-                takeawayBtn.style.borderColor = '#dfe6e9';
                 deliveryFields.style.display = 'block';
+                dineinFields.style.display = 'none';
                 document.getElementById('orderType').value = 'delivery';
-            } else {
+            } else if (type === 'takeaway') {
                 takeawayBtn.classList.add('active');
                 takeawayBtn.style.background = '#e74c3c';
                 takeawayBtn.style.color = 'white';
                 takeawayBtn.style.borderColor = '#e74c3c';
-                deliveryBtn.classList.remove('active');
-                deliveryBtn.style.background = 'white';
-                deliveryBtn.style.color = '#2d3436';
-                deliveryBtn.style.borderColor = '#dfe6e9';
                 deliveryFields.style.display = 'none';
+                dineinFields.style.display = 'none';
                 document.getElementById('orderType').value = 'takeaway';
+            } else {
+                dineinBtn.classList.add('active');
+                dineinBtn.style.background = '#e74c3c';
+                dineinBtn.style.color = 'white';
+                dineinBtn.style.borderColor = '#e74c3c';
+                deliveryFields.style.display = 'none';
+                dineinFields.style.display = 'block';
+                document.getElementById('orderType').value = 'dinein';
             }
         }
 
@@ -1093,13 +739,9 @@
         // ============================================================
         function openOrderForm() {
             if (!pendingOrder) return;
-            
-            // Reset order type to delivery
             selectOrderType('delivery');
-            
             const itemId = pendingOrder.items[0]?.id;
             const menuItem = menuItems.find(i => i.id === itemId);
-            
             let layersHtml = '';
             if (menuItem && menuItem.layers && menuItem.layers.length > 0) {
                 layersHtml = `
@@ -1113,19 +755,15 @@
                     </div>
                 `;
             }
-            
             selectedLayers = [];
             orderLocation = { lat: null, lng: null, address: '' };
-            
-            document.getElementById('orderTotalDisplay').textContent = `Total: Rs ${pendingOrder.total.toFixed(2)}`;
+            document.getElementById('orderTotalDisplay').textContent = `Total: ${currencySymbol} ${pendingOrder.total.toFixed(2)}`;
             document.getElementById('orderItems').value = JSON.stringify(pendingOrder.items);
             document.getElementById('orderTotal').value = pendingOrder.total;
-            
             const existingLayerContainer = document.getElementById('layerContainer');
             if (existingLayerContainer) {
                 existingLayerContainer.innerHTML = layersHtml;
             }
-            
             document.getElementById('orderForm').reset();
             orderPopup.classList.add('show');
         }
@@ -1142,7 +780,7 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION FUNCTIONS FOR DELIVERY ⭐
+        // LOCATION FUNCTIONS - FIXED ACCURACY
         // ============================================================
         function showLocationPopup(orderData) {
             pendingOrderData = orderData;
@@ -1159,27 +797,21 @@
         function getLocationForOrder() {
             const status = document.getElementById('locationStatus');
             const map = document.getElementById('locationMap');
-            
             if (!navigator.geolocation) {
                 status.innerHTML = '❌ Geolocation is not supported by your browser';
                 return;
             }
-            
             status.innerHTML = '⏳ Getting your location...';
-            
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     orderLocation.lat = lat;
                     orderLocation.lng = lng;
-                    
                     status.innerHTML = `✅ Location found! (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
-                    
                     map.style.display = 'block';
                     document.getElementById('locationIframe').src = 
                         `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
-                    
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                         .then(r => r.json())
                         .then(data => {
@@ -1189,7 +821,6 @@
                             }
                         })
                         .catch(() => {});
-                    
                     setTimeout(() => {
                         submitOrderWithLocation();
                     }, 500);
@@ -1198,7 +829,7 @@
                     status.innerHTML = '❌ Error getting location. Please enable GPS and try again.';
                     console.error('Location error:', error);
                 },
-                { enableHighAccuracy: true }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         }
 
@@ -1209,39 +840,42 @@
 
         function submitOrderWithLocation() {
             if (!pendingOrderData) return;
-            
             const { name, phone, address, city, items, total, layers } = pendingOrderData;
             const fullAddress = address + ', ' + city;
             const orderType = document.getElementById('orderType').value;
             const paymentMethod = document.getElementById('paymentMethod').value;
-            
-            // Only send location if delivery
+            const table = document.getElementById('orderTable')?.value || '';
             const sendLat = orderType === 'delivery' ? orderLocation.lat : null;
             const sendLng = orderType === 'delivery' ? orderLocation.lng : null;
-            
+
+            const orderData = {
+                items: items,
+                total: total,
+                name: name,
+                phone: phone,
+                address: orderType === 'dinein' ? 'Dine-In - Table ' + table : fullAddress,
+                layers: layers || [],
+                orderType: orderType,
+                paymentMethod: paymentMethod,
+                lat: sendLat,
+                lng: sendLng,
+                table: table,
+                orderNumber: orderCounter++
+            };
+
             fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    items: items,
-                    total: total,
-                    name: name,
-                    phone: phone,
-                    address: fullAddress,
-                    layers: layers || [],
-                    orderType: orderType,
-                    paymentMethod: paymentMethod,
-                    lat: sendLat,
-                    lng: sendLng
-                })
+                body: JSON.stringify(orderData)
             })
             .then(r => r.json())
             .then(data => {
-                if (data.message) {
+                if (data.message || data.order) {
                     closeLocationPopup();
                     closeOrderPopup();
                     showToast('✅ Order placed successfully!');
-                    showFeedbackPopup();
+                    // Show receipt popup with order data
+                    showReceipt(data.order || { ...orderData, id: data.order?.id || orderCounter - 1, status: 'pending', date: new Date().toLocaleString() });
                     loadOrders();
                     const itemIds = items.map(i => i.id);
                     cart = cart.filter(i => !itemIds.includes(i.id));
@@ -1254,7 +888,6 @@
             .catch(() => {
                 showToast('❌ Network error');
             });
-            
             pendingOrderData = null;
         }
 
@@ -1263,11 +896,11 @@
         // ============================================================
         function submitOrder(event) {
             event.preventDefault();
-
             const name = document.getElementById('orderName').value;
             const phone = document.getElementById('orderPhone').value;
             const address = document.getElementById('orderAddress').value;
             const city = document.getElementById('orderCity').value;
+            const table = document.getElementById('orderTable')?.value || '';
             const items = JSON.parse(document.getElementById('orderItems').value);
             const total = parseFloat(document.getElementById('orderTotal').value);
             const layers = selectedLayers || [];
@@ -1277,20 +910,21 @@
                 showToast('⚠️ Please fill name and phone');
                 return;
             }
-
             if (orderType === 'delivery' && (!address || !city)) {
                 showToast('⚠️ Please fill delivery address');
                 return;
             }
+            if (orderType === 'dinein' && !table) {
+                showToast('⚠️ Please enter table number');
+                return;
+            }
 
-            const orderData = { name, phone, address, city, items, total, layers };
+            const orderData = { name, phone, address, city, items, total, layers, table };
             closeOrderPopup();
-            
-            // Show location popup only for delivery
+
             if (orderType === 'delivery') {
                 showLocationPopup(orderData);
             } else {
-                // For takeaway, submit directly
                 pendingOrderData = orderData;
                 orderLocation = { lat: null, lng: null, address: '' };
                 submitOrderWithLocation();
@@ -1298,12 +932,111 @@
         }
 
         // ============================================================
+        // RECEIPT - RESTAURANT STYLE
+        // ============================================================
+        function showReceipt(order) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const orderTime = order.date || `${dateStr} ${timeStr}`;
+            const orderType = order.orderType || 'Delivery';
+            const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In' : 'Delivery';
+            const orderTypeIcon = orderType === 'takeaway' ? '🏪' : orderType === 'dinein' ? '🍽️' : '🚚';
+            const paymentMethod = order.paymentMethod || 'Cash';
+            const orderId = order.id || '#' + (order.orderNumber || Math.floor(Math.random() * 1000));
+            const tableInfo = order.table ? `Table: ${order.table}` : '';
+
+            // Calculate subtotal
+            let subtotal = 0;
+            let itemRows = '';
+            order.items.forEach(item => {
+                const qty = item.qty || 1;
+                const price = item.price || 0;
+                const amount = qty * price;
+                subtotal += amount;
+                itemRows += `
+                    <div class="receipt-row">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-qty">${qty}</span>
+                        <span class="item-price">${currencySymbol} ${price.toFixed(2)}</span>
+                        <span class="item-amount">${currencySymbol} ${amount.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            // Discount (fixed Rs 330 if applicable)
+            let discount = 0;
+            if (subtotal > 2000) {
+                discount = 330;
+            }
+            const grandTotal = subtotal - discount;
+
+            const html = `
+                <div id="receiptPrint">
+                    <div class="receipt-style">
+                        <div class="receipt-header">
+                            <h2>${restaurantName}</h2>
+                            <div class="est">Est. 2022</div>
+                            <div class="address">📍 ${restaurantName} Restaurant</div>
+                            <div class="address">📞 ${whatsappNumber}</div>
+                            <div class="receipt-divider"></div>
+                            <div style="font-weight:bold;">BILL</div>
+                            <div>Order #: ${orderId}</div>
+                            ${tableInfo ? `<div>${tableInfo}</div>` : ''}
+                            <div>${orderTime}</div>
+                            <div class="receipt-divider"></div>
+                            <div style="font-size:12px;">Customer: ${order.userName || 'Guest'}</div>
+                            <div style="font-size:12px;">${orderTypeIcon} ${orderTypeLabel} • 💳 ${paymentMethod}</div>
+                            ${order.lat && order.lng ? `<div style="font-size:10px; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db;">View Location</a></div>` : ''}
+                        </div>
+                        <div class="receipt-divider"></div>
+                        <div class="receipt-row" style="font-weight:bold; border-bottom:1px solid #999; padding-bottom:4px;">
+                            <span class="item-name">Item</span>
+                            <span class="item-qty">Qty</span>
+                            <span class="item-price">Price</span>
+                            <span class="item-amount">Amount</span>
+                        </div>
+                        ${itemRows}
+                        <div class="receipt-divider"></div>
+                        <div class="receipt-row" style="font-weight:bold;">
+                            <span class="item-name">Total Items: ${order.items.reduce((sum, i) => sum + (i.qty || 1), 0)}</span>
+                            <span class="item-amount">Subtotal: ${currencySymbol} ${subtotal.toFixed(2)}</span>
+                        </div>
+                        ${discount > 0 ? `<div class="receipt-row" style="color:#e74c3c; font-weight:bold;">
+                            <span class="item-name">Discount (Fixed):</span>
+                            <span class="item-amount">-${currencySymbol} ${discount.toFixed(2)}</span>
+                        </div>` : ''}
+                        <div class="receipt-total">
+                            <div class="receipt-row" style="font-size:18px;">
+                                <span>Bill Total:</span>
+                                <span>${currencySymbol} ${grandTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="receipt-footer">
+                            <div class="receipt-qr">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IndoaXRlIi8+PCEtLSBRUiBjb2RlIGRhdGEgLS0+PC9zdmc+" alt="QR Code" />
+                                <div style="font-size:10px; color:#555;">Scan QR Code To Download App</div>
+                            </div>
+                            <div>Thank you! Status: ${(order.status || 'pending').toUpperCase()}</div>
+                            <div style="font-size:10px; margin-top:4px;">Powered by DineFlow</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('receiptPrint').innerHTML = html;
+            document.getElementById('receiptPopup').classList.add('show');
+        }
+
+        function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
+        function printReceipt() { window.print(); }
+
+        // ============================================================
         // LOGIN REQUIRED
         // ============================================================
         function openLoginRequired() {
             loginRequiredPopup.classList.add('show');
         }
-
         function closeLoginRequired() {
             loginRequiredPopup.classList.remove('show');
         }
@@ -1316,11 +1049,9 @@
             dealsPopup.classList.add('show');
             renderDeals();
         }
-
         function closeDeals() {
             dealsPopup.classList.remove('show');
         }
-
         function renderDeals() {
             dealsList.innerHTML = '';
             if (!deals || deals.length === 0) {
@@ -1337,8 +1068,8 @@
                         <div class="deal-name">${deal.name}</div>
                         <div class="deal-desc">${deal.desc || ''}</div>
                         <div style="font-size:0.75em; color:#b2bec3;">
-                            ${deal.original ? `<del>Rs ${deal.original.toFixed(2)}</del>` : ''}
-                            <span style="color:#e74c3c; font-weight:700;"> Rs ${deal.price.toFixed(2)}</span>
+                            ${deal.original ? `<del>${currencySymbol} ${deal.original.toFixed(2)}</del>` : ''}
+                            <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
                         </div>
                     </div>
                     <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
@@ -1346,17 +1077,14 @@
                 dealsList.appendChild(div);
             });
         }
-
         function buyDeal(dealId) {
             if (!isLoggedIn) {
                 closeDeals();
                 openLoginRequired();
                 return;
             }
-
             const deal = deals.find(d => d.id === dealId);
             if (!deal) return;
-
             pendingOrder = {
                 items: [{ name: deal.name, price: deal.price, qty: 1, isDeal: true }],
                 total: deal.price
@@ -1370,11 +1098,9 @@
         // ============================================================
         function showPanel(panel) {
             currentPanel = panel;
-            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             const navItem = document.querySelector(`.nav-item[data-panel="${panel}"]`);
             if (navItem) navItem.classList.add('active');
-
             if (panel === 'menu') {
                 renderCategories();
                 renderMenu();
@@ -1409,32 +1135,37 @@
                 `;
                 return;
             }
-
             let html = `<div class="section-title">📦 My Orders</div>`;
-
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
-                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
                 html += `
-                    <div style="background:white; border-radius:12px; padding:12px 15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                        <div>
+                    <div style="background:white; border-radius:12px; padding:12px 15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
                             <div style="font-weight:700;">Order #${order.id} ${orderTypeIcon} ${order.orderType || 'Delivery'}</div>
-                            <div style="font-size:0.75em; color:#636e72;">🕐 ${order.date || 'Today'}</div>
-                            ${order.layers && order.layers.length ? `<div style="font-size:0.7em; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
-                            <span class="order-status ${statusClass}" style="font-size:0.7em; font-weight:600; padding:2px 12px; border-radius:12px; display:inline-block; margin-top:4px;">${order.status.toUpperCase()}</span>
-                            <div style="font-size:0.75em; color:#636e72; margin-top:4px;">
-                                ${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}
-                            </div>
-                            ${order.address ? `<div style="font-size:0.7em; color:#b2bec3;">📍 ${order.address}</div>` : ''}
-                            ${order.phone ? `<div style="font-size:0.7em; color:#b2bec3;">📞 ${order.phone}</div>` : ''}
-                            <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
+                            <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">${currencySymbol} ${order.total.toFixed(2)}</div>
                         </div>
-                        <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">Rs ${order.total.toFixed(2)}</div>
+                        <div style="font-size:0.75em; color:#636e72;">🕐 ${order.date || 'Today'}</div>
+                        ${order.layers && order.layers.length ? `<div style="font-size:0.7em; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
+                        <span class="order-status-badge ${statusClass}" style="font-size:0.7em; font-weight:600; padding:2px 12px; border-radius:12px; display:inline-block; margin-top:4px;">${order.status.toUpperCase()}</span>
+                        <div style="font-size:0.75em; color:#636e72; margin-top:4px;">
+                            ${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}
+                        </div>
+                        ${order.address ? `<div style="font-size:0.7em; color:#b2bec3;">📍 ${order.address}</div>` : ''}
+                        ${order.phone ? `<div style="font-size:0.7em; color:#b2bec3;">📞 ${order.phone}</div>` : ''}
+                        <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
+                        <button class="admin-action-btn btn-print" onclick="showReceiptForOrder(${order.id})" style="margin-top:6px; padding:4px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer;">🖨️ Receipt</button>
                     </div>
                 `;
             });
-
             menuArea.innerHTML = html;
+        }
+
+        function showReceiptForOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                showReceipt(order);
+            }
         }
 
         function updateOrderBadge() {
@@ -1449,11 +1180,10 @@
         }
 
         // ============================================================
-        // RENDER ACCOUNT
+        // RENDER ACCOUNT (keep existing)
         // ============================================================
         function renderAccount() {
             loadAuthStatus();
-
             let html = `
                 <div style="text-align:center; padding:30px 20px;">
                     <div style="font-size:4em; margin-bottom:10px;">${isLoggedIn ? '👤' : '👋'}</div>
@@ -1461,7 +1191,6 @@
                     <div style="color:#636e72; font-size:0.9em;">${isLoggedIn ? user?.email || '' : 'Not signed in'}</div>
                     <div style="margin: 20px 0;">
             `;
-
             if (isLoggedIn) {
                 html += `
                         <button onclick="logoutUser()" style="background:#e74c3c; color:white; border:none; padding:10px 30px; border-radius:30px; font-weight:600; cursor:pointer; font-size:1em;">
@@ -1483,12 +1212,10 @@
                         <div style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:10px; color:#636e72;">Sign in to place orders</div>
                     `;
             }
-
             html += `
                     </div>
                 </div>
             `;
-
             menuArea.innerHTML = html;
         }
 
@@ -1499,10 +1226,9 @@
         }
 
         // ============================================================
-        // FEEDBACK SECTION
+        // FEEDBACK SECTION (keep existing)
         // ============================================================
         let customerSelectedRating = 0;
-
         function renderFeedbackSection() {
             if (!isLoggedIn) {
                 menuArea.innerHTML = `
@@ -1519,7 +1245,6 @@
                 `;
                 return;
             }
-
             let html = `
                 <div style="padding:10px 5px;">
                     <div class="section-title">⭐ Rate & Review</div>
@@ -1541,7 +1266,6 @@
             menuArea.innerHTML = html;
             customerSelectedRating = 0;
         }
-
         function selectStarCustomer(rating) {
             customerSelectedRating = rating;
             document.querySelectorAll('.star-btn').forEach((b, i) => {
@@ -1550,7 +1274,6 @@
             const labels = ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Excellent'];
             document.getElementById('customerStarLabel').textContent = labels[rating] || 'Select a rating';
         }
-
         function submitCustomerFeedback() {
             if (!customerSelectedRating) {
                 showToast('⚠️ Please select a rating');
@@ -1579,7 +1302,7 @@
         }
 
         // ============================================================
-        // SUPPORT SECTION
+        // SUPPORT SECTION (keep existing)
         // ============================================================
         function renderSupportSection() {
             let html = `
@@ -1593,12 +1316,12 @@
                                 <div class="support-label">Email Support</div>
                                 <div class="support-desc">Send us a message</div>
                             </div>
-                            <div class="support-card" onclick="window.location.href='tel:+923001234567'">
+                            <div class="support-card" onclick="window.location.href='tel:${whatsappNumber}'">
                                 <div class="support-icon">📞</div>
                                 <div class="support-label">Call Us</div>
-                                <div class="support-desc">0300-1234567</div>
+                                <div class="support-desc">${whatsappNumber}</div>
                             </div>
-                            <div class="support-card" onclick="window.location.href='https://wa.me/923001234567'">
+                            <div class="support-card" onclick="window.location.href='https://wa.me/${whatsappNumber}'">
                                 <div class="support-icon">💬</div>
                                 <div class="support-label">WhatsApp</div>
                                 <div class="support-desc">Chat with us</div>
@@ -1616,6 +1339,63 @@
                 </div>
             `;
             menuArea.innerHTML = html;
+        }
+
+        function openSupportPopup() {
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            const supportPopup = document.createElement('div');
+            supportPopup.className = 'popup-overlay show';
+            supportPopup.id = 'supportPopup';
+            supportPopup.innerHTML = `
+                <div class="popup-content">
+                    <button class="popup-close" onclick="this.closest('.popup-overlay').remove()">✕</button>
+                    <div class="popup-title">📧 Send Message</div>
+                    <div class="popup-subtitle">We'll get back to you soon!</div>
+                    <form onsubmit="submitSupportForm(event)">
+                        <select id="supportPriority" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
+                            <option value="low">🟢 Low Priority</option>
+                            <option value="normal" selected>🟡 Normal Priority</option>
+                            <option value="high">🔴 High Priority</option>
+                        </select>
+                        <input type="text" id="supportSubject" placeholder="Subject" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;" />
+                        <textarea id="supportMessage" placeholder="Describe your issue..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; min-height:100px; resize:vertical; font-size:0.9em;"></textarea>
+                        <button type="submit" class="order-submit-btn">📤 Submit Ticket</button>
+                        <button type="button" style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="this.closest('.popup-overlay').remove()">Cancel</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(supportPopup);
+        }
+
+        function submitSupportForm(event) {
+            event.preventDefault();
+            const subject = document.getElementById('supportSubject').value;
+            const message = document.getElementById('supportMessage').value;
+            const priority = document.getElementById('supportPriority').value;
+            if (!subject || !message) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+            fetch('/api/support', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject, message, priority, restaurantId: RESTAURANT_ID })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Support ticket submitted! We\'ll get back to you.');
+                    const popup = document.getElementById('supportPopup');
+                    if (popup) popup.remove();
+                    showPanel('support');
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
         }
 
         // ============================================================
@@ -1641,7 +1421,6 @@
                 `;
                 return;
             }
-
             let html = `
                 <div style="padding:10px 5px;">
                     <div class="section-title">📍 Share Your Location</div>
@@ -1674,28 +1453,21 @@
             const status = document.getElementById('locationStatus2');
             const map = document.getElementById('locationMap2');
             const shareBtn = document.getElementById('shareLocationBtn');
-            
             if (!navigator.geolocation) {
                 status.innerHTML = '❌ Geolocation is not supported by your browser';
                 return;
             }
-            
             status.innerHTML = '⏳ Getting your location...';
-            
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     currentLat = position.coords.latitude;
                     currentLng = position.coords.longitude;
-                    
                     status.innerHTML = `✅ Location found! (${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})`;
-                    
                     map.style.display = 'block';
                     document.getElementById('locationIframe2').src = 
                         `https://www.openstreetmap.org/export/embed.html?bbox=${currentLng-0.01}%2C${currentLat-0.01}%2C${currentLng+0.01}%2C${currentLat+0.01}&layer=mapnik&marker=${currentLat}%2C${currentLng}`;
-                    
                     shareBtn.disabled = false;
                     shareBtn.style.opacity = '1';
-                    
                     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLng}`)
                         .then(r => r.json())
                         .then(data => {
@@ -1705,14 +1477,13 @@
                             }
                         })
                         .catch(() => {});
-                    
                     showToast('✅ Location found!');
                 },
                 function(error) {
                     status.innerHTML = '❌ Error getting location. Please enable GPS and try again.';
                     console.error('Location error:', error);
                 },
-                { enableHighAccuracy: true }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         }
 
@@ -1721,12 +1492,10 @@
                 showToast('⚠️ Please get your location first');
                 return;
             }
-            
             if (!isLoggedIn) {
                 openLoginRequired();
                 return;
             }
-            
             fetch('/api/location', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1750,15 +1519,13 @@
         }
 
         // ============================================================
-        // RENDER SETTINGS
+        // RENDER SETTINGS (keep existing)
         // ============================================================
         function renderSettings() {
             const theme = localStorage.getItem('theme') || 'light';
-
             let html = `
                 <div style="padding:10px 5px;">
                     <div class="section-title">⚙️ Settings</div>
-
                     <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">🎨 Theme</h3>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f2f6;">
@@ -1771,7 +1538,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">🔔 Notifications</h3>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f2f6;">
@@ -1793,7 +1559,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">🌐 Language</h3>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
@@ -1808,7 +1573,6 @@
                             </select>
                         </div>
                     </div>
-
                     <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">💳 Payment</h3>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
@@ -1824,7 +1588,6 @@
                             </select>
                         </div>
                     </div>
-
                     <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">📱 About</h3>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
@@ -1837,18 +1600,16 @@
                     </div>
                 </div>
             `;
-
             menuArea.innerHTML = html;
         }
 
         // ============================================================
-        // THEME TOGGLE
+        // THEME TOGGLE (keep existing)
         // ============================================================
         function toggleTheme() {
             const toggle = document.querySelector('.toggle-switch');
             toggle.classList.toggle('active');
             const isDark = toggle.classList.contains('active');
-
             if (isDark) {
                 document.body.style.background = '#1a1a2e';
                 document.body.style.color = '#ffffff';
@@ -1872,7 +1633,6 @@
                 document.querySelector('.restaurant-name span').style.color = '#2d3436';
                 localStorage.setItem('theme', 'light');
             }
-
             const activeNav = document.querySelector('.nav-item.active');
             if (activeNav) {
                 const panel = activeNav.dataset.panel;
@@ -1881,10 +1641,9 @@
         }
 
         // ============================================================
-        // FEEDBACK FUNCTIONS
+        // FEEDBACK FUNCTIONS (keep existing)
         // ============================================================
         let selectedRating = 0;
-
         function showFeedbackPopup() {
             selectedRating = 0;
             document.getElementById('feedbackComment').value = '';
@@ -1894,11 +1653,9 @@
                 document.getElementById('feedbackPopup').classList.add('show');
             }, 1500);
         }
-
         function closeFeedback() {
             document.getElementById('feedbackPopup').classList.remove('show');
         }
-
         function selectStar(rating) {
             selectedRating = rating;
             document.querySelectorAll('#feedbackPopup .star-btn').forEach((b, i) => {
@@ -1907,7 +1664,6 @@
             const labels = ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Excellent'];
             document.getElementById('starLabel').textContent = labels[rating] || 'Select a rating';
         }
-
         function submitFeedback() {
             if (!selectedRating) {
                 showToast('⚠️ Please select a rating');
@@ -1932,80 +1688,15 @@
         }
 
         // ============================================================
-        // SUPPORT POPUP
-        // ============================================================
-        function openSupportPopup() {
-            if (!isLoggedIn) {
-                openLoginRequired();
-                return;
-            }
-
-            const supportPopup = document.createElement('div');
-            supportPopup.className = 'popup-overlay show';
-            supportPopup.id = 'supportPopup';
-            supportPopup.innerHTML = `
-                <div class="popup-content">
-                    <button class="popup-close" onclick="this.closest('.popup-overlay').remove()">✕</button>
-                    <div class="popup-title">📧 Send Message</div>
-                    <div class="popup-subtitle">We'll get back to you soon!</div>
-                    <form onsubmit="submitSupportForm(event)">
-                        <select id="supportPriority" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
-                            <option value="low">🟢 Low Priority</option>
-                            <option value="normal" selected>🟡 Normal Priority</option>
-                            <option value="high">🔴 High Priority</option>
-                        </select>
-                        <input type="text" id="supportSubject" placeholder="Subject" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;" />
-                        <textarea id="supportMessage" placeholder="Describe your issue..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; min-height:100px; resize:vertical; font-size:0.9em;"></textarea>
-                        <button type="submit" class="order-submit-btn">📤 Submit Ticket</button>
-                        <button type="button" style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="this.closest('.popup-overlay').remove()">Cancel</button>
-                    </form>
-                </div>
-            `;
-            document.body.appendChild(supportPopup);
-        }
-
-        function submitSupportForm(event) {
-            event.preventDefault();
-            const subject = document.getElementById('supportSubject').value;
-            const message = document.getElementById('supportMessage').value;
-            const priority = document.getElementById('supportPriority').value;
-            
-            if (!subject || !message) {
-                showToast('⚠️ Please fill all fields');
-                return;
-            }
-            
-            fetch('/api/support', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subject, message, priority, restaurantId: RESTAURANT_ID })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('✅ Support ticket submitted! We\'ll get back to you.');
-                    const popup = document.getElementById('supportPopup');
-                    if (popup) popup.remove();
-                    showPanel('support');
-                } else {
-                    showToast('❌ ' + (data.error || 'Failed to submit'));
-                }
-            })
-            .catch(() => showToast('❌ Network error'));
-        }
-
-        // ============================================================
         // TOAST NOTIFICATION
         // ============================================================
         function showToast(message) {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
-
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerHTML = message;
             document.body.appendChild(toast);
-
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s';
