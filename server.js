@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============================================
-// ⭐ RESTAURANT CONFIGURATION - MATCHES YOUR IMAGE ⭐
+// ⭐ RESTAURANT CONFIGURATION ⭐
 // ============================================
 const RESTAURANT_CONFIG = {
     name: 'The Heaven Slice',
@@ -24,18 +24,28 @@ const RESTAURANT_CONFIG = {
 };
 // ============================================
 
-// Middleware - Production Ready
+// ============================================
+// ⭐ MIDDLEWARE - FIXED ORDER ⭐
+// ============================================
+
+// Increase payload limit for logo uploads (10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CORS - Must be before routes
 app.use(cors({ 
     origin: process.env.NODE_ENV === 'production' 
         ? ['https://dineflow.onrender.com', 'https://dineflow-admin.onrender.com']
         : '*', 
     credentials: true 
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Static files
 app.use(express.static(path.join(__dirname, 'Public')));
 
-// Session - Production Ready
+// ============================================
+// ⭐ SESSION - Must be before passport ⭐
+// ============================================
 app.use(session({
     secret: process.env.SESSION_SECRET || 'dineflow-super-secret-key-2026',
     resave: false,
@@ -71,7 +81,7 @@ let orderCounter = 1;
 // ============================================
 let receiptSettings = {
     logoIcon: '👨‍🍳',
-    logoUrl: '',  // Add this field for image logo URL
+    logoUrl: '',
     tagline: 'PIZZA • BURGER • FAST FOOD',
     established: RESTAURANT_CONFIG.est,
     address: RESTAURANT_CONFIG.address,
@@ -152,7 +162,6 @@ app.get('/api/whatsapp-number', (req, res) => {
 // ============================================
 // ⭐ RECEIPT SETTINGS API - FIXED ⭐
 // ============================================
-// GET receipt settings - No authentication required
 app.get('/api/receipt-settings', (req, res) => {
     try {
         const settings = {
@@ -175,9 +184,7 @@ app.get('/api/receipt-settings', (req, res) => {
     }
 });
 
-// POST receipt settings - Requires authentication
 app.post('/api/receipt-settings', (req, res) => {
-    // Check if user is authenticated
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in. Please login first.' });
     }
@@ -195,7 +202,6 @@ app.post('/api/receipt-settings', (req, res) => {
             }
         });
         
-        // Ensure logoIcon is never empty
         if (!receiptSettings.logoIcon) {
             receiptSettings.logoIcon = '👨‍🍳';
         }
@@ -213,6 +219,53 @@ app.post('/api/receipt-settings', (req, res) => {
             details: error.message 
         });
     }
+});
+
+// ============================================
+// RESTAURANT ID MIDDLEWARE
+// ============================================
+app.use((req, res, next) => {
+    if (req.query.restaurant) {
+        req.restaurantId = req.query.restaurant;
+    } else if (req.session && req.session.restaurantId) {
+        req.restaurantId = req.session.restaurantId;
+    } else {
+        req.restaurantId = 'restaurant-1';
+    }
+    if (req.session) {
+        req.session.restaurantId = req.restaurantId;
+    }
+    next();
+});
+
+// ============================================
+// RESTAURANT API
+// ============================================
+app.post('/api/restaurant/create', (req, res) => {
+    const { name, ownerName, ownerEmail } = req.body;
+    if (!name || !ownerName || !ownerEmail) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
+    if (existing) {
+        return res.status(400).json({ error: 'Restaurant already exists with this email' });
+    }
+    const restaurantId = 'restaurant-' + (restaurants.length + 1);
+    const newRestaurant = {
+        id: restaurants.length + 1,
+        restaurantId: restaurantId,
+        name: name,
+        ownerName: ownerName,
+        ownerEmail: ownerEmail,
+        createdAt: new Date().toLocaleString(),
+        menu: getDefaultMenu(),
+        deals: getDefaultDeals(),
+        orders: [],
+        restaurantName: name,
+        status: 'active'
+    };
+    restaurants.push(newRestaurant);
+    res.json({ success: true, restaurant: newRestaurant, restaurantId: restaurantId });
 });
 
 // ============================================
@@ -673,22 +726,23 @@ app.get('/api/users', (req, res) => {
 });
 
 // ============================================
-// GOOGLE OAUTH
+// GOOGLE OAUTH - FIXED
 // ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/callback'
+    callbackURL: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/callback',
+    passReqToCallback: true
   },
-  function(accessToken, refreshToken, profile, done) {
+  function(req, accessToken, refreshToken, profile, done) {
     let user = users.find(u => u.googleId === profile.id);
     if (!user) {
         user = {
             id: users.length + 1,
             googleId: profile.id,
-            displayName: profile.displayName,
-            email: profile.emails[0].value,
-            photo: profile.photos[0].value,
+            displayName: profile.displayName || profile.name?.givenName || 'User',
+            email: profile.emails && profile.emails[0] ? profile.emails[0].value : '',
+            photo: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
             role: users.length === 0 ? 'admin' : 'customer'
         };
         users.push(user);
@@ -704,6 +758,7 @@ passport.deserializeUser((id, done) => {
     done(null, user);
 });
 
+// ⭐ FIXED: Google Auth Routes with better error handling
 app.get('/auth/google',
     passport.authenticate('google', { 
         scope: ['profile', 'email'],
@@ -713,25 +768,58 @@ app.get('/auth/google',
 );
 
 app.get('/callback',
-    passport.authenticate('google', { failureRedirect: '/login-failed' }),
+    passport.authenticate('google', { 
+        failureRedirect: '/login-failed',
+        failureMessage: true
+    }),
     function(req, res) {
-        req.session.save(function(err) {
-            if (err) {
-                console.error('Session save error:', err);
-                return res.redirect('/login-failed');
-            }
-            const restaurantId = req.session.restaurantId || 'restaurant-1';
-            if (req.user && req.user.role === 'admin') {
-                res.redirect('/admin?restaurant=' + restaurantId);
-            } else {
-                res.redirect('/?restaurant=' + restaurantId);
-            }
-        });
+        try {
+            req.session.save(function(err) {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.redirect('/login-failed');
+                }
+                const restaurantId = req.session.restaurantId || 'restaurant-1';
+                if (req.user && req.user.role === 'admin') {
+                    res.redirect('/admin?restaurant=' + restaurantId);
+                } else {
+                    res.redirect('/?restaurant=' + restaurantId);
+                }
+            });
+        } catch(error) {
+            console.error('Callback error:', error);
+            res.redirect('/login-failed');
+        }
     }
 );
 
 app.get('/login-failed', (req, res) => {
-    res.send('Login failed. <a href="/auth/google">Try again</a>');
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Login Failed</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
+                h1 { color: #e74c3c; }
+                .container { max-width: 500px; margin: 0 auto; }
+                .btn { display: inline-block; padding: 12px 30px; background: #4285f4; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+                .btn:hover { background: #3367d6; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🔐 Login Failed</h1>
+                <p>There was an error logging in. Please try again.</p>
+                <a href="/auth/google" class="btn">Try Again</a>
+                <br><br>
+                <a href="/" style="color: #b2bec3;">Go Home</a>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
 app.get('/logout', (req, res) => {
@@ -746,27 +834,22 @@ app.get('/logout', (req, res) => {
 // SERVE HTML PAGES
 // ============================================
 
-// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
-// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
-// Staff Panel
 app.get('/staff', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'staff.html'));
 });
 
-// Restaurant Creation Page
 app.get('/create-restaurant', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'create-restaurant.html'));
 });
 
-// ⭐ PixelPanel - Secret Restaurant Management Panel ⭐
 app.get('/pixelpanel', (req, res) => {
     if (!req.user || req.user.role !== 'admin') {
         return res.status(404).send(`
@@ -796,6 +879,17 @@ app.get('/pixelpanel', (req, res) => {
         `);
     }
     res.sendFile(path.join(__dirname, 'Public', 'pixelpanel.html'));
+});
+
+// ============================================
+// ⭐ TEST ENDPOINT ⭐
+// ============================================
+app.get('/api/test', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        message: 'Server is running',
+        user: req.user ? req.user.displayName : 'Not logged in'
+    });
 });
 
 // ============================================
