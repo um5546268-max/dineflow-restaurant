@@ -71,6 +71,7 @@ let orderCounter = 1;
 // ============================================
 let receiptSettings = {
     logoIcon: '👨‍🍳',
+    logoUrl: '',  // Add this field for image logo URL
     tagline: 'PIZZA • BURGER • FAST FOOD',
     established: RESTAURANT_CONFIG.est,
     address: RESTAURANT_CONFIG.address,
@@ -154,6 +155,7 @@ app.get('/api/whatsapp-number', (req, res) => {
 app.get('/api/receipt-settings', (req, res) => {
     const settings = {
         logoIcon: receiptSettings.logoIcon || '👨‍🍳',
+        logoUrl: receiptSettings.logoUrl || '',
         tagline: receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD',
         established: receiptSettings.established || RESTAURANT_CONFIG.est,
         address: receiptSettings.address || RESTAURANT_CONFIG.address,
@@ -171,7 +173,7 @@ app.post('/api/receipt-settings', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     try {
         const allowedFields = [
-            'logoIcon', 'tagline', 'established', 'address', 'phone',
+            'logoIcon', 'logoUrl', 'tagline', 'established', 'address', 'phone',
             'qrCodeUrl', 'discountAmount', 'discountThreshold',
             'thankYouMessage', 'footerMessage'
         ];
@@ -188,23 +190,6 @@ app.post('/api/receipt-settings', (req, res) => {
         console.error('Error saving receipt settings:', error);
         res.status(500).json({ error: 'Failed to save settings', details: error.message });
     }
-});
-
-// ============================================
-// RESTAURANT ID MIDDLEWARE
-// ============================================
-app.use((req, res, next) => {
-    if (req.query.restaurant) {
-        req.restaurantId = req.query.restaurant;
-    } else if (req.session && req.session.restaurantId) {
-        req.restaurantId = req.session.restaurantId;
-    } else {
-        req.restaurantId = 'restaurant-1';
-    }
-    if (req.session) {
-        req.session.restaurantId = req.restaurantId;
-    }
-    next();
 });
 
 // ============================================

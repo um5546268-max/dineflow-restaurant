@@ -1233,6 +1233,21 @@
                         </div>
                     </div>
 
+                    <div class="settings-option" style="align-items:flex-start;">
+                        <div>
+                            <div class="option-label">Logo Image URL</div>
+                            <div class="option-desc">Upload your restaurant logo (PNG/JPG) and paste the URL here</div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <img id="receiptLogoImagePreview" style="width:60px; height:60px; border:1px solid #dfe6e9; border-radius:8px; object-fit:contain; display:none;" />
+                            <input type="text" id="receiptLogoUrl" placeholder="https://your-logo-url.com/logo.png" style="width:260px;" oninput="updateLogoImagePreview()" />
+                            <div style="font-size:0.7em; color:#b2bec3;">
+                                <a href="#" onclick="document.getElementById('logoFileInput').click(); return false;" style="color:#3498db;">📁 Upload Logo</a>
+                                <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="uploadLogoFile(event)" />
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="settings-option">
                         <div>
                             <div class="option-label">Tagline</div>
@@ -1442,6 +1457,7 @@
         // ============================================================
         let receiptSettings = {
             logoIcon: '👨‍🍳',
+            logoUrl: '',
             tagline: 'PIZZA • BURGER • FAST FOOD',
             established: '2022',
             address: 'Gojra Road Near Ali Marriage Hall',
@@ -1506,6 +1522,11 @@
                     receiptSettings = Object.assign(receiptSettings, data);
                     document.getElementById('receiptLogoIcon').value = receiptSettings.logoIcon || '';
                     document.getElementById('receiptLogoPreview').textContent = receiptSettings.logoIcon || '👨‍🍳';
+                    document.getElementById('receiptLogoUrl').value = receiptSettings.logoUrl || '';
+                    if (receiptSettings.logoUrl) {
+                        document.getElementById('receiptLogoImagePreview').src = receiptSettings.logoUrl;
+                        document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
+                    }
                     document.getElementById('receiptTagline').value = receiptSettings.tagline || '';
                     document.getElementById('receiptEstablished').value = receiptSettings.established || '';
                     document.getElementById('receiptAddress').value = receiptSettings.address || '';
@@ -1516,6 +1537,7 @@
                     document.getElementById('receiptThankYou').value = receiptSettings.thankYouMessage || '';
                     document.getElementById('receiptFooterNote').value = receiptSettings.footerMessage || '';
                     updateQrPreview();
+                    updateLogoImagePreview();
                 })
                 .catch(() => {});
 
@@ -1622,6 +1644,48 @@
         }
 
         // ============================================================
+        // LOGO UPLOAD FUNCTIONS
+        // ============================================================
+        function updateLogoImagePreview() {
+            const url = document.getElementById('receiptLogoUrl').value.trim();
+            const img = document.getElementById('receiptLogoImagePreview');
+            if (url) {
+                img.src = url;
+                img.style.display = 'inline-block';
+            } else {
+                img.style.display = 'none';
+            }
+        }
+
+        function uploadLogoFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showToast('❌ Please select an image file');
+                return;
+            }
+            
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('❌ File size should be less than 2MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('receiptLogoUrl').value = base64;
+                document.getElementById('receiptLogoImagePreview').src = base64;
+                document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
+                showToast('✅ Logo uploaded successfully! Click Save to apply.');
+            };
+            reader.onerror = function() {
+                showToast('❌ Failed to read file');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ============================================================
         // RECEIPT SETTINGS FUNCTIONS
         // ============================================================
         function updateQrPreview() {
@@ -1638,6 +1702,7 @@
         function saveReceiptSettings() {
             const payload = {
                 logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
+                logoUrl: document.getElementById('receiptLogoUrl').value || '',
                 tagline: document.getElementById('receiptTagline').value || '',
                 established: document.getElementById('receiptEstablished').value || '2022',
                 address: document.getElementById('receiptAddress').value || '',
@@ -1712,7 +1777,22 @@
             const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
             const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
 
-            const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
+            // Get logo from receipt settings
+            let logoHtml = '';
+            if (receiptSettings && receiptSettings.logoUrl) {
+                logoHtml = `
+                    <div style="text-align:center; margin-bottom:5px;">
+                        <img src="${receiptSettings.logoUrl}" alt="${restaurantConfig.name}" style="max-width:120px; height:auto; border-radius:4px;" />
+                        <div style="font-size:9px; color:#555; letter-spacing:1px; font-weight:600; margin-top:2px;">${receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD'}</div>
+                    </div>
+                `;
+            } else {
+                const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
+                logoHtml = `
+                    <div style="text-align:center; font-size:3em; margin-bottom:2px;">${logoIcon}</div>
+                    <div style="text-align:center; font-size:9px; color:#555; letter-spacing:1px; font-weight:600; margin-bottom:3px;">${receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD'}</div>
+                `;
+            }
 
             const subtotal = (order.items || []).reduce((sum, i) => sum + (i.price * (i.qty || 1)), 0);
             const threshold = receiptSettings.discountThreshold || 0;
@@ -1747,7 +1827,7 @@
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
-                            <div style="text-align:center; font-size:3em; margin-bottom:5px;">${logoIcon}</div>
+                            ${logoHtml}
                             <div class="restaurant-name">${restaurantConfig.name.toUpperCase()}</div>
                             <div class="est">Est. ${receiptSettings.established || '2022'}</div>
                             <div class="address">📍 ${receiptSettings.address || restaurantConfig.address}</div>
@@ -1863,6 +1943,14 @@
                 const tableInfo = order.table ? `Table: ${order.table}` : '';
                 const orderTime = order.date || new Date(order.createdAt).toLocaleString();
 
+                // Get logo for order card
+                let logoHtml = '';
+                if (receiptSettings && receiptSettings.logoUrl) {
+                    logoHtml = `<div style="text-align:center; margin-bottom:3px;"><img src="${receiptSettings.logoUrl}" alt="${config.name}" style="max-width:80px; height:auto; border-radius:4px;" /></div>`;
+                } else {
+                    logoHtml = `<div style="text-align:center; font-size:2em; margin-bottom:2px;">${receiptSettings.logoIcon || '👨‍🍳'}</div>`;
+                }
+
                 let subtotal = 0;
                 let itemRows = '';
                 let totalItems = 0;
@@ -1904,7 +1992,7 @@
                 html += `
                     <div class="order-receipt-card">
                         <div class="receipt-header">
-                            <div style="text-align:center; font-size:2.5em; margin-bottom:3px;">${receiptSettings.logoIcon || '👨‍🍳'}</div>
+                            ${logoHtml}
                             <div class="restaurant-name">${config.name.toUpperCase()}</div>
                             <div class="est">Est. ${config.est}</div>
                             <div class="address">📍 ${config.address}</div>

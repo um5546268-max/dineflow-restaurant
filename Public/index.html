@@ -1062,7 +1062,7 @@
         let currencySymbol = 'Rs';
         let whatsappNumber = '923001234567';
         let orderCounter = 1;
-        let receiptSettings = { logoIcon: '👨‍🍳' };
+        let receiptSettings = { logoIcon: '👨‍🍳', logoUrl: '', tagline: 'PIZZA • BURGER • FAST FOOD' };
 
         const sidebar = document.getElementById('categorySidebar');
         const menuArea = document.getElementById('menuArea');
@@ -1801,7 +1801,23 @@
             const tableInfo = order.table ? `Table: ${order.table}` : '';
 
             const config = restaurantConfig;
-            const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
+            
+            // Get logo from receipt settings
+            let logoHtml = '';
+            if (receiptSettings && receiptSettings.logoUrl) {
+                logoHtml = `
+                    <div style="text-align:center; margin-bottom:5px;">
+                        <img src="${receiptSettings.logoUrl}" alt="${config.name}" style="max-width:120px; height:auto; border-radius:4px;" />
+                        <div style="font-size:9px; color:#555; letter-spacing:1px; font-weight:600; margin-top:2px;">${receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD'}</div>
+                    </div>
+                `;
+            } else {
+                const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
+                logoHtml = `
+                    <div style="text-align:center; font-size:3em; margin-bottom:2px;">${logoIcon}</div>
+                    <div style="text-align:center; font-size:9px; color:#555; letter-spacing:1px; font-weight:600; margin-bottom:3px;">${receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD'}</div>
+                `;
+            }
 
             let subtotal = 0;
             let itemRows = '';
@@ -1837,7 +1853,7 @@
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
-                            <div style="text-align:center; font-size:3em; margin-bottom:5px;">${logoIcon}</div>
+                            ${logoHtml}
                             <div class="restaurant-name">${config.name.toUpperCase()}</div>
                             <div class="est">Est. ${config.est}</div>
                             <div class="address">📍 ${config.address}</div>
