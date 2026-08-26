@@ -16,7 +16,6 @@
             overflow: hidden;
         }
 
-        /* Splash Screen */
         #splashScreen {
             position: fixed;
             top: 0;
@@ -64,7 +63,6 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
 
-        /* Top Header */
         .top-header {
             background: white;
             padding: 12px 16px;
@@ -112,10 +110,8 @@
             text-align: center; 
         }
 
-        /* Main Layout */
         .main-container { display: flex; flex: 1; overflow: hidden; }
 
-        /* Sidebar */
         .sidebar {
             width: 100px;
             background: white;
@@ -143,7 +139,6 @@
         .category-item .cat-name { font-size: 0.65em; font-weight: 600; color: #636e72; line-height: 1.2; }
         .category-item.active .cat-name { color: #e74c3c; }
 
-        /* Menu Area */
         .menu-area {
             flex: 1;
             padding: 12px 16px;
@@ -213,7 +208,6 @@
         }
         .btn-cart:hover { background: #dfe6e9; transform: scale(1.05); }
 
-        /* Bottom Navigation */
         .bottom-nav {
             background: white;
             display: flex;
@@ -257,7 +251,6 @@
             text-align: center; 
         }
 
-        /* Popups */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -326,7 +319,6 @@
         }
         .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
 
-        /* Order Form */
         .order-form input, .order-form select, .order-form textarea {
             width: 100%;
             padding: 10px 14px;
@@ -513,55 +505,57 @@
         .receipt-style {
             font-family: 'Courier New', monospace;
             background: #fff;
-            padding: 20px;
-            max-width: 400px;
+            padding: 20px 15px;
+            max-width: 380px;
             margin: 0 auto;
             border: 1px solid #ddd;
+            font-size: 13px;
         }
         .receipt-style .receipt-header {
             text-align: center;
             border-bottom: 2px dashed #333;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
         }
-        .receipt-style .receipt-header h2 {
-            font-size: 22px;
-            margin: 0;
-            color: #000;
+        .receipt-style .receipt-header .restaurant-name {
+            font-size: 20px;
             font-weight: 700;
-            letter-spacing: 2px;
+            color: #000;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
         }
         .receipt-style .receipt-header .est {
-            font-size: 12px;
-            color: #666;
+            font-size: 11px;
+            color: #555;
             font-weight: 600;
         }
         .receipt-style .receipt-header .address {
-            font-size: 11px;
-            color: #555;
-            line-height: 1.4;
+            font-size: 10px;
+            color: #444;
+            line-height: 1.3;
         }
         .receipt-style .receipt-header .phone {
-            font-size: 11px;
-            color: #555;
+            font-size: 10px;
+            color: #444;
             font-weight: 600;
         }
         .receipt-style .receipt-divider {
             border-top: 1px dashed #999;
-            margin: 8px 0;
+            margin: 6px 0;
         }
         .receipt-style .receipt-title {
             text-align: center;
             font-weight: 700;
-            font-size: 18px;
-            letter-spacing: 4px;
-            margin: 5px 0;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin: 4px 0;
         }
         .receipt-style .receipt-order-info {
-            font-size: 12px;
+            font-size: 11px;
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 2px 0;
+            font-weight: 600;
         }
         .receipt-style .receipt-order-info .order-left {
             text-align: left;
@@ -570,18 +564,19 @@
             text-align: right;
         }
         .receipt-style .receipt-customer {
-            font-size: 12px;
-            padding: 4px 0;
+            font-size: 11px;
+            padding: 2px 0;
             font-weight: 600;
         }
         .receipt-style .receipt-table-header {
             display: flex;
             justify-content: space-between;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 11px;
             border-bottom: 1px solid #999;
-            padding: 4px 0;
-            margin-top: 5px;
+            padding: 3px 0;
+            margin-top: 4px;
+            text-transform: uppercase;
         }
         .receipt-style .receipt-table-header span {
             flex: 1;
@@ -592,17 +587,17 @@
         }
         .receipt-style .receipt-table-header .col-price {
             text-align: right;
-            flex: 1;
+            flex: 0.8;
         }
         .receipt-style .receipt-table-header .col-amount {
             text-align: right;
-            flex: 1;
+            flex: 0.8;
         }
         .receipt-style .receipt-row {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            padding: 3px 0;
+            font-size: 11px;
+            padding: 2px 0;
         }
         .receipt-style .receipt-row .item-name {
             flex: 2;
@@ -613,22 +608,22 @@
             text-align: center;
         }
         .receipt-style .receipt-row .item-price {
-            flex: 1;
+            flex: 0.8;
             text-align: right;
         }
         .receipt-style .receipt-row .item-amount {
-            flex: 1;
+            flex: 0.8;
             text-align: right;
         }
         .receipt-style .receipt-totals {
             border-top: 2px double #333;
-            padding-top: 8px;
-            margin-top: 8px;
+            padding-top: 6px;
+            margin-top: 6px;
         }
         .receipt-style .receipt-totals .total-row {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 12px;
             padding: 2px 0;
         }
         .receipt-style .receipt-totals .total-row .label {
@@ -643,41 +638,43 @@
         .receipt-style .receipt-grand-total {
             display: flex;
             justify-content: space-between;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            padding: 8px 0;
+            padding: 6px 0;
             border-top: 2px double #333;
-            margin-top: 5px;
+            margin-top: 4px;
         }
         .receipt-style .receipt-footer {
             text-align: center;
             border-top: 2px dashed #333;
-            padding-top: 10px;
-            margin-top: 10px;
-            font-size: 11px;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-size: 10px;
             color: #555;
         }
         .receipt-style .receipt-footer .qr-section {
-            margin: 8px 0;
+            margin: 6px 0;
         }
         .receipt-style .receipt-footer .qr-section img {
-            max-width: 80px;
+            max-width: 70px;
             height: auto;
         }
-        .receipt-style .receipt-footer .thank-you {
-            font-size: 13px;
-            font-weight: 700;
-            color: #000;
-            margin-top: 5px;
-        }
-        .receipt-style .receipt-footer .great-day {
-            font-size: 11px;
+        .receipt-style .receipt-footer .qr-section .qr-text {
+            font-size: 9px;
             color: #555;
         }
-        .receipt-style .receipt-item-sub {
-            font-size: 11px;
-            color: #666;
-            padding-left: 10px;
+        .receipt-style .receipt-footer .thank-you {
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+            margin-top: 4px;
+        }
+        .receipt-style .receipt-footer .great-day {
+            font-size: 10px;
+            color: #555;
+        }
+        .receipt-style .receipt-footer .heart {
+            color: #e74c3c;
         }
 
         .order-status-badge {
@@ -701,38 +698,40 @@
         .receipt-popup.show { display: flex; }
         .receipt-popup .receipt-content {
             background: white;
-            border-radius: 16px;
-            max-width: 420px;
+            border-radius: 12px;
+            max-width: 400px;
             width: 100%;
-            max-height: 90vh;
+            max-height: 95vh;
             overflow-y: auto;
-            padding: 20px;
+            padding: 15px;
             position: relative;
         }
         .receipt-popup .receipt-close {
             position: absolute;
-            top: 10px;
-            right: 14px;
-            font-size: 1.4em;
+            top: 8px;
+            right: 12px;
+            font-size: 1.2em;
             cursor: pointer;
             color: #b2bec3;
             background: none;
             border: none;
+            z-index: 10;
         }
         .receipt-popup .receipt-close:hover { color: #e74c3c; }
         .receipt-popup .receipt-actions {
             display: flex;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 12px;
             justify-content: center;
         }
         .receipt-popup .receipt-actions button {
-            padding: 8px 20px;
+            padding: 6px 18px;
             border: none;
-            border-radius: 25px;
+            border-radius: 20px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 0.85em;
         }
         .receipt-popup .btn-print-receipt { background: #27ae60; color: white; }
         .receipt-popup .btn-print-receipt:hover { background: #1e8449; }
@@ -749,10 +748,13 @@
                 width: 80mm;
                 padding: 10px;
                 font-family: 'Courier New', monospace;
-                font-size: 12px;
+                font-size: 11px;
                 background: white;
                 color: black;
+                border: none;
             }
+            .receipt-popup .receipt-actions { display: none; }
+            .receipt-popup .receipt-close { display: none; }
         }
 
         @media (max-width: 600px) {
@@ -771,6 +773,9 @@
             .deal-item .deal-icons { font-size: 1.2em; }
             .star-btn { font-size: 1.8em; }
             .support-options { grid-template-columns: 1fr; }
+            .receipt-style { padding: 12px 10px; font-size: 11px; }
+            .receipt-style .receipt-header .restaurant-name { font-size: 17px; }
+            .receipt-style .receipt-grand-total { font-size: 14px; }
         }
         @media (max-width: 400px) {
             .sidebar { width: 60px; }
@@ -782,6 +787,8 @@
             .menu-item-card .item-name { font-size: 0.75em; }
             .btn-quick, .btn-cart { font-size: 0.55em; padding: 3px 8px; }
             .star-btn { font-size: 1.5em; }
+            .receipt-style { padding: 10px 8px; font-size: 10px; }
+            .receipt-style .receipt-header .restaurant-name { font-size: 15px; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -790,7 +797,6 @@
 </head>
 <body>
 
-    <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="splash-logo">🍔</div>
         <div class="splash-name" id="splashName">DineFlow</div>
@@ -798,7 +804,6 @@
         <div class="splash-loader"><div class="splash-progress"></div></div>
     </div>
 
-    <!-- Top Header -->
     <header class="top-header">
         <div class="restaurant-name" id="restaurantName">🍔 Dine<span>Flow</span></div>
         <div class="top-actions">
@@ -810,13 +815,11 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <div class="main-container">
         <aside class="sidebar" id="categorySidebar"></aside>
         <main class="menu-area" id="menuArea"></main>
     </div>
 
-    <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <button class="nav-item active" data-panel="menu" onclick="showPanel('menu')">
             <span class="nav-icon">🍽️</span> Menu
@@ -842,7 +845,6 @@
         </button>
     </nav>
 
-    <!-- Deals Popup -->
     <div class="popup-overlay" id="dealsPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeDeals()">✕</button>
@@ -852,7 +854,6 @@
         </div>
     </div>
 
-    <!-- Order Form Popup -->
     <div class="popup-overlay" id="orderPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeOrderPopup()">✕</button>
@@ -862,20 +863,17 @@
             <form class="order-form" id="orderForm" onsubmit="submitOrder(event)">
                 <input type="text" id="orderName" placeholder="Full Name" required />
                 <input type="tel" id="orderPhone" placeholder="Phone Number" required />
-                
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <button type="button" class="order-type-btn active" id="deliveryBtn" onclick="selectOrderType('delivery')">🚚 Delivery</button>
                     <button type="button" class="order-type-btn" id="takeawayBtn" onclick="selectOrderType('takeaway')">🏪 Takeaway</button>
                     <button type="button" class="order-type-btn" id="dineinBtn" onclick="selectOrderType('dinein')">🍽️ Dine-In</button>
                 </div>
-                
                 <select id="paymentMethod" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
                     <option value="cash">💵 Cash on Delivery</option>
                     <option value="easypaisa">📱 Easypaisa</option>
                     <option value="jazzcash">📱 JazzCash</option>
                     <option value="card">💳 Credit Card</option>
                 </select>
-                
                 <div id="deliveryFields">
                     <input type="text" id="orderAddress" placeholder="Delivery Address" required />
                     <input type="text" id="orderCity" placeholder="City" required />
@@ -892,7 +890,6 @@
         </div>
     </div>
 
-    <!-- Login Required Popup -->
     <div class="popup-overlay" id="loginRequiredPopup">
         <div class="popup-content" style="text-align:center;">
             <button class="popup-close" onclick="closeLoginRequired()">✕</button>
@@ -907,7 +904,6 @@
         </div>
     </div>
 
-    <!-- Location Popup -->
     <div class="popup-overlay" id="locationPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeLocationPopup()">✕</button>
@@ -930,7 +926,6 @@
         </div>
     </div>
 
-    <!-- Feedback Popup -->
     <div class="popup-overlay" id="feedbackPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeFeedback()">✕</button>
@@ -950,7 +945,6 @@
         </div>
     </div>
 
-    <!-- Receipt Popup -->
     <div class="receipt-popup" id="receiptPopup">
         <div class="receipt-content">
             <button class="receipt-close" onclick="closeReceipt()">✕</button>
@@ -1004,9 +998,6 @@
         let whatsappNumber = '923001234567';
         let orderCounter = 1;
 
-        // ============================================================
-        // DOM REFS
-        // ============================================================
         const sidebar = document.getElementById('categorySidebar');
         const menuArea = document.getElementById('menuArea');
         const dealsPopup = document.getElementById('dealsPopup');
@@ -1537,7 +1528,7 @@
         }
 
         // ============================================================
-        // RECEIPT - EXACT MATCH TO IMAGE STYLE
+        // RECEIPT - EXACT MATCH TO IMAGE
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -1546,11 +1537,9 @@
             const orderTime = order.date || `${dateStr} ${timeStr}`;
             const orderType = order.orderType || 'Delivery';
             const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
-            const paymentMethod = order.paymentMethod || 'Cash';
             const orderId = order.id || '#' + (order.orderNumber || Math.floor(Math.random() * 1000));
             const tableInfo = order.table ? `Table: ${order.table}` : '';
 
-            // Calculate totals
             let subtotal = 0;
             let itemRows = '';
             let totalItems = 0;
@@ -1574,7 +1563,6 @@
                 `;
             });
 
-            // Fixed discount of Rs 330 (like in your example)
             let discount = 0;
             if (subtotal > 2000) {
                 discount = 330;
@@ -1585,7 +1573,7 @@
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
-                            <h2>${restaurantName.toUpperCase()}</h2>
+                            <div class="restaurant-name">${restaurantName.toUpperCase()}</div>
                             <div class="est">Est. 2022</div>
                             <div class="address">📍 ${restaurantName} Restaurant</div>
                             <div class="phone">📞 ${whatsappNumber}</div>
@@ -1600,10 +1588,10 @@
                             </div>
                             <div class="receipt-divider"></div>
                             <div class="receipt-customer">Customer: ${orderTypeLabel}</div>
-                            ${order.userName && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:11px;">Name: ${order.userName}</div>` : ''}
-                            ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:11px;">📞 ${order.phone}</div>` : ''}
-                            ${order.address && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:11px;">📍 ${order.address}</div>` : ''}
-                            ${order.lat && order.lng ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db;">View Location</a></div>` : ''}
+                            ${order.userName && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">Name: ${order.userName}</div>` : ''}
+                            ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📞 ${order.phone}</div>` : ''}
+                            ${order.address && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📍 ${order.address}</div>` : ''}
+                            ${order.lat && order.lng ? `<div class="receipt-customer" style="font-weight:normal; font-size:9px; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db;">View Location</a></div>` : ''}
                         </div>
                         
                         <div class="receipt-table-header">
@@ -1639,11 +1627,11 @@
                         
                         <div class="receipt-footer">
                             <div class="qr-section">
-                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IndoaXRlIi8+PCEtLSBRUiBjb2RlIGRhdGEgLS0+PC9zdmc+" alt="QR Code" />
-                                <div style="font-size:10px; color:#555;">Scan QR Code To Download App</div>
+                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MCIgaGVpZ2h0PSI3MCIgdmlld0JveD0iMCAwIDcwIDcwIj48cmVjdCB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIGZpbGw9IndoaXRlIi8+PCEtLSBRUiBjb2RlIGRhdGEgLS0+PC9zdmc+" alt="QR Code" />
+                                <div class="qr-text">Scan QR Code To Download App</div>
                             </div>
                             <div class="receipt-divider"></div>
-                            <div class="thank-you">Thank You for Your Order!</div>
+                            <div class="thank-you"><span class="heart">❤️</span> Thank You for Your Order!</div>
                             <div class="great-day">Have a Great Day!</div>
                         </div>
                     </div>
