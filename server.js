@@ -10,15 +10,21 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============================================
-// ⭐ WHATSAPP NUMBER CONFIGURATION ⭐
+// ⭐ RESTAURANT CONFIGURATION - MATCHES YOUR IMAGE ⭐
 // ============================================
-// CHANGE THIS TO YOUR WHATSAPP NUMBER
-const WHATSAPP_NUMBER = '923001234567'; // Format: CountryCode + Number (e.g., 923001234567)
+const RESTAURANT_CONFIG = {
+    name: 'The Heaven Slice',
+    est: '2022',
+    address: 'Gojra Road Near Ali Marriage Hall',
+    phone: '0300-0310275',
+    whatsapp: '923001234567',
+    currency: 'Rs',
+    discountAmount: 330,
+    discountThreshold: 2000
+};
 // ============================================
 
-// ============================================
-// MIDDLEWARE - Production Ready
-// ============================================
+// Middleware - Production Ready
 app.use(cors({ 
     origin: process.env.NODE_ENV === 'production' 
         ? ['https://dineflow.onrender.com', 'https://dineflow-admin.onrender.com']
@@ -100,20 +106,34 @@ function createDefaultRestaurant() {
         const defaultRestaurant = {
             id: 1,
             restaurantId: 'restaurant-1',
-            name: 'DineFlow Restaurant',
+            name: RESTAURANT_CONFIG.name,
             ownerName: 'Admin',
             ownerEmail: 'admin@dineflow.com',
             createdAt: new Date().toLocaleString(),
             menu: getDefaultMenu(),
             deals: getDefaultDeals(),
             orders: [],
-            restaurantName: 'DineFlow Restaurant',
+            restaurantName: RESTAURANT_CONFIG.name,
             status: 'active'
         };
         restaurants.push(defaultRestaurant);
         console.log('🏪 Default restaurant created');
     }
 }
+
+// ============================================
+// RESTAURANT CONFIG API
+// ============================================
+app.get('/api/restaurant-config', (req, res) => {
+    res.json(RESTAURANT_CONFIG);
+});
+
+// ============================================
+// WHATSAPP NUMBER API
+// ============================================
+app.get('/api/whatsapp-number', (req, res) => {
+    res.json({ number: RESTAURANT_CONFIG.whatsapp });
+});
 
 // ============================================
 // RESTAURANT ID MIDDLEWARE
@@ -185,13 +205,6 @@ app.post('/api/restaurants/all', (req, res) => {
 });
 
 // ============================================
-// WHATSAPP NUMBER API
-// ============================================
-app.get('/api/whatsapp-number', (req, res) => {
-    res.json({ number: WHATSAPP_NUMBER });
-});
-
-// ============================================
 // MENU ROUTES
 // ============================================
 app.get('/api/menu', (req, res) => {
@@ -241,7 +254,7 @@ app.get('/api/restaurant-name', (req, res) => {
         createDefaultRestaurant();
         restaurant = restaurants[0];
     }
-    res.json({ name: restaurant ? restaurant.restaurantName : 'DineFlow' });
+    res.json({ name: restaurant ? restaurant.restaurantName : RESTAURANT_CONFIG.name });
 });
 
 app.post('/api/restaurant-name', (req, res) => {
@@ -355,7 +368,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ORDER ROUTES - Enhanced with Receipt Support
+// ORDER ROUTES
 // ============================================
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
@@ -394,7 +407,6 @@ app.post('/api/orders', (req, res) => {
     
     restaurant.orders.push(newOrder);
     
-    // Save location for delivery orders
     if (orderType === 'delivery' && lat && lng) {
         customerLocations.push({
             id: customerLocations.length + 1,
@@ -412,7 +424,7 @@ app.post('/api/orders', (req, res) => {
         });
     }
     
-    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} (${orderType}) at ${restaurant.name}`);
+    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} (${orderType})`);
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
@@ -698,27 +710,22 @@ app.get('/logout', (req, res) => {
 });
 
 // ============================================
-// ⭐ SERVE HTML PAGES ⭐
+// SERVE HTML PAGES
 // ============================================
 
-// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
-// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
-// Restaurant Creation Page
 app.get('/create-restaurant', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'create-restaurant.html'));
 });
 
-// ⭐ PixelPanel - Secret Restaurant Management Panel ⭐
 app.get('/pixelpanel', (req, res) => {
-    // Secret panel - only accessible to admin
     if (!req.user || req.user.role !== 'admin') {
         return res.status(404).send(`
             <!DOCTYPE html>
@@ -756,14 +763,14 @@ createDefaultRestaurant();
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
-    console.log('🍔 DINEFLOW SERVER RUNNING');
+    console.log(`🍔 ${RESTAURANT_CONFIG.name} SERVER RUNNING`);
     console.log('========================================');
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
-    console.log(`🏪 Create Restaurant: http://localhost:${PORT}/create-restaurant`);
     console.log(`⬛ PixelPanel: http://localhost:${PORT}/pixelpanel`);
     console.log('========================================');
-    console.log(`📱 WhatsApp Number: ${WHATSAPP_NUMBER}`);
+    console.log(`📱 WhatsApp: ${RESTAURANT_CONFIG.whatsapp}`);
+    console.log(`📞 Phone: ${RESTAURANT_CONFIG.phone}`);
     console.log('========================================');
     console.log(`🏪 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);

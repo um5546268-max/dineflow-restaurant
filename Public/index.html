@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>DineFlow - Restaurant</title>
+    <title>The Heaven Slice - Restaurant</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -799,13 +799,13 @@
 
     <div id="splashScreen">
         <div class="splash-logo">🍔</div>
-        <div class="splash-name" id="splashName">DineFlow</div>
+        <div class="splash-name" id="splashName">The Heaven Slice</div>
         <div class="splash-sub">Restaurant Ordering System</div>
         <div class="splash-loader"><div class="splash-progress"></div></div>
     </div>
 
     <header class="top-header">
-        <div class="restaurant-name" id="restaurantName">🍔 Dine<span>Flow</span></div>
+        <div class="restaurant-name" id="restaurantName">🍔 The <span>Heaven Slice</span></div>
         <div class="top-actions">
             <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
             <span class="cart-icon" onclick="showPanel('orders')">
@@ -967,6 +967,32 @@
         const RESTAURANT_ID = getRestaurantId();
 
         // ============================================================
+        // RESTAURANT CONFIG - THE HEAVEN SLICE
+        // ============================================================
+        let restaurantConfig = {
+            name: 'The Heaven Slice',
+            est: '2022',
+            address: 'Gojra Road Near Ali Marriage Hall',
+            phone: '0300-0310275',
+            whatsapp: '923001234567',
+            currency: 'Rs',
+            discountAmount: 330,
+            discountThreshold: 2000
+        };
+
+        function loadRestaurantConfig() {
+            fetch('/api/restaurant-config')
+                .then(r => r.json())
+                .then(data => {
+                    restaurantConfig = data;
+                    updateRestaurantNameDisplay();
+                })
+                .catch(() => {
+                    // Use default config if server not available
+                });
+        }
+
+        // ============================================================
         // DATA
         // ============================================================
         let categories = [
@@ -988,7 +1014,7 @@
         let user = null;
         let currentCategory = 'all';
         let pendingOrder = null;
-        let restaurantName = 'DineFlow';
+        let restaurantName = 'The Heaven Slice';
         let currentPanel = 'menu';
         let selectedLayers = [];
         let selectedOrderType = 'delivery';
@@ -1070,25 +1096,33 @@
         // SPLASH SCREEN
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
+            loadRestaurantConfig();
             checkPersistentLogin();
+            
             fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
-                    restaurantName = data.name || 'DineFlow';
+                    restaurantName = data.name || 'The Heaven Slice';
                     updateRestaurantNameDisplay();
                     updateSplashName();
                 })
                 .catch(() => {});
+            
             fetch('/api/whatsapp-number')
                 .then(r => r.json())
-                .then(data => { whatsappNumber = data.number || '923001234567'; })
+                .then(data => { 
+                    whatsappNumber = data.number || '923001234567';
+                    restaurantConfig.whatsapp = whatsappNumber;
+                })
                 .catch(() => {});
+            
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('hide');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
                 }, 600);
             }, 2000);
+            
             loadAllData();
             showPanel('menu');
         });
@@ -1105,7 +1139,7 @@
             fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
-                    restaurantName = data.name || 'DineFlow';
+                    restaurantName = data.name || 'The Heaven Slice';
                     updateRestaurantNameDisplay();
                     updateSplashName();
                 })
@@ -1528,7 +1562,7 @@
         }
 
         // ============================================================
-        // RECEIPT - EXACT MATCH TO IMAGE
+        // RECEIPT - EXACT MATCH TO "THE HEAVEN SLICE" IMAGE
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -1537,9 +1571,12 @@
             const orderTime = order.date || `${dateStr} ${timeStr}`;
             const orderType = order.orderType || 'Delivery';
             const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
-            const orderId = order.id || '#' + (order.orderNumber || Math.floor(Math.random() * 1000));
+            const orderId = order.id || '#' + String(order.orderNumber || Math.floor(Math.random() * 1000)).padStart(3, '0');
             const tableInfo = order.table ? `Table: ${order.table}` : '';
 
+            const config = restaurantConfig;
+
+            // Calculate totals
             let subtotal = 0;
             let itemRows = '';
             let totalItems = 0;
@@ -1550,33 +1587,36 @@
                 const amount = qty * price;
                 subtotal += amount;
                 totalItems += qty;
-                
                 const itemName = item.name || 'Item';
                 
                 itemRows += `
                     <div class="receipt-row">
                         <span class="item-name">${itemName}</span>
                         <span class="item-qty">${qty}</span>
-                        <span class="item-price">${currencySymbol} ${price.toFixed(2)}</span>
-                        <span class="item-amount">${currencySymbol} ${amount.toFixed(2)}</span>
+                        <span class="item-price">${config.currency} ${price.toFixed(2)}</span>
+                        <span class="item-amount">${config.currency} ${amount.toFixed(2)}</span>
                     </div>
                 `;
             });
 
+            // Apply discount if subtotal exceeds threshold
             let discount = 0;
-            if (subtotal > 2000) {
-                discount = 330;
+            if (subtotal > config.discountThreshold) {
+                discount = config.discountAmount;
             }
             const grandTotal = subtotal - discount;
+
+            // Generate QR code URL for app download
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(window.location.origin)}`;
 
             const html = `
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
-                            <div class="restaurant-name">${restaurantName.toUpperCase()}</div>
-                            <div class="est">Est. 2022</div>
-                            <div class="address">📍 ${restaurantName} Restaurant</div>
-                            <div class="phone">📞 ${whatsappNumber}</div>
+                            <div class="restaurant-name">${config.name.toUpperCase()}</div>
+                            <div class="est">Est. ${config.est}</div>
+                            <div class="address">📍 ${config.address}</div>
+                            <div class="phone">📞 ${config.phone}</div>
                             <div class="receipt-divider"></div>
                             <div class="receipt-title">BILL</div>
                             <div class="receipt-order-info">
@@ -1591,7 +1631,6 @@
                             ${order.userName && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">Name: ${order.userName}</div>` : ''}
                             ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📞 ${order.phone}</div>` : ''}
                             ${order.address && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📍 ${order.address}</div>` : ''}
-                            ${order.lat && order.lng ? `<div class="receipt-customer" style="font-weight:normal; font-size:9px; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db;">View Location</a></div>` : ''}
                         </div>
                         
                         <div class="receipt-table-header">
@@ -1611,23 +1650,23 @@
                             </div>
                             <div class="total-row">
                                 <span class="label">Subtotal:</span>
-                                <span class="value">${currencySymbol} ${subtotal.toFixed(2)}</span>
+                                <span class="value">${config.currency} ${subtotal.toFixed(2)}</span>
                             </div>
                             ${discount > 0 ? `
                             <div class="total-row discount">
                                 <span class="label">Discount (Fixed):</span>
-                                <span class="value">-${currencySymbol} ${discount.toFixed(2)}</span>
+                                <span class="value">-${config.currency} ${discount.toFixed(2)}</span>
                             </div>` : ''}
                         </div>
                         
                         <div class="receipt-grand-total">
                             <span>Bill Total:</span>
-                            <span>${currencySymbol} ${grandTotal.toFixed(2)}</span>
+                            <span>${config.currency} ${grandTotal.toFixed(2)}</span>
                         </div>
                         
                         <div class="receipt-footer">
                             <div class="qr-section">
-                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MCIgaGVpZ2h0PSI3MCIgdmlld0JveD0iMCAwIDcwIDcwIj48cmVjdCB3aWR0aD0iNzAiIGhlaWdodD0iNzAiIGZpbGw9IndoaXRlIi8+PCEtLSBRUiBjb2RlIGRhdGEgLS0+PC9zdmc+" alt="QR Code" />
+                                <img src="${qrUrl}" alt="QR Code" style="max-width:80px; height:auto;" />
                                 <div class="qr-text">Scan QR Code To Download App</div>
                             </div>
                             <div class="receipt-divider"></div>
