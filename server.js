@@ -15,11 +15,9 @@ const PORT = process.env.PORT || 5000;
 const RESTAURANT_CONFIG = {
     name: 'The Heaven Slice',
     est: '2022',
-    tagline: 'PIZZA • BURGER • FAST FOOD',
     address: 'Gojra Road Near Ali Marriage Hall',
     phone: '0300-0310275',
     whatsapp: '923001234567',
-    website: 'https://theheavenslice.com',
     currency: 'Rs',
     discountAmount: 330,
     discountThreshold: 2000
@@ -67,6 +65,23 @@ let availableLayers = [
 ];
 let customerLocations = [];
 let orderCounter = 1;
+
+// ============================================
+// ⭐ RECEIPT SETTINGS (logo, QR code, discount rule, footer text) ⭐
+// Editable from the Admin Panel -> Settings -> Receipt Settings
+// ============================================
+let receiptSettings = {
+    logoIcon: '👨‍🍳',
+    tagline: 'PIZZA • BURGER • FAST FOOD',
+    established: RESTAURANT_CONFIG.est,
+    address: RESTAURANT_CONFIG.address,
+    phone: RESTAURANT_CONFIG.phone,
+    qrCodeUrl: '',
+    discountAmount: RESTAURANT_CONFIG.discountAmount,
+    discountThreshold: RESTAURANT_CONFIG.discountThreshold,
+    thankYouMessage: 'Thank You for Your Order!',
+    footerMessage: 'Have a Great Day!'
+};
 
 // ============================================
 // DEFAULT MENU AND DEALS
@@ -135,6 +150,28 @@ app.get('/api/restaurant-config', (req, res) => {
 // ============================================
 app.get('/api/whatsapp-number', (req, res) => {
     res.json({ number: RESTAURANT_CONFIG.whatsapp });
+});
+
+// ============================================
+// ⭐ RECEIPT SETTINGS API (logo, QR code, discount rule, footer text) ⭐
+// ============================================
+app.get('/api/receipt-settings', (req, res) => {
+    res.json(receiptSettings);
+});
+
+app.post('/api/receipt-settings', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const allowedFields = [
+        'logoIcon', 'tagline', 'established', 'address', 'phone',
+        'qrCodeUrl', 'discountAmount', 'discountThreshold',
+        'thankYouMessage', 'footerMessage'
+    ];
+    allowedFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+            receiptSettings[field] = req.body[field];
+        }
+    });
+    res.json({ success: true, settings: receiptSettings });
 });
 
 // ============================================

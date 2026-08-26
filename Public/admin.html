@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>The Heaven Slice - Admin Panel</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>DineFlow - Admin Panel</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -33,6 +32,15 @@
         body.dark-mode .admin-table td { border-top-color: #2d2d44; color: #f5f5f5; }
         body.dark-mode .admin-form { background: #16213e; }
         body.dark-mode .admin-form input, body.dark-mode .admin-form select { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .calculator { background: #16213e; }
+        body.dark-mode .calculator .calc-display { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .calculator .calc-buttons .calc-num { background: #2d2d44; color: #f5f5f5; }
+        body.dark-mode .calculator .calc-buttons .calc-num:hover { background: #3d3d5c; }
+        body.dark-mode .settings-card { background: #16213e; color: #f5f5f5; }
+        body.dark-mode .settings-option { border-bottom-color: #2d2d44; }
+        body.dark-mode .settings-option select { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .today-orders-card { background: #16213e; color: #f5f5f5; }
+        body.dark-mode .today-orders-card .order-item { border-bottom-color: #2d2d44; }
 
         .admin-header {
             background: #2d3436;
@@ -155,308 +163,6 @@
             font-size: 2em;
         }
 
-        /* ============================================
-           ORDER CARD - SAME STYLE AS RECEIPT
-           ============================================ */
-        .order-receipt-card {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            font-family: 'Courier New', monospace;
-            border: 1px solid #e0e0e0;
-            transition: background 0.3s, color 0.3s, border-color 0.3s;
-        }
-        body.dark-mode .order-receipt-card {
-            background: #16213e;
-            border-color: #2d2d44;
-        }
-        .order-receipt-card .receipt-header {
-            text-align: center;
-            border-bottom: 2px dashed #333;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
-        }
-        body.dark-mode .order-receipt-card .receipt-header {
-            border-bottom-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-header .restaurant-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #000;
-            letter-spacing: 1px;
-        }
-        body.dark-mode .order-receipt-card .receipt-header .restaurant-name {
-            color: #f5f5f5;
-        }
-        .order-receipt-card .receipt-header .est {
-            font-size: 10px;
-            color: #555;
-            font-weight: 600;
-        }
-        body.dark-mode .order-receipt-card .receipt-header .est {
-            color: #aaa;
-        }
-        .order-receipt-card .receipt-header .address {
-            font-size: 9px;
-            color: #444;
-            line-height: 1.3;
-        }
-        body.dark-mode .order-receipt-card .receipt-header .address {
-            color: #aaa;
-        }
-        .order-receipt-card .receipt-header .phone {
-            font-size: 9px;
-            color: #444;
-            font-weight: 600;
-        }
-        body.dark-mode .order-receipt-card .receipt-header .phone {
-            color: #aaa;
-        }
-        .order-receipt-card .receipt-divider {
-            border-top: 1px dashed #999;
-            margin: 6px 0;
-        }
-        body.dark-mode .order-receipt-card .receipt-divider {
-            border-top-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-title {
-            text-align: center;
-            font-weight: 700;
-            font-size: 14px;
-            letter-spacing: 3px;
-            margin: 4px 0;
-            color: #000;
-        }
-        body.dark-mode .order-receipt-card .receipt-title {
-            color: #f5f5f5;
-        }
-        .order-receipt-card .receipt-order-info {
-            font-size: 10px;
-            display: flex;
-            justify-content: space-between;
-            padding: 2px 0;
-            font-weight: 600;
-            color: #333;
-        }
-        body.dark-mode .order-receipt-card .receipt-order-info {
-            color: #ddd;
-        }
-        .order-receipt-card .receipt-customer {
-            font-size: 10px;
-            padding: 2px 0;
-            font-weight: 600;
-            color: #333;
-        }
-        body.dark-mode .order-receipt-card .receipt-customer {
-            color: #ddd;
-        }
-        .order-receipt-card .receipt-customer .customer-detail {
-            font-weight: normal;
-            font-size: 9px;
-            color: #555;
-        }
-        body.dark-mode .order-receipt-card .receipt-customer .customer-detail {
-            color: #aaa;
-        }
-        .order-receipt-card .receipt-table-header {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 700;
-            font-size: 10px;
-            border-bottom: 1px solid #999;
-            padding: 3px 0;
-            margin-top: 4px;
-            text-transform: uppercase;
-            color: #333;
-        }
-        body.dark-mode .order-receipt-card .receipt-table-header {
-            color: #ddd;
-            border-bottom-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-table-header span {
-            flex: 1;
-        }
-        .order-receipt-card .receipt-table-header .col-qty {
-            text-align: center;
-            flex: 0.5;
-        }
-        .order-receipt-card .receipt-table-header .col-price {
-            text-align: right;
-            flex: 0.8;
-        }
-        .order-receipt-card .receipt-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            padding: 2px 0;
-            color: #333;
-        }
-        body.dark-mode .order-receipt-card .receipt-row {
-            color: #ddd;
-        }
-        .order-receipt-card .receipt-row .item-name {
-            flex: 2;
-            font-weight: 600;
-        }
-        .order-receipt-card .receipt-row .item-qty {
-            flex: 0.5;
-            text-align: center;
-        }
-        .order-receipt-card .receipt-row .item-price {
-            flex: 0.8;
-            text-align: right;
-        }
-        .order-receipt-card .receipt-totals {
-            border-top: 2px double #333;
-            padding-top: 6px;
-            margin-top: 6px;
-        }
-        body.dark-mode .order-receipt-card .receipt-totals {
-            border-top-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-totals .total-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            padding: 2px 0;
-            color: #333;
-        }
-        body.dark-mode .order-receipt-card .receipt-totals .total-row {
-            color: #ddd;
-        }
-        .order-receipt-card .receipt-totals .total-row .label {
-            font-weight: 600;
-        }
-        .order-receipt-card .receipt-totals .total-row .value {
-            font-weight: 600;
-        }
-        .order-receipt-card .receipt-totals .total-row.discount {
-            color: #e74c3c;
-        }
-        .order-receipt-card .receipt-grand-total {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            font-weight: 700;
-            padding: 6px 0;
-            border-top: 2px double #333;
-            margin-top: 4px;
-            color: #000;
-        }
-        body.dark-mode .order-receipt-card .receipt-grand-total {
-            color: #f5f5f5;
-            border-top-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-footer {
-            text-align: center;
-            border-top: 2px dashed #333;
-            padding-top: 8px;
-            margin-top: 8px;
-            font-size: 9px;
-            color: #555;
-        }
-        body.dark-mode .order-receipt-card .receipt-footer {
-            color: #aaa;
-            border-top-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-footer .thank-you {
-            font-size: 11px;
-            font-weight: 700;
-            color: #000;
-            margin-top: 4px;
-        }
-        body.dark-mode .order-receipt-card .receipt-footer .thank-you {
-            color: #f5f5f5;
-        }
-        .order-receipt-card .receipt-footer .great-day {
-            font-size: 9px;
-            color: #555;
-        }
-        body.dark-mode .order-receipt-card .receipt-footer .great-day {
-            color: #aaa;
-        }
-        .order-receipt-card .receipt-footer .heart {
-            color: #e74c3c;
-        }
-        .order-receipt-card .receipt-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
-        body.dark-mode .order-receipt-card .receipt-actions {
-            border-top-color: #2d2d44;
-        }
-        .order-receipt-card .receipt-actions button,
-        .order-receipt-card .receipt-actions select {
-            padding: 4px 12px;
-            border: none;
-            border-radius: 15px;
-            font-size: 0.75em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: inherit;
-        }
-        .order-receipt-card .receipt-actions .btn-status {
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.75em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #dfe6e9;
-            background: white;
-            color: #2d3436;
-        }
-        body.dark-mode .order-receipt-card .receipt-actions .btn-status {
-            background: #2d2d44;
-            color: #f5f5f5;
-            border-color: #3d3d5c;
-        }
-        .order-receipt-card .receipt-actions .btn-status:hover {
-            border-color: #e74c3c;
-        }
-        .order-receipt-card .receipt-actions .btn-print {
-            background: #f39c12;
-            color: white;
-        }
-        .order-receipt-card .receipt-actions .btn-print:hover {
-            background: #d68910;
-        }
-        .order-receipt-card .receipt-actions .btn-whatsapp {
-            background: #25D366;
-            color: white;
-        }
-        .order-receipt-card .receipt-actions .btn-whatsapp:hover {
-            background: #1da851;
-        }
-        .order-receipt-card .receipt-actions .btn-map {
-            background: #3498db;
-            color: white;
-        }
-        .order-receipt-card .receipt-actions .btn-map:hover {
-            background: #2980b9;
-        }
-        .order-receipt-card .receipt-badge {
-            display: inline-block;
-            padding: 2px 12px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: 600;
-        }
-        .status-pending { background: #fdf2f2; color: #e74c3c; }
-        .status-confirmed { background: #e8f4fd; color: #3498db; }
-        .status-preparing { background: #fef9e7; color: #f39c12; }
-        .status-ready { background: #e8f8f0; color: #27ae60; }
-        .status-delivered { background: #e8f8f0; color: #27ae60; }
-        .status-cancelled { background: #fdf2f2; color: #e74c3c; }
-
         .admin-table {
             width: 100%;
             background: white;
@@ -483,6 +189,38 @@
             border-top: 1px solid #f1f2f6;
             transition: border-color 0.3s;
         }
+        .admin-table .admin-action-btn {
+            padding: 3px 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 2px;
+        }
+        .admin-table .btn-edit { background: #3498db; color: white; }
+        .admin-table .btn-edit:hover { background: #2980b9; }
+        .admin-table .btn-delete { background: #e74c3c; color: white; }
+        .admin-table .btn-delete:hover { background: #c0392b; }
+        .admin-table .btn-save { background: #27ae60; color: white; }
+        .admin-table .btn-save:hover { background: #1e8449; }
+        .admin-table .btn-cancel { background: #b2bec3; color: white; }
+        .admin-table .btn-cancel:hover { background: #636e72; }
+        .admin-table .btn-print { background: #f39c12; color: white; }
+        .admin-table .btn-print:hover { background: #d68910; }
+        .admin-table .status-badge {
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .status-pending { background: #fdf2f2; color: #e74c3c; }
+        .status-confirmed { background: #e8f4fd; color: #3498db; }
+        .status-preparing { background: #fef9e7; color: #f39c12; }
+        .status-ready { background: #e8f8f0; color: #27ae60; }
+        .status-delivered { background: #e8f8f0; color: #27ae60; }
+        .status-cancelled { background: #fdf2f2; color: #e74c3c; }
 
         .admin-add-btn {
             background: #27ae60;
@@ -573,6 +311,25 @@
             background: #fdf2f2;
             border-color: #e74c3c;
         }
+        .icon-picker-container .selected-icon:hover::after {
+            content: '✕';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.4em;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-picker-container .icon-hint {
+            color: #b2bec3;
+            font-size: 0.85em;
+        }
         .icon-picker-btn {
             background: #dfe6e9;
             border: none;
@@ -649,6 +406,145 @@
         .icon-picker-popup .picker-body .emoji-grid button:hover {
             background: #f1f2f6;
             transform: scale(1.1);
+        }
+
+        /* ⭐ WHATSAPP NUMBER DISPLAY ⭐ */
+        .whatsapp-number-box {
+            background: #25D366;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .whatsapp-number-box a {
+            color: white;
+            text-decoration: none;
+        }
+        .whatsapp-number-box a:hover {
+            text-decoration: underline;
+        }
+
+        /* Calculator Section */
+        .calculator-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .calculator-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calculator {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s;
+        }
+        .calculator .calc-display {
+            width: 100%;
+            padding: 15px;
+            font-size: 2em;
+            text-align: right;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .calculator .calc-display:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .calculator .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calculator .calc-buttons button {
+            padding: 14px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .calculator .calc-buttons .calc-num { background: #f1f2f6; color: #2d3436; }
+        .calculator .calc-buttons .calc-num:hover { background: #dfe6e9; transform: scale(1.02); }
+        .calculator .calc-buttons .calc-op { background: #3498db; color: white; }
+        .calculator .calc-buttons .calc-op:hover { background: #2980b9; transform: scale(1.02); }
+        .calculator .calc-buttons .calc-eq { background: #27ae60; color: white; }
+        .calculator .calc-buttons .calc-eq:hover { background: #1e8449; transform: scale(1.02); }
+        .calculator .calc-buttons .calc-clear { background: #e74c3c; color: white; }
+        .calculator .calc-buttons .calc-clear:hover { background: #c0392b; transform: scale(1.02); }
+        .calculator .calc-buttons .calc-span2 { grid-column: span 2; }
+        .calculator .calc-keyboard-hint {
+            margin-top: 8px;
+            font-size: 0.75em;
+            color: #b2bec3;
+            text-align: center;
+        }
+
+        /* Today's Orders */
+        .today-orders-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.3s, color 0.3s;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .today-orders-card::-webkit-scrollbar { width: 4px; }
+        .today-orders-card::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        .today-orders-card h4 {
+            margin-bottom: 10px;
+            color: #2d3436;
+            font-size: 1em;
+        }
+        .today-orders-card .order-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s;
+        }
+        .today-orders-card .order-item:last-child {
+            border-bottom: none;
+        }
+        .today-orders-card .order-item .order-id {
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        .today-orders-card .order-item .order-customer {
+            font-size: 0.8em;
+            color: #636e72;
+        }
+        .today-orders-card .order-item .order-total {
+            font-weight: 700;
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+        .today-orders-card .order-item .order-status {
+            font-size: 0.65em;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .today-orders-card .no-orders {
+            text-align: center;
+            padding: 20px;
+            color: #b2bec3;
         }
 
         /* Settings */
@@ -739,9 +635,262 @@
             font-size: 0.9em;
         }
 
+        .receipt-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .receipt-popup.show { display: flex; }
+        .receipt-popup .receipt-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+        .receipt-popup .receipt-close {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 1.4em;
+            cursor: pointer;
+            color: #b2bec3;
+            background: none;
+            border: none;
+        }
+        .receipt-popup .receipt-close:hover { color: #e74c3c; }
+        .receipt-popup .receipt-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .receipt-popup .receipt-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .receipt-popup .btn-print-receipt { background: #27ae60; color: white; }
+        .receipt-popup .btn-print-receipt:hover { background: #1e8449; }
+        .receipt-popup .btn-close-receipt { background: #b2bec3; color: white; }
+        .receipt-popup .btn-close-receipt:hover { background: #636e72; }
+
+        /* ============================================================
+           ⭐ BILL-STYLE RECEIPT (matches printed bill design) ⭐
+           ============================================================ */
+        #receiptPrint {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #111;
+            background: #fff;
+            padding: 6px;
+        }
+        #receiptPrint .bill-logo-wrap {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        #receiptPrint .bill-logo-circle {
+            width: 96px;
+            height: 96px;
+            border: 3px solid #111;
+            border-radius: 50%;
+            margin: 0 auto 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.6em;
+            position: relative;
+        }
+        #receiptPrint .bill-logo-ribbon {
+            display: inline-block;
+            background: #111;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.95em;
+            margin-top: -4px;
+        }
+        #receiptPrint .bill-logo-tagline {
+            font-size: 0.65em;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #333;
+            margin-top: 4px;
+        }
+        #receiptPrint .bill-title {
+            text-align: center;
+            font-size: 1.6em;
+            font-weight: 800;
+            font-family: Georgia, 'Times New Roman', serif;
+            margin: 6px 0 2px;
+        }
+        #receiptPrint .bill-est {
+            text-align: center;
+            font-size: 0.75em;
+            font-weight: 700;
+            color: #333;
+            border-top: 2px solid #111;
+            border-bottom: 2px solid #111;
+            display: inline-block;
+            padding: 2px 10px;
+            margin: 4px auto;
+        }
+        #receiptPrint .bill-est-wrap { text-align: center; margin-bottom: 6px; }
+        #receiptPrint .bill-contact {
+            text-align: center;
+            font-size: 0.78em;
+            font-weight: 600;
+            margin: 2px 0;
+        }
+        #receiptPrint .bill-label-wrap {
+            text-align: center;
+            margin: 10px 0;
+        }
+        #receiptPrint .bill-label {
+            background: #111;
+            color: #fff;
+            font-weight: 800;
+            letter-spacing: 2px;
+            padding: 5px 26px;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+        #receiptPrint .bill-info-box {
+            display: flex;
+            justify-content: space-between;
+            border: 2px solid #111;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.78em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        #receiptPrint .bill-customer {
+            font-size: 0.82em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        #receiptPrint table.bill-items {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #111;
+            margin-bottom: 8px;
+        }
+        #receiptPrint table.bill-items th {
+            background: #111;
+            color: #fff;
+            padding: 5px 6px;
+            font-size: 0.72em;
+            text-align: left;
+        }
+        #receiptPrint table.bill-items th:not(:first-child),
+        #receiptPrint table.bill-items td:not(:first-child) {
+            text-align: center;
+        }
+        #receiptPrint table.bill-items td {
+            padding: 5px 6px;
+            font-size: 0.75em;
+            border-top: 1px solid #ccc;
+        }
+        #receiptPrint table.bill-items .bill-item-name { font-weight: 700; }
+        #receiptPrint table.bill-items .bill-item-variant { font-weight: 400; color: #555; font-size: 0.9em; }
+        #receiptPrint .bill-totals-box {
+            border: 2px solid #111;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        #receiptPrint .bill-totals-box div {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+        #receiptPrint .bill-grand-total {
+            background: #111;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 1.05em;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        #receiptPrint .bill-qr-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid #111;
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+        #receiptPrint .bill-qr-box img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+        }
+        #receiptPrint .bill-qr-text {
+            font-size: 0.78em;
+            font-weight: 700;
+            text-align: center;
+            flex: 1;
+        }
+        #receiptPrint .bill-thankyou {
+            background: #111;
+            color: #fff;
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+        }
+        #receiptPrint .bill-footer-note {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.8em;
+            padding-top: 4px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #receiptPrint, #receiptPrint * { visibility: visible; }
+            #receiptPrint {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 80mm;
+                padding: 10px;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 12px;
+                background: white;
+                color: black;
+            }
         }
 
         @media (max-width: 600px) {
@@ -751,258 +900,25 @@
             .admin-form .form-row-admin { grid-template-columns: 1fr; }
             .admin-header h2 { font-size: 1em; }
             .admin-header .admin-header-actions a { font-size: 0.7em; padding: 4px 10px; }
-            .order-receipt-card { padding: 10px; }
-            .order-receipt-card .receipt-header .restaurant-name { font-size: 15px; }
-            .order-receipt-card .receipt-grand-total { font-size: 12px; }
+            .admin-table table { font-size: 0.75em; }
+            .admin-table th, .admin-table td { padding: 6px 8px; }
             .icon-picker-popup { width: 95%; max-width: 350px; }
             .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(5, 1fr); }
         }
         @media (max-width: 400px) {
             .admin-sidebar { width: 110px; }
             .admin-sidebar .admin-nav-item { font-size: 0.65em; padding: 8px 10px; }
-            .order-receipt-card .receipt-header .restaurant-name { font-size: 13px; }
-            .order-receipt-card .receipt-row { font-size: 9px; }
             .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(4, 1fr); }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
-
-        /* ============================================================
-           NEW BILL DESIGN — matches "The Heaven Slice" reference photo
-           Used both in the admin Orders list and in the printed receipt.
-           ============================================================ */
-        .bill-card {
-            background: #ffffff;
-            color: #000;
-            font-family: Georgia, 'Times New Roman', serif;
-            max-width: 380px;
-            margin: 0 auto 15px auto;
-            padding: 18px 16px 14px 16px;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
-        body.dark-mode .bill-card { background: #fff; color: #000; } /* bill itself always stays print-style */
-
-        .bill-logo-wrap { display: flex; justify-content: center; margin-bottom: 6px; }
-        .bill-logo-badge svg { display: block; }
-
-        .bill-restaurant-title {
-            text-align: center;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-top: 4px;
-            font-family: Georgia, 'Times New Roman', serif;
-        }
-        .bill-est-row {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            margin: 4px 0 8px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .bill-est-row .line { flex: 1; max-width: 60px; height: 1px; background: #000; }
-        .bill-address-row, .bill-phone-row {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            margin: 2px 0;
-        }
-
-        .bill-label-pill {
-            display: block;
-            text-align: center;
-            background: #000;
-            color: #fff;
-            font-weight: 700;
-            font-size: 15px;
-            letter-spacing: 2px;
-            padding: 6px 0;
-            border-radius: 8px;
-            margin: 12px 0 10px 0;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-
-        .bill-info-box {
-            border: 2px solid #000;
-            border-radius: 8px;
-            display: flex;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-        .bill-info-box .info-left {
-            flex: 1;
-            padding: 6px 10px;
-            border-right: 2px solid #000;
-        }
-        .bill-info-box .info-left div:first-child { margin-bottom: 3px; }
-        .bill-info-box .info-right {
-            flex: 1.2;
-            padding: 6px 10px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .bill-customer-row {
-            font-size: 13px;
-            font-weight: 700;
-            margin: 6px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-
-        .bill-items-table { width: 100%; margin-top: 6px; border-collapse: collapse; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .bill-items-table thead tr { background: #000; color: #fff; }
-        .bill-items-table th {
-            padding: 6px 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: left;
-        }
-        .bill-items-table th.col-qty, .bill-items-table td.col-qty { text-align: center; width: 15%; }
-        .bill-items-table th.col-price, .bill-items-table td.col-price,
-        .bill-items-table th.col-amount, .bill-items-table td.col-amount { text-align: right; width: 20%; }
-        .bill-items-table td {
-            padding: 8px 6px;
-            font-size: 12px;
-            border-bottom: 1px solid #000;
-            vertical-align: top;
-        }
-        .bill-items-table .bill-item-icon { font-size: 1.3em; margin-right: 4px; }
-        .bill-items-table .bill-item-name { font-weight: 700; }
-        .bill-items-table .bill-item-variant { display: block; font-weight: 400; font-size: 11px; color: #333; }
-
-        .bill-totals-box {
-            border: 2px solid #000;
-            border-radius: 8px;
-            padding: 8px 12px;
-            margin-top: 10px;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-        .bill-totals-box .bill-total-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            font-weight: 700;
-            padding: 2px 0;
-        }
-        .bill-totals-box .bill-total-row.discount { color: #000; }
-
-        .bill-grand-total-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #000;
-            color: #fff;
-            font-size: 18px;
-            font-weight: 700;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-top: 8px;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-
-        .bill-qr-box {
-            border: 2px solid #000;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            margin-top: 12px;
-        }
-        .bill-qr-box .bill-qr-canvas {
-            width: 70px;
-            height: 70px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .bill-qr-box .bill-qr-canvas img,
-        .bill-qr-box .bill-qr-canvas canvas { width: 100%; height: 100%; }
-        .bill-qr-box .bill-qr-text {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            line-height: 1.3;
-        }
-        .bill-qr-box .bill-qr-text .qr-icon { font-size: 1.4em; margin-right: 4px; }
-        .bill-qr-box .bill-qr-divider { width: 2px; align-self: stretch; background: #000; }
-
-        .bill-thankyou-bar {
-            background: #000;
-            color: #fff;
-            text-align: center;
-            font-weight: 700;
-            font-size: 15px;
-            padding: 8px 0;
-            border-radius: 8px;
-            margin-top: 12px;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-        .bill-greatday-row {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-        .bill-greatday-row .line { flex: 1; max-width: 50px; height: 1px; background: #000; }
-
-        .bill-status-line {
-            text-align: center;
-            margin: 6px 0;
-        }
-
-        .bill-card-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-        .bill-card-actions button, .bill-card-actions select {
-            padding: 5px 14px;
-            border: none;
-            border-radius: 15px;
-            font-size: 0.78em;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .bill-card-actions .btn-status { border: 1px solid #dfe6e9; background: white; color: #2d3436; }
-        .bill-card-actions .btn-print { background: #f39c12; color: white; }
-        .bill-card-actions .btn-whatsapp { background: #25D366; color: white; text-decoration: none; display: inline-block; }
-        .bill-card-actions .btn-map { background: #3498db; color: white; text-decoration: none; display: inline-block; }
-
-        @media (max-width: 420px) {
-            .bill-card { padding: 12px 10px 10px 10px; max-width: 100%; }
-            .bill-restaurant-title { font-size: 20px; }
-            .bill-logo-badge svg { width: 70px; height: 70px; }
-            .bill-grand-total-bar { font-size: 15px; }
-        }
     </style>
 </head>
 <body>
 
     <header class="admin-header">
-        <h2>👑 The Heaven Slice - Admin</h2>
+        <h2>👑 Admin Dashboard</h2>
         <div class="admin-header-actions">
             <a href="/" class="view-site-btn">📱 View Site</a>
             <a href="/logout" class="logout-btn">🚪 Logout</a>
@@ -1012,9 +928,10 @@
     <div class="admin-body">
         <div class="admin-sidebar">
             <a class="admin-nav-item active" data-admin="dashboard" onclick="showAdminSection('dashboard')">📊 Dashboard</a>
-            <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
             <a class="admin-nav-item" data-admin="menu" onclick="showAdminSection('menu')">🍽️ Menu</a>
             <a class="admin-nav-item" data-admin="deals" onclick="showAdminSection('deals')">🔥 Deals</a>
+            <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
+            <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
             <a class="admin-nav-item" data-admin="feedback" onclick="showAdminSection('feedback')">⭐ Feedback</a>
             <a class="admin-nav-item" data-admin="support" onclick="showAdminSection('support')">🎫 Support</a>
             <a class="admin-nav-item" data-admin="layers" onclick="showAdminSection('layers')">🧅 Layers</a>
@@ -1049,15 +966,7 @@
                     </div>
                 </div>
                 <h4 style="margin-bottom:10px;">📋 Recent Orders</h4>
-                <div id="adminRecentOrders">
-                    <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
-                </div>
-            </div>
-
-            <!-- Orders -->
-            <div class="admin-section" id="adminOrders">
-                <h3 style="margin-bottom:15px;">📦 All Orders</h3>
-                <div id="adminAllOrders">
+                <div class="admin-table" id="adminOrdersList">
                     <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
                 </div>
             </div>
@@ -1126,7 +1035,52 @@
                 </div>
             </div>
 
-            <!-- Feedback -->
+            <!-- Orders -->
+            <div class="admin-section" id="adminOrders">
+                <h3 style="margin-bottom:10px;">📦 All Orders</h3>
+                <div class="admin-table" id="adminAllOrdersTable">
+                    <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
+                </div>
+            </div>
+
+            <!-- Calculator -->
+            <div class="admin-section" id="adminCalculator">
+                <h3 style="margin-bottom:15px;">🧮 Calculator & Today's Orders</h3>
+                <div class="calculator-section">
+                    <div class="calculator" id="calculatorWidget">
+                        <input class="calc-display" id="calcDisplay" readonly value="0" />
+                        <div class="calc-buttons">
+                            <button class="calc-clear calc-span2" onclick="calcClear()">C</button>
+                            <button class="calc-op" onclick="calcInput('/')">÷</button>
+                            <button class="calc-num" onclick="calcInput('7')">7</button>
+                            <button class="calc-num" onclick="calcInput('8')">8</button>
+                            <button class="calc-num" onclick="calcInput('9')">9</button>
+                            <button class="calc-op" onclick="calcInput('*')">×</button>
+                            <button class="calc-num" onclick="calcInput('4')">4</button>
+                            <button class="calc-num" onclick="calcInput('5')">5</button>
+                            <button class="calc-num" onclick="calcInput('6')">6</button>
+                            <button class="calc-op" onclick="calcInput('-')">−</button>
+                            <button class="calc-num" onclick="calcInput('1')">1</button>
+                            <button class="calc-num" onclick="calcInput('2')">2</button>
+                            <button class="calc-num" onclick="calcInput('3')">3</button>
+                            <button class="calc-op" onclick="calcInput('+')">+</button>
+                            <button class="calc-num calc-span2" onclick="calcInput('0')">0</button>
+                            <button class="calc-op" onclick="calcInput('.')">.</button>
+                            <button class="calc-eq" onclick="calcResult()">=</button>
+                        </div>
+                        <div class="calc-keyboard-hint">⌨️ Keyboard supported: 0-9, +, -, *, /, Enter, Backspace, Escape</div>
+                    </div>
+
+                    <div class="today-orders-card" id="todayOrdersCard">
+                        <h4>📋 Today's Orders</h4>
+                        <div id="todayOrdersList">
+                            <div class="no-orders">Loading orders...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Section -->
             <div class="admin-section" id="adminFeedback">
                 <h3 style="margin-bottom:15px;">⭐ Customer Feedback</h3>
                 <div class="admin-stats" style="margin-bottom:15px;">
@@ -1146,7 +1100,7 @@
                 </div>
             </div>
 
-            <!-- Support -->
+            <!-- Support Section -->
             <div class="admin-section" id="adminSupport">
                 <h3 style="margin-bottom:15px;">🎫 Support Tickets</h3>
                 <div class="admin-table" id="supportList">
@@ -1154,7 +1108,7 @@
                 </div>
             </div>
 
-            <!-- Layers -->
+            <!-- Layers Management -->
             <div class="admin-section" id="adminLayers">
                 <h3 style="margin-bottom:15px;">🧅 Manage Layers</h3>
                 <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
@@ -1164,11 +1118,27 @@
                 <div class="admin-table" id="layersList">
                     <p style="color:#b2bec3; padding:15px;">Loading layers...</p>
                 </div>
+                <div style="margin-top:15px; background:#fef9e7; padding:15px; border-radius:12px; border-left:4px solid #f39c12;">
+                    <h4 style="color:#f39c12;">💡 Tip</h4>
+                    <p style="font-size:0.85em; color:#636e72;">Layers added here will be available for burger-type items.</p>
+                </div>
             </div>
 
-            <!-- Delivery -->
+            <!-- ⭐ DELIVERY TRACKING SECTION ⭐ -->
             <div class="admin-section" id="adminDelivery">
-                <h3 style="margin-bottom:15px;">📍 Delivery Tracking</h3>
+                <h3 style="margin-bottom:15px;">📍 Live Delivery Tracking</h3>
+                
+                <!-- ⭐ WHATSAPP NUMBER DISPLAY ⭐ -->
+                <div style="background:#25D366; color:white; padding:12px 20px; border-radius:12px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <span style="font-size:1.1em; font-weight:700;">📱 WhatsApp Number:</span>
+                        <span id="whatsappNumberDisplay" style="font-size:1.1em;">Loading...</span>
+                    </div>
+                    <a href="#" onclick="openWhatsApp()" target="_blank" style="background:white; color:#25D366; padding:6px 16px; border-radius:20px; text-decoration:none; font-weight:700; font-size:0.85em;">
+                        💬 Open WhatsApp
+                    </a>
+                </div>
+                
                 <div class="admin-stats" style="margin-bottom:15px;">
                     <div class="admin-stat-card">
                         <div class="stat-icon">📍</div>
@@ -1181,7 +1151,19 @@
                         <div class="stat-label">Today's Shares</div>
                     </div>
                 </div>
-                <div id="deliveryLocationsList">
+                
+                <div style="background:white; border-radius:12px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:15px;">
+                    <div id="deliveryMap" style="width:100%; height:450px; border-radius:8px; background:#f1f2f6; overflow:hidden;">
+                        <iframe id="deliveryMapIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                    </div>
+                    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="admin-add-btn" onclick="refreshDeliveryMap()" style="margin:0; padding:6px 16px; font-size:0.85em;">🔄 Refresh Map</button>
+                        <button class="admin-add-btn" onclick="centerAllMarkers()" style="margin:0; padding:6px 16px; font-size:0.85em; background:#3498db;">📍 Center All</button>
+                        <span id="mapStatus" style="color:#b2bec3; font-size:0.85em; padding:6px;">Loading locations...</span>
+                    </div>
+                </div>
+                
+                <div class="admin-table" id="deliveryLocationsList">
                     <p style="color:#b2bec3; padding:15px;">Loading customer locations...</p>
                 </div>
             </div>
@@ -1189,6 +1171,7 @@
             <!-- Settings -->
             <div class="admin-section" id="adminSettings">
                 <h3 style="margin-bottom:15px;">⚙️ Settings</h3>
+
                 <div class="settings-card">
                     <h4>Restaurant Settings</h4>
                     <div class="settings-option">
@@ -1200,6 +1183,104 @@
                         <button class="admin-submit-btn" onclick="adminUpdateRestaurantName()" style="padding:6px 16px; font-size:0.85em;">Update</button>
                     </div>
                 </div>
+
+                <!-- ⭐ RECEIPT SETTINGS ⭐ -->
+                <div class="settings-card">
+                    <h4>🧾 Receipt Settings</h4>
+                    <p style="font-size:0.75em; color:#b2bec3; margin-bottom:10px;">Controls the printed bill: logo, QR code, discount rule and footer text.</p>
+
+                    <div class="settings-option" style="align-items:flex-start;">
+                        <div>
+                            <div class="option-label">Logo Icon</div>
+                            <div class="option-desc">Emoji shown inside the circle logo</div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <span id="receiptLogoPreview" style="font-size:1.8em; border:1px solid #dfe6e9; border-radius:8px; padding:4px 10px;">👨‍🍳</span>
+                            <input type="text" id="receiptLogoIcon" placeholder="e.g. 👨‍🍳" style="width:80px;" oninput="document.getElementById('receiptLogoPreview').textContent=this.value||'👨‍🍳';" />
+                        </div>
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Tagline</div>
+                            <div class="option-desc">Small text under logo ribbon</div>
+                        </div>
+                        <input type="text" id="receiptTagline" placeholder="PIZZA • BURGER • FAST FOOD" style="width:220px;" />
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Established Year</div>
+                            <div class="option-desc">Shown as "Est. YYYY"</div>
+                        </div>
+                        <input type="text" id="receiptEstablished" placeholder="2022" style="width:120px;" />
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Address</div>
+                            <div class="option-desc">Printed under restaurant name</div>
+                        </div>
+                        <input type="text" id="receiptAddress" placeholder="Street, Area" style="width:260px;" />
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Phone</div>
+                            <div class="option-desc">Printed contact number</div>
+                        </div>
+                        <input type="text" id="receiptPhone" placeholder="0300-0000000" style="width:180px;" />
+                    </div>
+
+                    <div class="settings-option" style="align-items:flex-start;">
+                        <div>
+                            <div class="option-label">QR Code Image URL</div>
+                            <div class="option-desc">Link to a QR code image (any hosted PNG/JPG link, or a QR generator URL)</div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <img id="receiptQrPreview" style="width:44px; height:44px; border:1px solid #dfe6e9; border-radius:6px; object-fit:contain; display:none;" />
+                            <input type="text" id="receiptQrUrl" placeholder="https://..." style="width:220px;" oninput="updateQrPreview()" />
+                        </div>
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Discount Amount (Fixed Rs)</div>
+                            <div class="option-desc">Applied automatically once threshold is reached</div>
+                        </div>
+                        <input type="number" id="receiptDiscountAmount" placeholder="330" style="width:120px;" />
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Discount Threshold (Rs)</div>
+                            <div class="option-desc">Minimum subtotal to trigger the discount</div>
+                        </div>
+                        <input type="number" id="receiptDiscountThreshold" placeholder="2000" style="width:120px;" />
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Thank You Message</div>
+                            <div class="option-desc">Bottom black banner text</div>
+                        </div>
+                        <input type="text" id="receiptThankYou" placeholder="Thank You for Your Order!" style="width:260px;" />
+                    </div>
+
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Footer Note</div>
+                            <div class="option-desc">Last line under thank you</div>
+                        </div>
+                        <input type="text" id="receiptFooterNote" placeholder="Have a Great Day!" style="width:220px;" />
+                    </div>
+
+                    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="admin-submit-btn" onclick="saveReceiptSettings()">💾 Save Receipt Settings</button>
+                        <button class="admin-cancel-btn" onclick="previewSampleReceipt()">👁️ Preview Sample Receipt</button>
+                    </div>
+                </div>
+
                 <div class="settings-card">
                     <h4>🎨 Theme Settings</h4>
                     <div class="settings-option">
@@ -1210,6 +1291,84 @@
                         <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()">
                             <div class="toggle-dot"></div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🔤 Font Settings</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Font Size</div>
+                            <div class="option-desc">Adjust the font size</div>
+                        </div>
+                        <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+                            <option value="14px">Small</option>
+                            <option value="16px" selected>Medium</option>
+                            <option value="18px">Large</option>
+                            <option value="20px">X-Large</option>
+                        </select>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Font Family</div>
+                            <div class="option-desc">Choose your preferred font</div>
+                        </div>
+                        <select id="fontFamilySelect" onchange="changeFontFamily(this.value)">
+                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="'Courier New', monospace">Courier New</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🌐 Language & Region</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">App Language</div>
+                            <div class="option-desc">Choose your preferred language</div>
+                        </div>
+                        <select id="languageSelect" onchange="changeLanguage(this.value)">
+                            <option value="en">English</option>
+                            <option value="ur">Urdu</option>
+                            <option value="ar">Arabic</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                        </select>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Currency Symbol</div>
+                            <div class="option-desc">Choose your currency</div>
+                        </div>
+                        <select id="currencySelect" onchange="changeCurrency(this.value)">
+                            <option value="Rs">Rs (PKR)</option>
+                            <option value="$">$ (USD)</option>
+                            <option value="€">€ (EUR)</option>
+                            <option value="£">£ (GBP)</option>
+                            <option value="₹">₹ (INR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>📱 About</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">App Version</div>
+                            <div class="option-desc">DineFlow v2.0.0</div>
+                        </div>
+                        <span style="color:#27ae60;">✅ Up to date</span>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Total Users</div>
+                            <div class="option-desc">Registered users</div>
+                        </div>
+                        <span id="adminTotalUsers">0</span>
                     </div>
                 </div>
             </div>
@@ -1227,23 +1386,18 @@
         </div>
     </div>
 
-    <script>
-        // ============================================================
-        // RESTAURANT CONFIG - THE HEAVEN SLICE
-        // ============================================================
-        let restaurantConfig = {
-            name: 'The Heaven Slice',
-            est: '2022',
-            tagline: 'PIZZA • BURGER • FAST FOOD',
-            address: 'Gojra Road Near Ali Marriage Hall',
-            phone: '0300-0310275',
-            whatsapp: '923001234567',
-            website: 'https://theheavenslice.com',
-            currency: 'Rs',
-            discountAmount: 330,
-            discountThreshold: 2000
-        };
+    <div class="receipt-popup" id="receiptPopup">
+        <div class="receipt-content">
+            <button class="receipt-close" onclick="closeReceipt()">✕</button>
+            <div id="receiptPrint"></div>
+            <div class="receipt-actions">
+                <button class="btn-print-receipt" onclick="printReceipt()">🖨️ Print Receipt</button>
+                <button class="btn-close-receipt" onclick="closeReceipt()">Close</button>
+            </div>
+        </div>
+    </div>
 
+    <script>
         // ============================================================
         // DATA
         // ============================================================
@@ -1251,13 +1405,24 @@
         let deals = [];
         let orders = [];
         let users = [];
-        let feedbacks = [];
-        let supportTickets = [];
-        let customerLocations = [];
-        let availableLayers = [];
         let lastOrderCount = 0;
+        let restaurantName = 'DineFlow';
         let currencySymbol = 'Rs';
-        let whatsappNumber = '923001234567';
+        let whatsappNumber = '';
+
+        // ⭐ Receipt settings (logo, QR code, discount rule, footer text) ⭐
+        let receiptSettings = {
+            logoIcon: '👨‍🍳',
+            tagline: 'PIZZA • BURGER • FAST FOOD',
+            established: '2022',
+            address: '',
+            phone: '',
+            qrCodeUrl: '',
+            discountAmount: 0,
+            discountThreshold: 0,
+            thankYouMessage: 'Thank You for Your Order!',
+            footerMessage: 'Have a Great Day!'
+        };
 
         // Icon picker state
         let currentPickerTarget = 'menu';
@@ -1272,7 +1437,12 @@
             '🥘', '🍲', '🥩', '🍖', '🍗', '🥓', '🧀', '🍳', '🥚', '🍞',
             '🥐', '🥖', '🥨', '🥯', '🧇', '🍩', '🍪', '🎂', '🍰', '🧁',
             '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🥛', '☕', '🧃', '🥤',
-            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🥮'
+            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🥮',
+            '🍡', '🍧', '🍨', '🍦', '🥧', '🍰', '🎂', '🍮', '🍭', '🍬',
+            '🍫', '🍿', '🍩', '🍪', '🧇', '🥐', '🥖', '🥨', '🥯', '🧀',
+            '🥗', '🥙', '🌮', '🌯', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱',
+            '🥟', '🍤', '🍙', '🍚', '🍘', '🥠', '🍢', '🍡', '🍧', '🍨',
+            '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿'
         ];
 
         // ============================================================
@@ -1282,27 +1452,23 @@
             fetch('/api/user/profile')
                 .then(r => r.json())
                 .then(data => {
-                    if (!data.user) {
+                    if (data.user) {
+                        document.querySelector('.admin-header h2').textContent = '👑 Admin Dashboard';
+                    } else {
                         window.location.href = '/auth/google';
                     }
                 });
 
-            fetch('/api/restaurant-config')
-                .then(r => r.json())
-                .then(data => {
-                    restaurantConfig = data;
-                    currencySymbol = data.currency || 'Rs';
-                    whatsappNumber = data.whatsapp || '923001234567';
-                    document.querySelector('.admin-header h2').textContent = `👑 ${data.name} - Admin`;
-                })
-                .catch(() => {});
-
+            // Load WhatsApp number
             fetch('/api/whatsapp-number')
                 .then(r => r.json())
                 .then(data => {
                     whatsappNumber = data.number || '923001234567';
+                    document.getElementById('whatsappNumberDisplay').textContent = whatsappNumber;
                 })
-                .catch(() => {});
+                .catch(() => {
+                    document.getElementById('whatsappNumberDisplay').textContent = '923001234567';
+                });
 
             fetch('/api/menu?t=' + Date.now()).then(r => r.json()).then(data => { menuItems = data; renderAdminMenu(); });
             fetch('/api/deals?t=' + Date.now()).then(r => r.json()).then(data => { deals = data; renderAdminDeals(); });
@@ -1310,23 +1476,23 @@
                 orders = data;
                 lastOrderCount = orders.length;
                 renderAdminDashboard();
-                renderAdminOrders();
+                renderAdminAllOrders();
+                renderTodayOrders();
             });
             fetch('/api/users').then(r => r.json()).then(data => {
                 users = data.users || [];
                 document.getElementById('adminTotalUsers').textContent = users.length;
             });
             fetch('/api/restaurant-name').then(r => r.json()).then(data => {
-                document.getElementById('adminRestaurantName').value = data.name || 'The Heaven Slice';
+                restaurantName = data.name || 'DineFlow';
+                document.getElementById('adminRestaurantName').value = restaurantName;
             });
-            fetch('/api/layers').then(r => r.json()).then(data => {
-                availableLayers = data || [];
-                renderAdminLayers();
-                renderAddLayers();
-            });
-            fetch('/api/feedback/all').then(r => r.json()).then(data => { feedbacks = data; renderAdminFeedback(); });
-            fetch('/api/support/all').then(r => r.json()).then(data => { supportTickets = data; renderAdminSupport(); });
-            fetch('/api/locations/all').then(r => r.json()).then(data => { customerLocations = data; renderAdminDelivery(); });
+            loadReceiptSettings();
+            renderAdminFeedback();
+            renderAdminSupport();
+            renderAdminLayers();
+            renderAdminDelivery();
+            renderAddLayers();
         }
 
         function checkNewOrders() {
@@ -1334,246 +1500,227 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.length > lastOrderCount) {
+                        const newOrders = data.slice(lastOrderCount);
+                        newOrders.forEach(order => {
+                            showReceipt(order);
+                        });
                         lastOrderCount = data.length;
                         orders = data;
                         renderAdminDashboard();
-                        renderAdminOrders();
+                        renderAdminAllOrders();
+                        renderTodayOrders();
                         renderAdminDelivery();
                     }
                 });
         }
 
         // ============================================================
-        // BILL LOGO BADGE (matches reference photo — chef circle + ribbon)
+        // ⭐ WHATSAPP FUNCTIONS ⭐
         // ============================================================
-        function buildBillLogoSVG(name) {
-            const label = (name || 'THE HEAVEN SLICE').toUpperCase();
-            return `
-                <div class="bill-logo-badge">
-                    <svg viewBox="0 0 220 220" width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="110" cy="105" r="98" fill="#fff" stroke="#000" stroke-width="6"/>
-                        <circle cx="110" cy="105" r="84" fill="none" stroke="#000" stroke-width="2"/>
-                        <!-- chef hat -->
-                        <path d="M78 78 Q78 42 110 42 Q142 42 142 78 L142 96 L78 96 Z" fill="#000"/>
-                        <rect x="72" y="94" width="76" height="10" rx="2" fill="#000"/>
-                        <!-- face -->
-                        <circle cx="110" cy="118" r="20" fill="#000"/>
-                        <!-- mustache -->
-                        <path d="M96 128 Q110 138 124 128 Q116 136 110 132 Q104 136 96 128 Z" fill="#fff"/>
-                        <!-- fork -->
-                        <g transform="translate(52,60)">
-                            <line x1="0" y1="0" x2="0" y2="70" stroke="#000" stroke-width="5"/>
-                            <line x1="-6" y1="0" x2="-6" y2="16" stroke="#000" stroke-width="4"/>
-                            <line x1="0" y1="0" x2="0" y2="16" stroke="#000" stroke-width="4"/>
-                            <line x1="6" y1="0" x2="6" y2="16" stroke="#000" stroke-width="4"/>
-                        </g>
-                        <!-- knife -->
-                        <g transform="translate(168,60)">
-                            <line x1="0" y1="20" x2="0" y2="70" stroke="#000" stroke-width="5"/>
-                            <path d="M-6 -6 L6 -6 L2 20 L-2 20 Z" fill="#000"/>
-                        </g>
-                        <!-- ribbon banner -->
-                        <polygon points="30,150 190,150 200,170 180,168 20,168 10,170" fill="#000"/>
-                        <rect x="20" y="150" width="180" height="24" fill="#000"/>
-                        <text x="110" y="167" font-size="15" fill="#fff" text-anchor="middle" font-family="Georgia, serif" font-weight="bold">${label}</text>
-                        <!-- stars -->
-                        <text x="110" y="192" font-size="14" fill="#000" text-anchor="middle">★ ★ ★</text>
-                    </svg>
-                </div>
-            `;
+        function openWhatsApp() {
+            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            window.open('https://wa.me/' + number, '_blank');
         }
 
-        function billIdCounter() { return Math.random().toString(36).slice(2, 9); }
+        function getWhatsAppLink(phone, message) {
+            const number = phone || document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            const encodedMessage = encodeURIComponent(message || '');
+            return 'https://wa.me/' + number + '?text=' + encodedMessage;
+        }
 
         // ============================================================
-        // BUILD FULL BILL (matches reference photo exactly)
-        // config: restaurantConfig, order: order object
+        // ⭐ RECEIPT SETTINGS (logo, QR code, discount, footer) ⭐
         // ============================================================
-        function buildBillHTML(order, config) {
-            const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
-            const orderIdStr = String(order.id).padStart(3, '0');
-            const orderTime = order.date || new Date(order.createdAt).toLocaleString();
-            const tagline = config.tagline || 'PIZZA • BURGER • FAST FOOD';
+        function loadReceiptSettings() {
+            fetch('/api/receipt-settings')
+                .then(r => r.json())
+                .then(data => {
+                    receiptSettings = Object.assign(receiptSettings, data);
+                    document.getElementById('receiptLogoIcon').value = receiptSettings.logoIcon || '';
+                    document.getElementById('receiptLogoPreview').textContent = receiptSettings.logoIcon || '👨‍🍳';
+                    document.getElementById('receiptTagline').value = receiptSettings.tagline || '';
+                    document.getElementById('receiptEstablished').value = receiptSettings.established || '';
+                    document.getElementById('receiptAddress').value = receiptSettings.address || '';
+                    document.getElementById('receiptPhone').value = receiptSettings.phone || '';
+                    document.getElementById('receiptQrUrl').value = receiptSettings.qrCodeUrl || '';
+                    document.getElementById('receiptDiscountAmount').value = receiptSettings.discountAmount || 0;
+                    document.getElementById('receiptDiscountThreshold').value = receiptSettings.discountThreshold || 0;
+                    document.getElementById('receiptThankYou').value = receiptSettings.thankYouMessage || '';
+                    document.getElementById('receiptFooterNote').value = receiptSettings.footerMessage || '';
+                    updateQrPreview();
+                })
+                .catch(() => {});
+        }
 
-            let subtotal = 0;
-            let totalItems = 0;
-            let itemRows = '';
-
-            order.items.forEach(item => {
-                const qty = item.qty || 1;
-                const price = item.price || 0;
-                const amount = qty * price;
-                subtotal += amount;
-                totalItems += qty;
-                const itemName = item.name || 'Item';
-                const icon = (item.icons && item.icons[0]) || item.icon || '🍽️';
-                const variant = item.variant || item.size || item.note || '';
-
-                itemRows += `
-                    <tr>
-                        <td>
-                            <span class="bill-item-icon">${icon}</span>
-                            <span class="bill-item-name">${itemName}</span>
-                            ${variant ? `<span class="bill-item-variant">- ${variant.toUpperCase()}</span>` : ''}
-                        </td>
-                        <td class="col-qty">${qty}</td>
-                        <td class="col-price">${price}</td>
-                        <td class="col-amount">${amount}</td>
-                    </tr>
-                `;
-            });
-
-            let discount = 0;
-            if (subtotal > config.discountThreshold) {
-                discount = config.discountAmount;
+        function updateQrPreview() {
+            const url = document.getElementById('receiptQrUrl').value.trim();
+            const img = document.getElementById('receiptQrPreview');
+            if (url) {
+                img.src = url;
+                img.style.display = 'inline-block';
+            } else {
+                img.style.display = 'none';
             }
-            const grandTotal = subtotal - discount;
+        }
 
-            const qrId = 'billQr_' + billIdCounter();
-            const qrTarget = config.website || (typeof window !== 'undefined' ? window.location.origin : 'https://theheavenslice.com');
+        function saveReceiptSettings() {
+            const payload = {
+                logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
+                tagline: document.getElementById('receiptTagline').value,
+                established: document.getElementById('receiptEstablished').value,
+                address: document.getElementById('receiptAddress').value,
+                phone: document.getElementById('receiptPhone').value,
+                qrCodeUrl: document.getElementById('receiptQrUrl').value,
+                discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 0,
+                discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 0,
+                thankYouMessage: document.getElementById('receiptThankYou').value,
+                footerMessage: document.getElementById('receiptFooterNote').value
+            };
+            fetch('/api/receipt-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    receiptSettings = Object.assign(receiptSettings, data.settings);
+                    showToast('✅ Receipt settings saved!');
+                } else {
+                    showToast('❌ ' + (data.error || 'Save failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
 
-            return {
-                qrId,
-                qrTarget,
-                html: `
-                <div class="bill-card">
-                    <div class="bill-logo-wrap">${buildBillLogoSVG(config.name)}</div>
-                    <div class="bill-restaurant-title">${config.name}</div>
-                    <div class="bill-est-row"><span class="line"></span> Est. ${config.est} <span class="line"></span></div>
-                    <div class="bill-address-row">📍 ${config.address}</div>
-                    <div class="bill-phone-row">📞 ${config.phone}</div>
+        function previewSampleReceipt() {
+            const sampleOrder = {
+                id: 51,
+                orderNumber: 51,
+                userName: 'Dine-In Customer',
+                phone: '-',
+                address: '-',
+                table: 2,
+                orderType: 'takeaway',
+                paymentMethod: 'Cash',
+                date: new Date().toLocaleString(),
+                status: 'confirmed',
+                items: [
+                    { name: 'Behari Kabab', variant: 'LARGE', price: 1600, qty: 1 },
+                    { name: 'Malai Boti', variant: 'LARGE', price: 1450, qty: 1 },
+                    { name: 'Water', variant: 'LARGE', price: 120, qty: 1 },
+                    { name: 'Burgers', variant: '2NGER BURGER', price: 380, qty: 2 },
+                    { name: 'Coke', variant: '1LTR', price: 200, qty: 2 }
+                ],
+                layers: [],
+                total: 4000
+            };
+            showReceipt(sampleOrder, true);
+        }
 
-                    <div class="bill-label-pill">BILL</div>
+        // ============================================================
+        // RECEIPT (bill style)
+        // ============================================================
+        function showReceipt(order, isPreview) {
+            const orderTime = order.date || new Date(order.createdAt).toLocaleString();
+            const orderNum = String(order.orderNumber || order.id).padStart(3, '0');
+
+            const subtotal = (order.items || []).reduce((sum, i) => sum + (i.price * (i.qty || 1)), 0);
+            const threshold = receiptSettings.discountThreshold || 0;
+            const discountAmt = receiptSettings.discountAmount || 0;
+            const applyDiscount = threshold > 0 && subtotal >= threshold;
+            const discount = applyDiscount ? discountAmt : 0;
+            const billTotal = isPreview ? (order.total || (subtotal - discount)) : (order.total != null ? order.total : (subtotal - discount));
+            const totalItems = (order.items || []).reduce((sum, i) => sum + (i.qty || 1), 0);
+
+            const qrSrc = receiptSettings.qrCodeUrl && receiptSettings.qrCodeUrl.trim()
+                ? receiptSettings.qrCodeUrl
+                : `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.origin)}`;
+
+            const html = `
+                <div id="receiptPrint">
+                    <div class="bill-logo-wrap">
+                        <div class="bill-logo-circle">${receiptSettings.logoIcon || '👨‍🍳'}</div>
+                        <div class="bill-logo-ribbon">${restaurantName}</div>
+                        <div class="bill-logo-tagline">${receiptSettings.tagline || ''}</div>
+                    </div>
+                    <div class="bill-title">${restaurantName}</div>
+                    <div class="bill-est-wrap"><span class="bill-est">Est. ${receiptSettings.established || ''}</span></div>
+                    ${receiptSettings.address ? `<div class="bill-contact">📍 ${receiptSettings.address}</div>` : ''}
+                    ${receiptSettings.phone ? `<div class="bill-contact">📞 ${receiptSettings.phone}</div>` : ''}
+                    <div class="bill-label-wrap"><span class="bill-label">BILL</span></div>
 
                     <div class="bill-info-box">
-                        <div class="info-left">
-                            <div>Order #: ${orderIdStr}</div>
-                            <div>${order.table ? 'Table: ' + order.table : (order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'delivery' ? 'Delivery' : '')}</div>
-                        </div>
-                        <div class="info-right">📅 ${orderTime}</div>
+                        <div>Order #: ${orderNum}${order.table ? `<br>Table: ${order.table}` : ''}</div>
+                        <div>📅 ${orderTime}</div>
                     </div>
 
-                    <div class="bill-customer-row">👤 Customer: ${order.userName ? order.userName : orderTypeLabel}</div>
-                    ${order.phone ? `<div class="bill-customer-row">📞 ${order.phone}</div>` : ''}
-                    ${order.address ? `<div class="bill-customer-row">📍 ${order.address}</div>` : ''}
-                    ${order.paymentMethod ? `<div class="bill-customer-row">💳 ${order.paymentMethod}</div>` : ''}
-                    <div class="bill-status-line"><span class="receipt-badge status-${order.status}">${order.status.toUpperCase()}</span></div>
+                    <div class="bill-customer">👤 Customer: ${order.userName || 'Guest'}</div>
 
-                    <table class="bill-items-table">
-                        <thead>
+                    <table class="bill-items">
+                        <tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr>
+                        ${(order.items || []).map(i => `
                             <tr>
-                                <th>Item</th>
-                                <th class="col-qty">Qty</th>
-                                <th class="col-price">Price</th>
-                                <th class="col-amount">Amount</th>
+                                <td>
+                                    <div class="bill-item-name">${i.name}</div>
+                                    ${i.variant ? `<div class="bill-item-variant">- ${i.variant}</div>` : ''}
+                                </td>
+                                <td>${i.qty || 1}</td>
+                                <td>${i.price}</td>
+                                <td>${(i.price * (i.qty || 1))}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            ${itemRows}
-                        </tbody>
+                        `).join('')}
                     </table>
 
                     <div class="bill-totals-box">
-                        <div class="bill-total-row"><span>Total Items:</span><span>${totalItems}</span></div>
-                        <div class="bill-total-row"><span>Subtotal:</span><span>${subtotal}</span></div>
-                        ${discount > 0 ? `<div class="bill-total-row discount"><span>Discount (Fixed):</span><span>-${discount}</span></div>` : ''}
+                        <div><span>Total Items:</span><span>${totalItems}</span></div>
+                        <div><span>Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
+                        ${discount > 0 ? `<div><span>Discount (Fixed):</span><span>-${discount.toFixed(2)}</span></div>` : ''}
                     </div>
 
-                    <div class="bill-grand-total-bar">
-                        <span>Bill Total:</span>
-                        <span>${grandTotal}</span>
-                    </div>
+                    <div class="bill-grand-total"><span>Bill Total:</span><span>${currencySymbol} ${billTotal.toFixed(2)}</span></div>
 
                     <div class="bill-qr-box">
-                        <div class="bill-qr-canvas" id="${qrId}"></div>
-                        <div class="bill-qr-divider"></div>
-                        <div class="bill-qr-text"><span class="qr-icon">📲</span>Scan QR Code<br>To Download App</div>
+                        <img src="${qrSrc}" alt="QR" />
+                        <div class="bill-qr-text">Scan QR Code<br>To Download App</div>
                     </div>
 
-                    <div class="bill-thankyou-bar">❤️ Thank You for Your Order!</div>
-                    <div class="bill-greatday-row"><span class="line"></span> Have a Great Day! <span class="line"></span></div>
+                    <div class="bill-thankyou">❤ ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}</div>
+                    <div class="bill-footer-note">${receiptSettings.footerMessage || 'Have a Great Day!'}</div>
                 </div>
-                `
-            };
-        }
-
-        function renderBillQRCode(qrId, targetUrl) {
-            const el = document.getElementById(qrId);
-            if (!el || typeof QRCode === 'undefined') return;
-            el.innerHTML = '';
-            new QRCode(el, {
-                text: targetUrl,
-                width: 70,
-                height: 70,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
-        }
-
-        // ============================================================
-        // RENDER ORDERS - RECEIPT STYLE
-        // ============================================================
-        function renderAdminOrders() {
-            const container = document.getElementById('adminAllOrders');
-            
-            if (!orders || orders.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding:40px 20px; color:#b2bec3;">
-                        <div style="font-size:3em; margin-bottom:10px;">📦</div>
-                        <h3 style="color:#2d3436;">No Orders Yet</h3>
-                        <p>Orders will appear here when customers place them</p>
-                    </div>
-                `;
-                return;
+            `;
+            document.getElementById('receiptPrint').outerHTML = html;
+            document.getElementById('receiptPopup').classList.add('show');
+            if (!isPreview) {
+                setTimeout(() => printReceipt(), 1000);
             }
-
-            let html = '';
-            const config = restaurantConfig;
-            const qrJobs = [];
-
-            orders.slice().reverse().forEach(order => {
-                const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In' : 'Delivery';
-
-                let subtotal = 0;
-                order.items.forEach(item => { subtotal += (item.qty || 1) * (item.price || 0); });
-                let discount = subtotal > config.discountThreshold ? config.discountAmount : 0;
-                const grandTotal = subtotal - discount;
-
-                const locationHtml = order.lat && order.lng ?
-                    `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db; text-decoration:none; font-size:11px;">📍 View Location</a>` : '';
-
-                const whatsappMsg = `Order #${order.id}%0A📦 ${orderTypeLabel}%0A👤 ${order.userName || 'Guest'}%0A📞 ${order.phone || 'N/A'}%0A📍 ${order.address || 'N/A'}%0A💰 Total: ${config.currency} ${grandTotal.toFixed(2)}`;
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
-
-                const bill = buildBillHTML(order, config);
-                qrJobs.push(bill);
-
-                html += `
-                    <div class="order-receipt-card" style="font-family:inherit;">
-                        ${bill.html}
-                        ${locationHtml ? `<div style="text-align:center; margin-top:6px;">${locationHtml}</div>` : ''}
-                        <div class="bill-card-actions">
-                            <select class="btn-status" onchange="updateOrderStatus(${order.id}, this.value)">
-                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                                <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
-                                <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
-                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                            </select>
-                            <button class="btn-print" onclick="showReceiptForOrder(${order.id})">🖨️ Print</button>
-                            <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>
-                            ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map">🗺️ Map</a>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            qrJobs.forEach(job => renderBillQRCode(job.qrId, job.qrTarget));
         }
 
+        function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
+        function printReceipt() { window.print(); }
+
+        // ============================================================
+        // ADMIN NAVIGATION
+        // ============================================================
+        function showAdminSection(section) {
+            document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.admin-nav-item[data-admin="${section}"]`).classList.add('active');
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`admin${section.charAt(0).toUpperCase() + section.slice(1)}`).classList.add('active');
+            if (section === 'dashboard') renderAdminDashboard();
+            if (section === 'menu') renderAdminMenu();
+            if (section === 'deals') renderAdminDeals();
+            if (section === 'orders') renderAdminAllOrders();
+            if (section === 'calculator') renderTodayOrders();
+            if (section === 'feedback') renderAdminFeedback();
+            if (section === 'support') renderAdminSupport();
+            if (section === 'layers') renderAdminLayers();
+            if (section === 'delivery') renderAdminDelivery();
+        }
+
+        // ============================================================
+        // ADMIN DASHBOARD
+        // ============================================================
         function renderAdminDashboard() {
             const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
             const pendingOrders = orders.filter(o => o.status === 'pending').length;
@@ -1584,136 +1731,42 @@
             document.getElementById('statPending').textContent = pendingOrders;
             document.getElementById('statCompleted').textContent = completedOrders;
 
-            const container = document.getElementById('adminRecentOrders');
             if (orders.length === 0) {
-                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
+                document.getElementById('adminOrdersList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
                 return;
             }
 
-            let html = '';
-            const config = restaurantConfig;
-            orders.slice().reverse().slice(0, 5).forEach(order => {
-                const statusClass = `status-${order.status}`;
-                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
+            let html = `<table>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Payment</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>📍 Location</th>
+                </tr>
+            `;
+            orders.slice().reverse().slice(0, 10).forEach(order => {
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
                 html += `
-                    <div class="order-receipt-card" style="margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                            <div style="font-weight:700; font-size:12px;">#${order.id} ${orderTypeIcon} ${order.userName || 'Guest'}</div>
-                            <div><span class="receipt-badge ${statusClass}">${order.status.toUpperCase()}</span></div>
-                        </div>
-                        <div style="font-size:10px; color:#636e72;">${order.date || 'Today'}</div>
-                        <div style="font-size:12px; font-weight:700; color:#e74c3c;">${config.currency} ${order.total.toFixed(2)}</div>
-                        <button onclick="showReceiptForOrder(${order.id})" style="margin-top:4px; padding:2px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">🖨️ View</button>
-                    </div>
+                    <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.userName || 'Guest'}</td>
+                        <td>${orderTypeIcon}</td>
+                        <td>${order.paymentMethod || 'Cash'}</td>
+                        <td>${currencySymbol} ${order.total.toFixed(2)}</td>
+                        <td><span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span></td>
+                        <td>
+                            ${order.lat && order.lng ? `
+                                <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 10px;">📍 Map</a>
+                            ` : '<span style="color:#b2bec3;">-</span>'}
+                        </td>
+                    </tr>
                 `;
             });
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        // RECEIPT POPUP FOR ADMIN
-        // ============================================================
-        function showReceiptForOrder(orderId) {
-            const order = orders.find(o => o.id === orderId);
-            if (!order) return;
-
-            const config = restaurantConfig;
-            const bill = buildBillHTML(order, config);
-
-            const printWindow = window.open('', '_blank', 'width=420,height=700');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Receipt - ${config.name}</title>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-                    <style>
-                        * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: white; padding: 16px; }
-                        .receipt-badge { display: inline-block; padding: 2px 12px; border-radius: 12px; font-size: 0.75em; font-weight: 600; }
-                        .status-pending { background: #fdf2f2; color: #e74c3c; }
-                        .status-confirmed { background: #e8f4fd; color: #3498db; }
-                        .status-preparing { background: #fef9e7; color: #f39c12; }
-                        .status-ready { background: #e8f8f0; color: #27ae60; }
-                        .status-delivered { background: #e8f8f0; color: #27ae60; }
-                        .status-cancelled { background: #fdf2f2; color: #e74c3c; }
-                        .bill-card { background:#fff; color:#000; font-family: Georgia, 'Times New Roman', serif; max-width:380px; margin:0 auto; padding:18px 16px 14px 16px; border-radius:6px; }
-                        .bill-logo-wrap { display:flex; justify-content:center; margin-bottom:6px; }
-                        .bill-logo-badge svg { display:block; }
-                        .bill-restaurant-title { text-align:center; font-size:26px; font-weight:700; letter-spacing:0.5px; margin-top:4px; font-family: Georgia, 'Times New Roman', serif; }
-                        .bill-est-row { text-align:center; font-size:13px; font-weight:700; margin:4px 0 8px 0; display:flex; align-items:center; justify-content:center; gap:8px; }
-                        .bill-est-row .line { flex:1; max-width:60px; height:1px; background:#000; }
-                        .bill-address-row, .bill-phone-row { text-align:center; font-size:13px; font-weight:600; margin:2px 0; }
-                        .bill-label-pill { display:block; text-align:center; background:#000; color:#fff; font-weight:700; font-size:15px; letter-spacing:2px; padding:6px 0; border-radius:8px; margin:12px 0 10px 0; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-info-box { border:2px solid #000; border-radius:8px; display:flex; font-size:12px; font-weight:700; margin-bottom:8px; overflow:hidden; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-info-box .info-left { flex:1; padding:6px 10px; border-right:2px solid #000; }
-                        .bill-info-box .info-left div:first-child { margin-bottom:3px; }
-                        .bill-info-box .info-right { flex:1.2; padding:6px 10px; display:flex; align-items:center; gap:4px; }
-                        .bill-customer-row { font-size:13px; font-weight:700; margin:6px 0; display:flex; align-items:center; gap:6px; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-items-table { width:100%; margin-top:6px; border-collapse:collapse; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-items-table thead tr { background:#000; color:#fff; }
-                        .bill-items-table th { padding:6px 6px; font-size:11px; font-weight:700; text-align:left; }
-                        .bill-items-table th.col-qty, .bill-items-table td.col-qty { text-align:center; width:15%; }
-                        .bill-items-table th.col-price, .bill-items-table td.col-price, .bill-items-table th.col-amount, .bill-items-table td.col-amount { text-align:right; width:20%; }
-                        .bill-items-table td { padding:8px 6px; font-size:12px; border-bottom:1px solid #000; vertical-align:top; }
-                        .bill-items-table .bill-item-icon { font-size:1.3em; margin-right:4px; }
-                        .bill-items-table .bill-item-name { font-weight:700; }
-                        .bill-items-table .bill-item-variant { display:block; font-weight:400; font-size:11px; color:#333; }
-                        .bill-totals-box { border:2px solid #000; border-radius:8px; padding:8px 12px; margin-top:10px; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-totals-box .bill-total-row { display:flex; justify-content:space-between; font-size:13px; font-weight:700; padding:2px 0; }
-                        .bill-grand-total-bar { display:flex; justify-content:space-between; align-items:center; background:#000; color:#fff; font-size:18px; font-weight:700; padding:10px 14px; border-radius:8px; margin-top:8px; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-qr-box { border:2px solid #000; border-radius:10px; display:flex; align-items:center; gap:12px; padding:10px 12px; margin-top:12px; }
-                        .bill-qr-box .bill-qr-canvas { width:70px; height:70px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-                        .bill-qr-box .bill-qr-canvas img, .bill-qr-box .bill-qr-canvas canvas { width:100%; height:100%; }
-                        .bill-qr-box .bill-qr-text { font-family:'Segoe UI', Tahoma, sans-serif; font-size:13px; font-weight:700; line-height:1.3; }
-                        .bill-qr-box .bill-qr-text .qr-icon { font-size:1.4em; margin-right:4px; }
-                        .bill-qr-box .bill-qr-divider { width:2px; align-self:stretch; background:#000; }
-                        .bill-thankyou-bar { background:#000; color:#fff; text-align:center; font-weight:700; font-size:15px; padding:8px 0; border-radius:8px; margin-top:12px; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-greatday-row { text-align:center; font-size:13px; font-weight:700; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Segoe UI', Tahoma, sans-serif; }
-                        .bill-greatday-row .line { flex:1; max-width:50px; height:1px; background:#000; }
-                        .bill-status-line { text-align:center; margin:6px 0; }
-                        @media print { body { padding: 0; } }
-                    </style>
-                </head>
-                <body>
-                    ${bill.html}
-                    <script>
-                        window.onload = function() {
-                            if (typeof QRCode !== 'undefined') {
-                                new QRCode(document.getElementById('${bill.qrId}'), {
-                                    text: '${bill.qrTarget}',
-                                    width: 70, height: 70,
-                                    colorDark: '#000000', colorLight: '#ffffff',
-                                    correctLevel: QRCode.CorrectLevel.M
-                                });
-                            }
-                            setTimeout(function(){ window.print(); }, 300);
-                        }
-                    <\/script>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-        }
-
-        // ============================================================
-        // UPDATE ORDER STATUS
-        // ============================================================
-        function updateOrderStatus(id, status) {
-            fetch(`/api/orders/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('✅ Order status updated!');
-                    loadAdminData();
-                } else {
-                    showToast('❌ ' + (data.error || 'Update failed'));
-                }
-            })
-            .catch(() => showToast('❌ Network error'));
+            html += `</table>`;
+            document.getElementById('adminOrdersList').innerHTML = html;
         }
 
         // ============================================================
@@ -1737,7 +1790,7 @@
             menuItems.forEach(item => {
                 const icons = item.icons ? item.icons.join(' ') : (item.icon || '🍽️');
                 const layers = item.layers && item.layers.length ? 
-                    item.layers.map(l => `<span style="font-size:0.7em; background:#f1f2f6; padding:2px 8px; border-radius:10px; margin:2px; display:inline-block;">${l}</span>`).join('') : 
+                    item.layers.map(l => `<span class="layer-icon-item"><span class="layer-icon">${l.split(' ')[0]}</span> ${l}</span>`).join('') : 
                     '<span style="color:#b2bec3; font-size:0.8em;">-</span>';
                 html += `
                     <tr id="menu-row-${item.id}">
@@ -1747,14 +1800,117 @@
                         <td>${currencySymbol} ${item.price.toFixed(2)}</td>
                         <td style="font-size:0.75em;">${layers}</td>
                         <td>
-                            <button class="admin-action-btn btn-edit" onclick="editMenuItem(${item.id})" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.75em; font-weight:600; cursor:pointer; background:#3498db; color:white;">✏️ Edit</button>
-                            <button class="admin-action-btn btn-delete" onclick="deleteMenuItem(${item.id})" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️</button>
+                            <button class="admin-action-btn btn-edit" onclick="editMenuItem(${item.id})">✏️ Edit</button>
+                            <button class="admin-action-btn btn-delete" onclick="deleteMenuItem(${item.id})">🗑️</button>
                         </td>
                     </tr>
                 `;
             });
             html += `</table>`;
             document.getElementById('adminMenuTable').innerHTML = html;
+        }
+
+        function editMenuItem(id) {
+            const item = menuItems.find(i => i.id === id);
+            if (!item) return;
+
+            fetch('/api/layers')
+                .then(r => r.json())
+                .then(layers => {
+                    const row = document.getElementById(`menu-row-${id}`);
+                    if (!row) return;
+
+                    let layersHtml = '';
+                    if (layers && layers.length > 0) {
+                        layersHtml = layers.map(layer => {
+                            const isChecked = item.layers && item.layers.includes(layer);
+                            const icon = layer.split(' ')[0] || '🧅';
+                            return `
+                                <span class="layer-checkbox-wrapper">
+                                    <input type="checkbox" class="layer-checkbox-${id}" value="${layer}" ${isChecked ? 'checked' : ''}>
+                                    <label>${icon} ${layer}</label>
+                                </span>
+                            `;
+                        }).join('');
+                    } else {
+                        layersHtml = '<span style="color:#b2bec3; font-size:0.85em;">No layers available.</span>';
+                    }
+
+                    row.innerHTML = `
+                        <td style="font-size:1.5em;">
+                            <input type="text" id="edit-icon-${id}" value="${item.icon || '🍽️'}" style="width:40px; text-align:center; font-size:1.2em; border:1px solid #dfe6e9; border-radius:6px;">
+                        </td>
+                        <td><input type="text" id="edit-name-${id}" value="${item.name}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
+                        <td>
+                            <select id="edit-category-${id}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;">
+                                <option value="burgers" ${item.category === 'burgers' ? 'selected' : ''}>Burgers</option>
+                                <option value="pizza" ${item.category === 'pizza' ? 'selected' : ''}>Pizza</option>
+                                <option value="sandwiches" ${item.category === 'sandwiches' ? 'selected' : ''}>Sandwiches</option>
+                                <option value="sides" ${item.category === 'sides' ? 'selected' : ''}>Sides</option>
+                                <option value="drinks" ${item.category === 'drinks' ? 'selected' : ''}>Drinks</option>
+                                <option value="salads" ${item.category === 'salads' ? 'selected' : ''}>Salads</option>
+                                <option value="appetizers" ${item.category === 'appetizers' ? 'selected' : ''}>Appetizers</option>
+                                <option value="desserts" ${item.category === 'desserts' ? 'selected' : ''}>Desserts</option>
+                            </select>
+                        </td>
+                        <td><input type="number" id="edit-price-${id}" value="${item.price}" step="0.01" style="width:80px; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
+                        <td>
+                            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+                                ${layersHtml}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="admin-action-btn btn-save" onclick="saveMenuItem(${id})">💾 Save</button>
+                            <button class="admin-action-btn btn-cancel" onclick="renderAdminMenu()">✕ Cancel</button>
+                        </td>
+                    `;
+                })
+                .catch(() => {
+                    showToast('❌ Failed to load layers');
+                });
+        }
+
+        function saveMenuItem(id) {
+            const name = document.getElementById(`edit-name-${id}`).value;
+            const price = parseFloat(document.getElementById(`edit-price-${id}`).value);
+            const category = document.getElementById(`edit-category-${id}`).value;
+            const icon = document.getElementById(`edit-icon-${id}`).value;
+            
+            const layerCheckboxes = document.querySelectorAll(`.layer-checkbox-${id}:checked`);
+            const layers = Array.from(layerCheckboxes).map(el => el.value);
+
+            if (!name || !price) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+
+            fetch(`/api/menu/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, category, icon })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    return fetch(`/api/menu/${id}/layers`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ layers })
+                    });
+                } else {
+                    throw new Error(data.error || 'Update failed');
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Menu item updated!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Layer update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
         }
 
         function deleteMenuItem(id) {
@@ -1778,8 +1934,8 @@
                     layers.forEach(layer => {
                         const icon = layer.split(' ')[0] || '🧅';
                         html += `
-                            <span class="layer-checkbox-wrapper" style="cursor:pointer; padding:4px 10px; border:2px solid #dfe6e9; border-radius:15px; font-size:0.8em; background:#f8f9fa;" onclick="toggleAddLayer(this, '${layer}')">
-                                <span style="font-size:1em;">${icon}</span>
+                            <span class="layer-checkbox-wrapper" style="cursor:pointer;" onclick="toggleAddLayer(this, '${layer}')">
+                                <span style="font-size:1.1em;">${icon}</span>
                                 <span>${layer}</span>
                             </span>
                         `;
@@ -1848,7 +2004,7 @@
                         <td>${deal.name}</td>
                         <td>${currencySymbol} ${deal.price.toFixed(2)}</td>
                         <td>${currencySymbol} ${(deal.original || deal.price * 1.5).toFixed(2)}</td>
-                        <td><button class="admin-action-btn btn-delete" onclick="deleteDeal(${deal.id})" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️</button></td>
+                        <td><button class="admin-action-btn btn-delete" onclick="deleteDeal(${deal.id})">🗑️</button></td>
                     </tr>
                 `;
             });
@@ -1893,7 +2049,313 @@
         }
 
         // ============================================================
-        // ADMIN FEEDBACK
+        // ADMIN ORDERS - WITH LOCATION AND WHATSAPP
+        // ============================================================
+        function renderAdminAllOrders() {
+            if (orders.length === 0) {
+                document.getElementById('adminAllOrdersTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>#</th>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Payment</th>
+                    <th>Items</th>
+                    <th>Layers</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>📍 Location</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            orders.slice().reverse().forEach(order => {
+                const statusClass = `status-${order.status}`;
+                const layers = order.layers && order.layers.length ? order.layers.join(', ') : '-';
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
+                const locationHtml = order.lat && order.lng ? `
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">🗺️ Map</a>
+                        <a href="https://wa.me/${whatsappNumber || '923001234567'}?text=📍%20Customer%20Location:%20https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="admin-action-btn btn-edit" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">📤 WhatsApp</a>
+                    </div>
+                ` : '<span style="color:#b2bec3;">Not shared</span>';
+                html += `
+                    <tr>
+                        <td><strong>#${order.id}</strong></td>
+                        <td>${order.userName || 'Guest'}</td>
+                        <td>${order.phone || '-'}</td>
+                        <td>${orderTypeIcon} ${order.orderType || 'Delivery'}</td>
+                        <td>${order.paymentMethod || 'Cash'}</td>
+                        <td style="max-width:150px;">${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}</td>
+                        <td style="font-size:0.7em; max-width:100px;">${layers}</td>
+                        <td><strong>${currencySymbol} ${order.total.toFixed(2)}</strong></td>
+                        <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
+                        <td style="font-size:0.7em;">${order.date || 'Today'}</td>
+                        <td style="min-width:90px;">${locationHtml}</td>
+                        <td>
+                            <select onchange="updateOrderStatus(${order.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
+                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                                <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                                <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                            <button class="admin-action-btn btn-print" onclick="showReceiptForOrder(${order.id})">🖨️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</table>`;
+            document.getElementById('adminAllOrdersTable').innerHTML = html;
+        }
+
+        function updateOrderStatus(id, status) {
+            fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Order status updated!');
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function showReceiptForOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                showReceipt(order);
+            }
+        }
+
+        // ============================================================
+        // TODAY'S ORDERS
+        // ============================================================
+        function renderTodayOrders() {
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(o => {
+                const orderDate = o.date ? new Date(o.date) : new Date(o.createdAt);
+                return orderDate.toDateString() === today;
+            });
+
+            const container = document.getElementById('todayOrdersList');
+            
+            if (todayOrders.length === 0) {
+                container.innerHTML = '<div class="no-orders">📭 No orders placed today</div>';
+                return;
+            }
+
+            let html = '';
+            const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
+            html += `<div style="padding:8px 0; border-bottom:2px solid #e74c3c; margin-bottom:10px; display:flex; justify-content:space-between;">
+                <strong>Total Today: ${currencySymbol} ${todayTotal.toFixed(2)}</strong>
+                <span style="color:#636e72; font-size:0.85em;">${todayOrders.length} orders</span>
+            </div>`;
+
+            todayOrders.slice().reverse().forEach(order => {
+                const statusClass = `status-${order.status}`;
+                const layers = order.layers && order.layers.length ? '🧅 ' + order.layers.join(', ') : '';
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : '🚚';
+                html += `
+                    <div class="order-item">
+                        <div>
+                            <div class="order-id">#${order.id} - ${order.userName || 'Guest'} ${orderTypeIcon}</div>
+                            <div class="order-customer">${order.items.map(i => i.name).join(', ')} ${layers}</div>
+                            <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
+                            ${order.lat && order.lng ? `<div style="font-size:0.7em; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db; text-decoration:none;">View Location</a></div>` : ''}
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="order-total">${currencySymbol} ${order.total.toFixed(2)}</div>
+                            <span class="order-status ${statusClass}">${order.status.toUpperCase()}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // ADMIN FORM
+        // ============================================================
+        function toggleAdminForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.toggle('show');
+            if (form.classList.contains('show')) {
+                const target = formId === 'menuForm' ? 'menu' : 'deal';
+                updateIconDisplay(target);
+                if (formId === 'menuForm') {
+                    renderAddLayers();
+                }
+            }
+        }
+
+        // ============================================================
+        // ADMIN SETTINGS
+        // ============================================================
+        function adminUpdateRestaurantName() {
+            const name = document.getElementById('adminRestaurantName').value;
+            if (!name) { showToast('⚠️ Enter a name'); return; }
+            fetch('/api/restaurant-name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            })
+            .then(r => r.json())
+            .then(() => {
+                showToast('✅ Restaurant name updated!');
+                restaurantName = name;
+                loadAdminData();
+            });
+        }
+
+        // ============================================================
+        // ICON PICKER
+        // ============================================================
+        function openIconPicker(target) {
+            currentPickerTarget = target;
+            const popup = document.getElementById('iconPickerPopup');
+            const grid = document.getElementById('emojiGrid');
+            
+            grid.innerHTML = '';
+            emojiList.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.textContent = emoji;
+                btn.onclick = () => {
+                    const currentIcons = selectedIcons[currentPickerTarget];
+                    if (currentIcons.length < 5 && !currentIcons.includes(emoji)) {
+                        currentIcons.push(emoji);
+                        updateIconDisplay(currentPickerTarget);
+                    } else if (currentIcons.includes(emoji)) {
+                        showToast('⚠️ This icon is already selected');
+                    } else {
+                        showToast('⚠️ Maximum 5 icons allowed');
+                    }
+                };
+                grid.appendChild(btn);
+            });
+            
+            popup.classList.add('show');
+        }
+
+        function closeIconPicker() {
+            document.getElementById('iconPickerPopup').classList.remove('show');
+        }
+
+        function updateIconDisplay(target) {
+            const container = document.getElementById(target + 'SelectedIcons');
+            const icons = selectedIcons[target];
+            
+            container.innerHTML = '';
+            
+            if (icons.length === 0) {
+                const hint = document.createElement('span');
+                hint.className = 'icon-hint';
+                hint.textContent = 'Click "Add Icon" to choose';
+                container.appendChild(hint);
+                return;
+            }
+            
+            icons.forEach((icon, index) => {
+                const span = document.createElement('span');
+                span.className = 'selected-icon';
+                span.textContent = icon;
+                span.title = 'Click to remove';
+                span.onclick = () => {
+                    selectedIcons[target].splice(index, 1);
+                    updateIconDisplay(target);
+                };
+                container.appendChild(span);
+            });
+        }
+
+        // ============================================================
+        // CALCULATOR
+        // ============================================================
+        let calcDisplay = document.getElementById('calcDisplay');
+        let calcExpression = '';
+
+        function calcInput(value) {
+            calcExpression += value;
+            calcDisplay.value = calcExpression;
+        }
+
+        function calcClear() {
+            calcExpression = '';
+            calcDisplay.value = '0';
+        }
+
+        function calcResult() {
+            try {
+                const result = eval(calcExpression);
+                calcDisplay.value = result;
+                calcExpression = result.toString();
+            } catch(e) {
+                calcDisplay.value = 'Error';
+                calcExpression = '';
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const calcSection = document.getElementById('adminCalculator');
+            if (!calcSection.classList.contains('active')) return;
+
+            const key = e.key;
+            
+            if (/^[0-9]$/.test(key)) {
+                e.preventDefault();
+                calcInput(key);
+            }
+            else if (key === '+') {
+                e.preventDefault();
+                calcInput('+');
+            }
+            else if (key === '-') {
+                e.preventDefault();
+                calcInput('-');
+            }
+            else if (key === '*') {
+                e.preventDefault();
+                calcInput('*');
+            }
+            else if (key === '/') {
+                e.preventDefault();
+                calcInput('/');
+            }
+            else if (key === '.') {
+                e.preventDefault();
+                calcInput('.');
+            }
+            else if (key === '=' || key === 'Enter') {
+                e.preventDefault();
+                calcResult();
+            }
+            else if (key === 'Backspace') {
+                e.preventDefault();
+                calcExpression = calcExpression.slice(0, -1);
+                calcDisplay.value = calcExpression || '0';
+            }
+            else if (key === 'Escape') {
+                e.preventDefault();
+                calcClear();
+            }
+        });
+
+        // ============================================================
+        // FEEDBACK FUNCTIONS
         // ============================================================
         function renderAdminFeedback() {
             fetch('/api/feedback/all')
@@ -1934,7 +2396,7 @@
                                 <td>${f.comment || '-'}</td>
                                 <td style="font-size:0.75em;">${f.date}</td>
                                 <td>
-                                    <button class="admin-action-btn btn-delete" onclick="deleteFeedback(${f.id})" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️</button>
+                                    <button class="admin-action-btn btn-delete" onclick="deleteFeedback(${f.id})">🗑️</button>
                                 </td>
                             </tr>
                         `;
@@ -1956,7 +2418,7 @@
         }
 
         // ============================================================
-        // ADMIN SUPPORT
+        // SUPPORT FUNCTIONS
         // ============================================================
         function renderAdminSupport() {
             fetch('/api/support/all')
@@ -2002,7 +2464,7 @@
                                 </td>
                                 <td style="font-size:0.75em;">${t.date}</td>
                                 <td>
-                                    <button class="admin-action-btn btn-edit" onclick="viewTicket(${t.id})" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.75em; font-weight:600; cursor:pointer; background:#3498db; color:white;">👁️</button>
+                                    <button class="admin-action-btn btn-edit" onclick="viewTicket(${t.id})">👁️</button>
                                 </td>
                             </tr>
                         `;
@@ -2038,7 +2500,7 @@
         }
 
         // ============================================================
-        // ADMIN LAYERS
+        // LAYERS FUNCTIONS
         // ============================================================
         function renderAdminLayers() {
             fetch('/api/layers')
@@ -2063,7 +2525,7 @@
                             <tr>
                                 <td style="font-size:1.1em;">${icon} ${layer}</td>
                                 <td>
-                                    <button class="admin-action-btn btn-delete" onclick="deleteLayer('${encodeURIComponent(layer)}')" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️</button>
+                                    <button class="admin-action-btn btn-delete" onclick="deleteLayer('${encodeURIComponent(layer)}')">🗑️</button>
                                 </td>
                             </tr>
                         `;
@@ -2122,61 +2584,123 @@
         }
 
         // ============================================================
-        // ADMIN DELIVERY
+        // ⭐ DELIVERY TRACKING FUNCTIONS ⭐
         // ============================================================
+        let allLocations = [];
+
         function renderAdminDelivery() {
             fetch('/api/locations/all')
                 .then(r => r.json())
                 .then(data => {
-                    const locations = data || [];
-                    document.getElementById('totalLocations').textContent = locations.length;
+                    allLocations = data || [];
+                    document.getElementById('totalLocations').textContent = allLocations.length;
                     
                     const today = new Date().toDateString();
-                    const todayLocations = locations.filter(l => {
+                    const todayLocations = allLocations.filter(l => {
                         const date = l.updatedAt ? new Date(l.updatedAt) : new Date();
                         return date.toDateString() === today;
                     });
                     document.getElementById('todayLocations').textContent = todayLocations.length;
                     
-                    const container = document.getElementById('deliveryLocationsList');
-                    if (locations.length === 0) {
-                        container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No customer locations shared yet</p>';
-                        return;
-                    }
-                    
-                    let html = `<table>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Phone</th>
-                            <th>Order</th>
-                            <th>Address</th>
-                            <th>Coordinates</th>
-                            <th>Shared</th>
-                            <th>Action</th>
-                        </tr>
-                    `;
-                    
-                    locations.slice().reverse().forEach(loc => {
-                        const mapUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
-                        html += `
-                            <tr>
-                                <td><strong>${loc.userName}</strong></td>
-                                <td>${loc.phone || '-'}</td>
-                                <td>${loc.orderId ? `#${loc.orderId}` : '-'}</td>
-                                <td style="max-width:150px; word-break:break-word;">${loc.address || 'No address'}</td>
-                                <td style="font-size:0.7em;">${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</td>
-                                <td style="font-size:0.7em;">${loc.timestamp || 'Today'}</td>
-                                <td>
-                                    <a href="${mapUrl}" target="_blank" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.7em; font-weight:600; cursor:pointer; background:#3498db; color:white; text-decoration:none; display:inline-block;">🗺️ Map</a>
-                                    <button onclick="deleteLocation(${loc.id})" style="padding:3px 12px; border:none; border-radius:12px; font-size:0.7em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    html += `</table>`;
-                    container.innerHTML = html;
+                    renderDeliveryList();
+                    updateDeliveryMap();
                 })
-                .catch(() => {});
+                .catch(() => {
+                    document.getElementById('deliveryLocationsList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No locations available</p>';
+                });
+        }
+
+        function renderDeliveryList() {
+            const container = document.getElementById('deliveryLocationsList');
+            
+            if (allLocations.length === 0) {
+                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No customer locations shared yet</p>';
+                return;
+            }
+            
+            const whatsappNum = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            
+            let html = `<table>
+                <tr>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Order</th>
+                    <th>Address</th>
+                    <th>Coordinates</th>
+                    <th>Shared</th>
+                    <th>📍 Location</th>
+                    <th>Action</th>
+                </tr>
+            `;
+            
+            allLocations.slice().reverse().forEach(loc => {
+                const mapUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
+                const whatsappMsg = `📍 Customer Location:%0Ahttps://www.google.com/maps?q=${loc.lat},${loc.lng}%0A%0A🧑 Customer: ${loc.userName}%0A📞 Phone: ${loc.phone || 'N/A'}%0A📍 Address: ${loc.address || 'N/A'}`;
+                const whatsappUrl = `https://wa.me/${whatsappNum}?text=${whatsappMsg}`;
+                html += `
+                    <tr>
+                        <td><strong>${loc.userName}</strong></td>
+                        <td>${loc.phone || '-'}</td>
+                        <td>${loc.orderId ? `#${loc.orderId}` : '-'}</td>
+                        <td style="max-width:150px; word-break:break-word;">${loc.address || 'No address'}</td>
+                        <td style="font-size:0.7em;">${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}</td>
+                        <td style="font-size:0.7em;">${loc.timestamp || 'Today'}</td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                <a href="${mapUrl}" target="_blank" class="admin-action-btn btn-print" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">🗺️ Map</a>
+                                <a href="${whatsappUrl}" target="_blank" class="admin-action-btn btn-edit" style="text-decoration:none; padding:3px 8px; font-size:0.7em; text-align:center;">📤 WhatsApp</a>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="admin-action-btn btn-delete" onclick="deleteLocation(${loc.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</table>`;
+            container.innerHTML = html;
+        }
+
+        function updateDeliveryMap() {
+            const iframe = document.getElementById('deliveryMapIframe');
+            const status = document.getElementById('mapStatus');
+            
+            if (allLocations.length === 0) {
+                iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=66.9%2C24.7%2C67.2%2C25.0&layer=mapnik&marker=24.9%2C67.05';
+                status.textContent = '📍 No locations to show';
+                return;
+            }
+            
+            const validLocations = allLocations.filter(l => l.lat && l.lng);
+            if (validLocations.length === 0) {
+                iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=66.9%2C24.7%2C67.2%2C25.0&layer=mapnik&marker=24.9%2C67.05';
+                status.textContent = '📍 No valid locations';
+                return;
+            }
+            
+            const avgLat = validLocations.reduce((sum, l) => sum + l.lat, 0) / validLocations.length;
+            const avgLng = validLocations.reduce((sum, l) => sum + l.lng, 0) / validLocations.length;
+            
+            let markersParam = '';
+            validLocations.forEach(l => {
+                markersParam += `&marker=${l.lat}%2C${l.lng}`;
+            });
+            
+            const bbox = `${avgLng-0.1}%2C${avgLat-0.1}%2C${avgLng+0.1}%2C${avgLat+0.1}`;
+            iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markersParam}`;
+            
+            status.textContent = `📍 Showing ${validLocations.length} customer locations`;
+        }
+
+        function refreshDeliveryMap() {
+            document.getElementById('mapStatus').textContent = '🔄 Refreshing...';
+            renderAdminDelivery();
+            showToast('✅ Map refreshed!');
+        }
+
+        function centerAllMarkers() {
+            updateDeliveryMap();
+            showToast('📍 Centered all markers');
         }
 
         function deleteLocation(id) {
@@ -2190,129 +2714,12 @@
                 .catch(() => showToast('❌ Network error'));
         }
 
-        // ============================================================
-        // ADMIN SETTINGS
-        // ============================================================
-        function adminUpdateRestaurantName() {
-            const name = document.getElementById('adminRestaurantName').value;
-            if (!name) { showToast('⚠️ Enter a name'); return; }
-            fetch('/api/restaurant-name', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            })
-            .then(r => r.json())
-            .then(() => {
-                showToast('✅ Restaurant name updated!');
-                loadAdminData();
-            });
-        }
-
-        // ============================================================
-        // ICON PICKER
-        // ============================================================
-        function openIconPicker(target) {
-            currentPickerTarget = target;
-            const popup = document.getElementById('iconPickerPopup');
-            const grid = document.getElementById('emojiGrid');
-            
-            grid.innerHTML = '';
-            emojiList.forEach(emoji => {
-                const btn = document.createElement('button');
-                btn.textContent = emoji;
-                btn.onclick = () => {
-                    const currentIcons = selectedIcons[currentPickerTarget];
-                    if (currentIcons.length < 5 && !currentIcons.includes(emoji)) {
-                        currentIcons.push(emoji);
-                        updateIconDisplay(currentPickerTarget);
-                    } else if (currentIcons.includes(emoji)) {
-                        showToast('⚠️ This icon is already selected');
-                    } else {
-                        showToast('⚠️ Maximum 5 icons allowed');
-                    }
-                };
-                grid.appendChild(btn);
-            });
-            
-            popup.classList.add('show');
-        }
-
-        function closeIconPicker() {
-            document.getElementById('iconPickerPopup').classList.remove('show');
-        }
-
-        function updateIconDisplay(target) {
-            const container = document.getElementById(target + 'SelectedIcons');
-            const icons = selectedIcons[target];
-            
-            container.innerHTML = '';
-            
-            if (icons.length === 0) {
-                const hint = document.createElement('span');
-                hint.className = 'icon-hint';
-                hint.textContent = 'Click "Add Icon" to choose';
-                hint.style.color = '#b2bec3';
-                hint.style.fontSize = '0.85em';
-                container.appendChild(hint);
-                return;
+        // Auto-refresh locations every 10 seconds
+        setInterval(function() {
+            if (document.getElementById('adminDelivery')?.classList.contains('active')) {
+                renderAdminDelivery();
             }
-            
-            icons.forEach((icon, index) => {
-                const span = document.createElement('span');
-                span.className = 'selected-icon';
-                span.textContent = icon;
-                span.title = 'Click to remove';
-                span.onclick = () => {
-                    selectedIcons[target].splice(index, 1);
-                    updateIconDisplay(target);
-                };
-                container.appendChild(span);
-            });
-        }
-
-        // ============================================================
-        // ADMIN FORM
-        // ============================================================
-        function toggleAdminForm(formId) {
-            const form = document.getElementById(formId);
-            form.classList.toggle('show');
-            if (form.classList.contains('show')) {
-                const target = formId === 'menuForm' ? 'menu' : 'deal';
-                updateIconDisplay(target);
-                if (formId === 'menuForm') {
-                    renderAddLayers();
-                }
-            }
-        }
-
-        // ============================================================
-        // ADMIN NAVIGATION
-        // ============================================================
-        function showAdminSection(section) {
-            document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
-            document.querySelector(`.admin-nav-item[data-admin="${section}"]`).classList.add('active');
-            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-            const sectionMap = {
-                dashboard: 'adminDashboard',
-                orders: 'adminOrders',
-                menu: 'adminMenu',
-                deals: 'adminDeals',
-                feedback: 'adminFeedback',
-                support: 'adminSupport',
-                layers: 'adminLayers',
-                delivery: 'adminDelivery',
-                settings: 'adminSettings'
-            };
-            document.getElementById(sectionMap[section]).classList.add('active');
-            if (section === 'dashboard') renderAdminDashboard();
-            if (section === 'orders') renderAdminOrders();
-            if (section === 'menu') renderAdminMenu();
-            if (section === 'deals') renderAdminDeals();
-            if (section === 'feedback') renderAdminFeedback();
-            if (section === 'support') renderAdminSupport();
-            if (section === 'layers') renderAdminLayers();
-            if (section === 'delivery') renderAdminDelivery();
-        }
+        }, 10000);
 
         // ============================================================
         // THEME SETTINGS
@@ -2322,6 +2729,28 @@
             toggle.classList.toggle('active');
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('adminDarkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        function changeFontSize(size) {
+            document.body.style.fontSize = size;
+            localStorage.setItem('adminFontSize', size);
+        }
+
+        function changeFontFamily(font) {
+            document.body.style.fontFamily = font;
+            localStorage.setItem('adminFontFamily', font);
+        }
+
+        function changeLanguage(lang) {
+            localStorage.setItem('adminLanguage', lang);
+            showToast(`🌐 Language changed to: ${lang.toUpperCase()}`);
+        }
+
+        function changeCurrency(currency) {
+            currencySymbol = currency;
+            localStorage.setItem('adminCurrency', currency);
+            showToast(`💰 Currency changed to: ${currency}`);
+            loadAdminData();
         }
 
         // ============================================================
@@ -2345,9 +2774,22 @@
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeToggle').classList.add('active');
             }
+            if (localStorage.getItem('adminFontSize')) {
+                document.body.style.fontSize = localStorage.getItem('adminFontSize');
+                document.getElementById('fontSizeSelect').value = localStorage.getItem('adminFontSize');
+            }
+            if (localStorage.getItem('adminFontFamily')) {
+                document.body.style.fontFamily = localStorage.getItem('adminFontFamily');
+                document.getElementById('fontFamilySelect').value = localStorage.getItem('adminFontFamily');
+            }
+            if (localStorage.getItem('adminCurrency')) {
+                currencySymbol = localStorage.getItem('adminCurrency');
+                document.getElementById('currencySelect').value = currencySymbol;
+            }
 
             loadAdminData();
             setInterval(checkNewOrders, 3000);
+            setInterval(renderTodayOrders, 5000);
             
             updateIconDisplay('menu');
             updateIconDisplay('deal');
