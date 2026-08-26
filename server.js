@@ -67,22 +67,6 @@ let customerLocations = [];
 let orderCounter = 1;
 
 // ============================================
-// ⭐ RECEIPT SETTINGS ⭐
-// ============================================
-let receiptSettings = {
-    logoIcon: '👨‍🍳',
-    tagline: 'PIZZA • BURGER • FAST FOOD',
-    established: RESTAURANT_CONFIG.est,
-    address: RESTAURANT_CONFIG.address,
-    phone: RESTAURANT_CONFIG.phone,
-    qrCodeUrl: '',
-    discountAmount: RESTAURANT_CONFIG.discountAmount,
-    discountThreshold: RESTAURANT_CONFIG.discountThreshold,
-    thankYouMessage: 'Thank You for Your Order!',
-    footerMessage: 'Have a Great Day!'
-};
-
-// ============================================
 // DEFAULT MENU AND DEALS
 // ============================================
 function getDefaultMenu() {
@@ -144,33 +128,8 @@ app.get('/api/restaurant-config', (req, res) => {
     res.json(RESTAURANT_CONFIG);
 });
 
-// ============================================
-// WHATSAPP NUMBER API
-// ============================================
 app.get('/api/whatsapp-number', (req, res) => {
     res.json({ number: RESTAURANT_CONFIG.whatsapp });
-});
-
-// ============================================
-// ⭐ RECEIPT SETTINGS API ⭐
-// ============================================
-app.get('/api/receipt-settings', (req, res) => {
-    res.json(receiptSettings);
-});
-
-app.post('/api/receipt-settings', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const allowedFields = [
-        'logoIcon', 'tagline', 'established', 'address', 'phone',
-        'qrCodeUrl', 'discountAmount', 'discountThreshold',
-        'thankYouMessage', 'footerMessage'
-    ];
-    allowedFields.forEach(field => {
-        if (req.body[field] !== undefined) {
-            receiptSettings[field] = req.body[field];
-        }
-    });
-    res.json({ success: true, settings: receiptSettings });
 });
 
 // ============================================
@@ -218,28 +177,6 @@ app.post('/api/restaurant/create', (req, res) => {
     };
     restaurants.push(newRestaurant);
     res.json({ success: true, restaurant: newRestaurant, restaurantId: restaurantId });
-});
-
-// ============================================
-// RESTAURANTS MANAGEMENT PANEL API
-// ============================================
-app.get('/api/restaurants/all', (req, res) => {
-    if (!req.user) {
-        return res.json([]);
-    }
-    res.json(restaurants);
-});
-
-app.post('/api/restaurants/all', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    const { restaurants: newRestaurants } = req.body;
-    if (newRestaurants && Array.isArray(newRestaurants)) {
-        res.json({ success: true, message: 'Restaurants data synced' });
-    } else {
-        res.status(400).json({ error: 'Invalid data' });
-    }
 });
 
 // ============================================

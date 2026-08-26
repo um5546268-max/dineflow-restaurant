@@ -1075,9 +1075,6 @@
                             <option value="salads">Salads</option>
                             <option value="appetizers">Appetizers</option>
                             <option value="desserts">Desserts</option>
-                            <option value="pasta">Pasta</option>
-                            <option value="broast">Broast</option>
-                            <option value="rolls">Rolls</option>
                         </select>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <button class="icon-picker-btn" onclick="openIconPicker('menu')">🎨 Add Icon</button>
@@ -1552,6 +1549,12 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.length > lastOrderCount) {
+                        const newOrders = data.slice(lastOrderCount);
+                        newOrders.forEach(order => {
+                            // ⭐ AUTO-PRINT: Show receipt and print automatically
+                            showReceipt(order);
+                            showToast(`🖨️ New Order #${order.id} - Auto-printing receipt!`);
+                        });
                         lastOrderCount = data.length;
                         orders = data;
                         renderAdminDashboard();
@@ -1688,7 +1691,7 @@
         }
 
         // ============================================================
-        // RECEIPT FUNCTION
+        // ⭐ RECEIPT FUNCTION WITH AUTO-PRINT (ADMIN ONLY) ⭐
         // ============================================================
         function showReceipt(order, isPreview) {
             const orderTime = order.date || new Date(order.createdAt).toLocaleString();
@@ -1798,8 +1801,20 @@
 
             document.getElementById('receiptPrint').innerHTML = html;
             document.getElementById('receiptPopup').classList.add('show');
+            
+            // ⭐ AUTO-PRINT: Only in admin panel, not customer
             if (!isPreview) {
-                setTimeout(() => printReceipt(), 1000);
+                setTimeout(function() {
+                    if (window.print) {
+                        try {
+                            window.print();
+                            showToast('🖨️ Receipt sent to printer!');
+                        } catch(e) {
+                            console.log('Print dialog cancelled or not available');
+                            showToast('⚠️ Please click Print button manually');
+                        }
+                    }
+                }, 1500);
             }
         }
 
@@ -2101,9 +2116,6 @@
                                 <option value="salads" ${item.category === 'salads' ? 'selected' : ''}>Salads</option>
                                 <option value="appetizers" ${item.category === 'appetizers' ? 'selected' : ''}>Appetizers</option>
                                 <option value="desserts" ${item.category === 'desserts' ? 'selected' : ''}>Desserts</option>
-                                <option value="pasta" ${item.category === 'pasta' ? 'selected' : ''}>Pasta</option>
-                                <option value="broast" ${item.category === 'broast' ? 'selected' : ''}>Broast</option>
-                                <option value="rolls" ${item.category === 'rolls' ? 'selected' : ''}>Rolls</option>
                             </select>
                         </td>
                         <td><input type="number" id="edit-price-${id}" value="${item.price}" step="0.01" style="width:80px; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
