@@ -150,76 +150,69 @@ app.get('/api/whatsapp-number', (req, res) => {
 });
 
 // ============================================
-// ⭐ RECEIPT SETTINGS API ⭐
+// ⭐ RECEIPT SETTINGS API - FIXED ⭐
 // ============================================
+// GET receipt settings - No authentication required
 app.get('/api/receipt-settings', (req, res) => {
-    const settings = {
-        logoIcon: receiptSettings.logoIcon || '👨‍🍳',
-        logoUrl: receiptSettings.logoUrl || '',
-        tagline: receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD',
-        established: receiptSettings.established || RESTAURANT_CONFIG.est,
-        address: receiptSettings.address || RESTAURANT_CONFIG.address,
-        phone: receiptSettings.phone || RESTAURANT_CONFIG.phone,
-        qrCodeUrl: receiptSettings.qrCodeUrl || '',
-        discountAmount: receiptSettings.discountAmount || RESTAURANT_CONFIG.discountAmount,
-        discountThreshold: receiptSettings.discountThreshold || RESTAURANT_CONFIG.discountThreshold,
-        thankYouMessage: receiptSettings.thankYouMessage || 'Thank You for Your Order!',
-        footerMessage: receiptSettings.footerMessage || 'Have a Great Day!'
-    };
-    res.json(settings);
+    try {
+        const settings = {
+            logoIcon: receiptSettings.logoIcon || '👨‍🍳',
+            logoUrl: receiptSettings.logoUrl || '',
+            tagline: receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD',
+            established: receiptSettings.established || RESTAURANT_CONFIG.est,
+            address: receiptSettings.address || RESTAURANT_CONFIG.address,
+            phone: receiptSettings.phone || RESTAURANT_CONFIG.phone,
+            qrCodeUrl: receiptSettings.qrCodeUrl || '',
+            discountAmount: receiptSettings.discountAmount || RESTAURANT_CONFIG.discountAmount,
+            discountThreshold: receiptSettings.discountThreshold || RESTAURANT_CONFIG.discountThreshold,
+            thankYouMessage: receiptSettings.thankYouMessage || 'Thank You for Your Order!',
+            footerMessage: receiptSettings.footerMessage || 'Have a Great Day!'
+        };
+        res.json(settings);
+    } catch (error) {
+        console.error('Error getting receipt settings:', error);
+        res.status(500).json({ error: 'Failed to get settings', details: error.message });
+    }
 });
 
+// POST receipt settings - Requires authentication
 app.post('/api/receipt-settings', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    // Check if user is authenticated
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in. Please login first.' });
+    }
+    
     try {
         const allowedFields = [
             'logoIcon', 'logoUrl', 'tagline', 'established', 'address', 'phone',
             'qrCodeUrl', 'discountAmount', 'discountThreshold',
             'thankYouMessage', 'footerMessage'
         ];
+        
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined && req.body[field] !== null) {
                 receiptSettings[field] = req.body[field];
             }
         });
+        
+        // Ensure logoIcon is never empty
         if (!receiptSettings.logoIcon) {
             receiptSettings.logoIcon = '👨‍🍳';
         }
-        res.json({ success: true, settings: receiptSettings });
+        
+        console.log('✅ Receipt settings saved successfully');
+        res.json({ 
+            success: true, 
+            settings: receiptSettings,
+            message: 'Settings saved successfully'
+        });
     } catch (error) {
         console.error('Error saving receipt settings:', error);
-        res.status(500).json({ error: 'Failed to save settings', details: error.message });
+        res.status(500).json({ 
+            error: 'Failed to save settings', 
+            details: error.message 
+        });
     }
-});
-
-// ============================================
-// RESTAURANT API
-// ============================================
-app.post('/api/restaurant/create', (req, res) => {
-    const { name, ownerName, ownerEmail } = req.body;
-    if (!name || !ownerName || !ownerEmail) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
-    if (existing) {
-        return res.status(400).json({ error: 'Restaurant already exists with this email' });
-    }
-    const restaurantId = 'restaurant-' + (restaurants.length + 1);
-    const newRestaurant = {
-        id: restaurants.length + 1,
-        restaurantId: restaurantId,
-        name: name,
-        ownerName: ownerName,
-        ownerEmail: ownerEmail,
-        createdAt: new Date().toLocaleString(),
-        menu: getDefaultMenu(),
-        deals: getDefaultDeals(),
-        orders: [],
-        restaurantName: name,
-        status: 'active'
-    };
-    restaurants.push(newRestaurant);
-    res.json({ success: true, restaurant: newRestaurant, restaurantId: restaurantId });
 });
 
 // ============================================

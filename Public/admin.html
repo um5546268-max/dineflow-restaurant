@@ -1686,86 +1686,111 @@
         }
 
         // ============================================================
-        // RECEIPT SETTINGS FUNCTIONS
-        // ============================================================
-        function updateQrPreview() {
-            const url = document.getElementById('receiptQrUrl').value.trim();
-            const img = document.getElementById('receiptQrPreview');
-            if (url) {
-                img.src = url;
-                img.style.display = 'inline-block';
-            } else {
-                img.style.display = 'none';
-            }
-        }
+// ⭐ SAVE RECEIPT SETTINGS - FIXED ⭐
+// ============================================================
+function saveReceiptSettings() {
+    // Get all values from form
+    const payload = {
+        logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
+        logoUrl: document.getElementById('receiptLogoUrl').value || '',
+        tagline: document.getElementById('receiptTagline').value || '',
+        established: document.getElementById('receiptEstablished').value || '2022',
+        address: document.getElementById('receiptAddress').value || '',
+        phone: document.getElementById('receiptPhone').value || '',
+        qrCodeUrl: document.getElementById('receiptQrUrl').value || '',
+        discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 0,
+        discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 0,
+        thankYouMessage: document.getElementById('receiptThankYou').value || 'Thank You for Your Order!',
+        footerMessage: document.getElementById('receiptFooterNote').value || 'Have a Great Day!'
+    };
 
-        function saveReceiptSettings() {
-            const payload = {
-                logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
-                logoUrl: document.getElementById('receiptLogoUrl').value || '',
-                tagline: document.getElementById('receiptTagline').value || '',
-                established: document.getElementById('receiptEstablished').value || '2022',
-                address: document.getElementById('receiptAddress').value || '',
-                phone: document.getElementById('receiptPhone').value || '',
-                qrCodeUrl: document.getElementById('receiptQrUrl').value || '',
-                discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 0,
-                discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 0,
-                thankYouMessage: document.getElementById('receiptThankYou').value || 'Thank You for Your Order!',
-                footerMessage: document.getElementById('receiptFooterNote').value || 'Have a Great Day!'
-            };
+    console.log('Saving receipt settings:', payload);
 
-            fetch('/api/receipt-settings', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            })
-            .then(r => {
-                if (!r.ok) {
-                    throw new Error('Server responded with status ' + r.status);
-                }
-                return r.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    receiptSettings = Object.assign(receiptSettings, data.settings);
-                    showToast('✅ Receipt settings saved successfully!');
-                } else {
-                    showToast('❌ ' + (data.error || 'Save failed'));
-                }
-            })
-            .catch(err => {
-                console.error('Save error:', err);
-                showToast('❌ Network error. Please try again.');
+    // Show loading state
+    const saveBtn = document.querySelector('.admin-submit-btn');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = '⏳ Saving...';
+    saveBtn.disabled = true;
+
+    fetch('/api/receipt-settings', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Server responded with status ' + response.status);
             });
         }
-
-        function previewSampleReceipt() {
-            const sampleOrder = {
-                id: 51,
-                orderNumber: 51,
-                userName: 'Dine-In Customer',
-                phone: '-',
-                address: '-',
-                table: 2,
-                orderType: 'takeaway',
-                paymentMethod: 'Cash',
-                date: new Date().toLocaleString(),
-                status: 'confirmed',
-                items: [
-                    { name: 'Behari Kabab', variant: 'LARGE', price: 1600, qty: 1 },
-                    { name: 'Malai Boti', variant: 'LARGE', price: 1450, qty: 1 },
-                    { name: 'Water', variant: 'LARGE', price: 120, qty: 1 },
-                    { name: 'Burgers', variant: '2NGER BURGER', price: 380, qty: 2 },
-                    { name: 'Coke', variant: '1LTR', price: 200, qty: 2 }
-                ],
-                layers: [],
-                total: 4000
-            };
-            showReceipt(sampleOrder, true);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            receiptSettings = Object.assign(receiptSettings, data.settings);
+            showToast('✅ Receipt settings saved successfully!');
+            // Update preview
+            if (data.settings.logoUrl) {
+                document.getElementById('receiptLogoImagePreview').src = data.settings.logoUrl;
+                document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
+            }
+        } else {
+            showToast('❌ ' + (data.error || 'Save failed'));
         }
+    })
+    .catch(err => {
+        console.error('Save error:', err);
+        showToast('❌ Error: ' + err.message);
+    })
+    .finally(() => {
+        // Reset button
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+// ============================================================
+// ⭐ LOAD RECEIPT SETTINGS - FIXED ⭐
+// ============================================================
+function loadReceiptSettings() {
+    fetch('/api/receipt-settings')
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Failed to load settings');
+            }
+            return r.json();
+        })
+        .then(data => {
+            receiptSettings = Object.assign(receiptSettings, data);
+            document.getElementById('receiptLogoIcon').value = receiptSettings.logoIcon || '';
+            document.getElementById('receiptLogoPreview').textContent = receiptSettings.logoIcon || '👨‍🍳';
+            document.getElementById('receiptLogoUrl').value = receiptSettings.logoUrl || '';
+            if (receiptSettings.logoUrl) {
+                document.getElementById('receiptLogoImagePreview').src = receiptSettings.logoUrl;
+                document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
+            }
+            document.getElementById('receiptTagline').value = receiptSettings.tagline || '';
+            document.getElementById('receiptEstablished').value = receiptSettings.established || '';
+            document.getElementById('receiptAddress').value = receiptSettings.address || '';
+            document.getElementById('receiptPhone').value = receiptSettings.phone || '';
+            document.getElementById('receiptQrUrl').value = receiptSettings.qrCodeUrl || '';
+            document.getElementById('receiptDiscountAmount').value = receiptSettings.discountAmount || 0;
+            document.getElementById('receiptDiscountThreshold').value = receiptSettings.discountThreshold || 0;
+            document.getElementById('receiptThankYou').value = receiptSettings.thankYouMessage || '';
+            document.getElementById('receiptFooterNote').value = receiptSettings.footerMessage || '';
+            updateQrPreview();
+            updateLogoImagePreview();
+        })
+        .catch(err => {
+            console.error('Error loading receipt settings:', err);
+            showToast('⚠️ Could not load receipt settings');
+        });
+}
 
         // ============================================================
         // ⭐ RECEIPT FUNCTION WITH AUTO-PRINT (ADMIN ONLY) ⭐
