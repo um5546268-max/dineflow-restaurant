@@ -768,18 +768,27 @@ app.get('/logout', (req, res) => {
 // SERVE HTML PAGES
 // ============================================
 
+// Customer Panel
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
+// Admin Panel
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'admin.html'));
 });
 
+// Staff Panel
+app.get('/staff', (req, res) => {
+    res.sendFile(path.join(__dirname, 'Public', 'staff.html'));
+});
+
+// Restaurant Creation Page
 app.get('/create-restaurant', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'create-restaurant.html'));
 });
 
+// ⭐ PixelPanel - Secret Restaurant Management Panel ⭐
 app.get('/pixelpanel', (req, res) => {
     if (!req.user || req.user.role !== 'admin') {
         return res.status(404).send(`
@@ -822,6 +831,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
+    console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
     console.log(`⬛ PixelPanel: http://localhost:${PORT}/pixelpanel`);
     console.log('========================================');
     console.log(`📱 WhatsApp: ${RESTAURANT_CONFIG.whatsapp}`);
