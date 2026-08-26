@@ -19,7 +19,7 @@
             background: white;
             padding: 40px;
             border-radius: 16px;
-            max-width: 500px;
+            max-width: 550px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
@@ -78,8 +78,71 @@
             font-size: 0.9em;
             border: 1px solid #dfe6e9;
         }
-        .result .url-box a { color: #667eea; text-decoration: none; }
+        .result .url-box a {
+            color: #667eea;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .result .url-box a:hover { text-decoration: underline; }
+        .result .url-box .url-icon {
+            font-size: 1.2em;
+        }
+        .result .url-label {
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: block;
+        }
+        .result .url-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .result .url-card {
+            background: #f8f9fa;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s;
+        }
+        .result .url-card:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        .result .url-card .url-title {
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+        .result .url-card .url-link {
+            font-size: 0.8em;
+            word-break: break-all;
+        }
+        .result .url-card .url-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .result .url-card .url-link a:hover {
+            text-decoration: underline;
+        }
+        .result .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: background 0.3s;
+        }
+        .result .copy-btn:hover {
+            background: #5a67d8;
+        }
         .back-link {
             display: block;
             text-align: center;
@@ -127,6 +190,22 @@
         }
         .debug-info.success { border-color: #27ae60; background: #e8f8f0; }
         .debug-info.error { border-color: #e74c3c; background: #fdf2f2; }
+        .url-role-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .badge-customer { background: #3498db; color: white; }
+        .badge-admin { background: #e74c3c; color: white; }
+        .badge-staff { background: #f39c12; color: white; }
+        .badge-owner { background: #27ae60; color: white; }
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .result .url-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -177,7 +256,6 @@
             debugMessage.textContent = '⏳ Checking server connection...';
             
             try {
-                // Try multiple endpoints
                 const endpoints = ['/api/restaurant-config', '/api/test', '/api/deals'];
                 let connected = false;
                 
@@ -216,7 +294,45 @@
         });
 
         // ============================================================
-        // FORM SUBMIT HANDLER
+        // COPY TO CLIPBOARD FUNCTION
+        // ============================================================
+        function copyToClipboard(text, element) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalText = element.textContent;
+                    element.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        element.textContent = originalText;
+                    }, 2000);
+                }).catch(() => {
+                    // Fallback
+                    copyTextFallback(text, element);
+                });
+            } else {
+                copyTextFallback(text, element);
+            }
+        }
+
+        function copyTextFallback(text, element) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const originalText = element.textContent;
+                element.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    element.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy. Please copy manually.');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // ============================================================
+        // FORM SUBMIT HANDLER - WITH STAFF URL
         // ============================================================
         document.getElementById('createForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -258,7 +374,6 @@
                 
                 debugMessage.textContent = `📡 Server responded with status: ${response.status}`;
                 
-                // Try to parse response
                 let data;
                 try {
                     data = await response.json();
@@ -270,21 +385,74 @@
                 
                 if (data.success) {
                     const baseUrl = window.location.origin;
-                    const customerUrl = `${baseUrl}/?restaurant=${data.restaurantId}`;
-                    const adminUrl = `${baseUrl}/admin?restaurant=${data.restaurantId}`;
+                    const restaurantId = data.restaurantId;
+                    
+                    // Generate all URLs
+                    const customerUrl = `${baseUrl}/?restaurant=${restaurantId}`;
+                    const adminUrl = `${baseUrl}/admin?restaurant=${restaurantId}`;
+                    const staffUrl = `${baseUrl}/staff?restaurant=${restaurantId}`;
+                    const ownerUrl = `${baseUrl}/pixelpanel?restaurant=${restaurantId}`;
                     
                     showResult('success', `
                         ✅ <strong>Restaurant Created Successfully!</strong><br><br>
                         <strong>🏪 Restaurant:</strong> ${data.restaurant.name}<br>
-                        <strong>🏪 Restaurant ID:</strong> ${data.restaurantId}<br>
+                        <strong>🏪 Restaurant ID:</strong> ${restaurantId}<br>
                         <strong>👤 Owner:</strong> ${data.restaurant.ownerName}<br>
                         <strong>📧 Email:</strong> ${data.restaurant.ownerEmail}<br><br>
-                        <strong>📱 Customer URL:</strong><br>
-                        <div class="url-box"><a href="${customerUrl}" target="_blank">${customerUrl}</a></div>
-                        <strong>👑 Admin URL:</strong><br>
-                        <div class="url-box"><a href="${adminUrl}" target="_blank">${adminUrl}</a></div>
-                        <br>
-                        <em style="font-size:0.85em;">✅ Share these URLs with the restaurant owner!</em>
+                        
+                        <div class="url-grid">
+                            <div class="url-card">
+                                <div class="url-title">
+                                    📱 Customer Panel
+                                    <span class="url-role-badge badge-customer">Customer</span>
+                                </div>
+                                <div class="url-link">
+                                    <a href="${customerUrl}" target="_blank">${customerUrl}</a>
+                                </div>
+                                <button class="copy-btn" onclick="copyToClipboard('${customerUrl}', this)">📋 Copy</button>
+                            </div>
+                            
+                            <div class="url-card">
+                                <div class="url-title">
+                                    👑 Admin Panel
+                                    <span class="url-role-badge badge-admin">Admin</span>
+                                </div>
+                                <div class="url-link">
+                                    <a href="${adminUrl}" target="_blank">${adminUrl}</a>
+                                </div>
+                                <button class="copy-btn" onclick="copyToClipboard('${adminUrl}', this)">📋 Copy</button>
+                            </div>
+                            
+                            <div class="url-card" style="border-color: #f39c12; background: #fef9e7;">
+                                <div class="url-title">
+                                    👨‍🍳 Staff Panel
+                                    <span class="url-role-badge badge-staff">Staff</span>
+                                </div>
+                                <div class="url-link">
+                                    <a href="${staffUrl}" target="_blank">${staffUrl}</a>
+                                </div>
+                                <button class="copy-btn" onclick="copyToClipboard('${staffUrl}', this)">📋 Copy</button>
+                            </div>
+                            
+                            <div class="url-card" style="border-color: #27ae60; background: #e8f8f0;">
+                                <div class="url-title">
+                                    ⬛ PixelPanel (Owner)
+                                    <span class="url-role-badge badge-owner">Owner</span>
+                                </div>
+                                <div class="url-link">
+                                    <a href="${ownerUrl}" target="_blank">${ownerUrl}</a>
+                                </div>
+                                <button class="copy-btn" onclick="copyToClipboard('${ownerUrl}', this)">📋 Copy</button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 0.8em; color: #636e72;">
+                            <strong>💡 Quick Summary:</strong><br>
+                            🧑‍💼 <strong>Customer:</strong> Browse menu & place orders<br>
+                            👨‍💼 <strong>Admin:</strong> Manage restaurant, orders & settings<br>
+                            👨‍🍳 <strong>Staff:</strong> Take orders from customers<br>
+                            👤 <strong>Owner:</strong> Full access to everything
+                        </div>
                     `);
                     
                     debugMessage.textContent = '✅ Restaurant created successfully!';
@@ -326,9 +494,8 @@
         }
         
         // ============================================================
-        // RETRY CONNECTION BUTTON
+        // RETRY CONNECTION
         // ============================================================
-        // Add a retry button if needed
         document.addEventListener('keydown', function(e) {
             if (e.key === 'r' && e.ctrlKey) {
                 checkServerConnection();
