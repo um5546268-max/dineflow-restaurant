@@ -15,9 +15,11 @@ const PORT = process.env.PORT || 5000;
 const RESTAURANT_CONFIG = {
     name: 'The Heaven Slice',
     est: '2022',
+    tagline: 'PIZZA • BURGER • FAST FOOD',
     address: 'Gojra Road Near Ali Marriage Hall',
     phone: '0300-0310275',
     whatsapp: '923001234567',
+    website: 'https://theheavenslice.com',
     currency: 'Rs',
     discountAmount: 330,
     discountThreshold: 2000
