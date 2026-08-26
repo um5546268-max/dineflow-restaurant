@@ -1062,6 +1062,7 @@
         let currencySymbol = 'Rs';
         let whatsappNumber = '923001234567';
         let orderCounter = 1;
+        let receiptSettings = { logoIcon: '👨‍🍳' };
 
         const sidebar = document.getElementById('categorySidebar');
         const menuArea = document.getElementById('menuArea');
@@ -1137,7 +1138,15 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadRestaurantConfig();
             checkPersistentLogin();
-            
+
+            // Load receipt settings for logo
+            fetch('/api/receipt-settings')
+                .then(r => r.json())
+                .then(data => {
+                    receiptSettings = data;
+                })
+                .catch(() => {});
+
             fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
@@ -1146,7 +1155,7 @@
                     updateSplashName();
                 })
                 .catch(() => {});
-            
+
             fetch('/api/whatsapp-number')
                 .then(r => r.json())
                 .then(data => { 
@@ -1154,14 +1163,14 @@
                     restaurantConfig.whatsapp = whatsappNumber;
                 })
                 .catch(() => {});
-            
+
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('hide');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
                 }, 600);
             }, 2000);
-            
+
             loadAllData();
             showPanel('menu');
         });
@@ -1779,7 +1788,7 @@
         }
 
         // ============================================================
-        // RECEIPT - ORIGINAL STYLE (NO AUTO-PRINT IN CUSTOMER)
+        // RECEIPT - ORIGINAL STYLE WITH LOGO
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -1792,6 +1801,7 @@
             const tableInfo = order.table ? `Table: ${order.table}` : '';
 
             const config = restaurantConfig;
+            const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
 
             let subtotal = 0;
             let itemRows = '';
@@ -1827,6 +1837,7 @@
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
+                            <div style="text-align:center; font-size:3em; margin-bottom:5px;">${logoIcon}</div>
                             <div class="restaurant-name">${config.name.toUpperCase()}</div>
                             <div class="est">Est. ${config.est}</div>
                             <div class="address">📍 ${config.address}</div>

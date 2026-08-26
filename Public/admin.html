@@ -1225,7 +1225,7 @@
                     <div class="settings-option" style="align-items:flex-start;">
                         <div>
                             <div class="option-label">Logo Icon</div>
-                            <div class="option-desc">Emoji shown inside the circle logo</div>
+                            <div class="option-desc">Emoji shown on receipt</div>
                         </div>
                         <div style="display:flex; gap:8px; align-items:center;">
                             <span id="receiptLogoPreview" style="font-size:1.8em; border:1px solid #dfe6e9; border-radius:8px; padding:4px 10px;">👨‍🍳</span>
@@ -1236,7 +1236,7 @@
                     <div class="settings-option">
                         <div>
                             <div class="option-label">Tagline</div>
-                            <div class="option-desc">Small text under logo ribbon</div>
+                            <div class="option-desc">Small text under logo</div>
                         </div>
                         <input type="text" id="receiptTagline" placeholder="PIZZA • BURGER • FAST FOOD" style="width:220px;" />
                     </div>
@@ -1638,31 +1638,43 @@
         function saveReceiptSettings() {
             const payload = {
                 logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
-                tagline: document.getElementById('receiptTagline').value,
-                established: document.getElementById('receiptEstablished').value,
-                address: document.getElementById('receiptAddress').value,
-                phone: document.getElementById('receiptPhone').value,
-                qrCodeUrl: document.getElementById('receiptQrUrl').value,
+                tagline: document.getElementById('receiptTagline').value || '',
+                established: document.getElementById('receiptEstablished').value || '2022',
+                address: document.getElementById('receiptAddress').value || '',
+                phone: document.getElementById('receiptPhone').value || '',
+                qrCodeUrl: document.getElementById('receiptQrUrl').value || '',
                 discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 0,
                 discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 0,
-                thankYouMessage: document.getElementById('receiptThankYou').value,
-                footerMessage: document.getElementById('receiptFooterNote').value
+                thankYouMessage: document.getElementById('receiptThankYou').value || 'Thank You for Your Order!',
+                footerMessage: document.getElementById('receiptFooterNote').value || 'Have a Great Day!'
             };
+
             fetch('/api/receipt-settings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
                 body: JSON.stringify(payload)
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error('Server responded with status ' + r.status);
+                }
+                return r.json();
+            })
             .then(data => {
                 if (data.success) {
                     receiptSettings = Object.assign(receiptSettings, data.settings);
-                    showToast('✅ Receipt settings saved!');
+                    showToast('✅ Receipt settings saved successfully!');
                 } else {
                     showToast('❌ ' + (data.error || 'Save failed'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(err => {
+                console.error('Save error:', err);
+                showToast('❌ Network error. Please try again.');
+            });
         }
 
         function previewSampleReceipt() {
@@ -1700,6 +1712,8 @@
             const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
             const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
 
+            const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
+
             const subtotal = (order.items || []).reduce((sum, i) => sum + (i.price * (i.qty || 1)), 0);
             const threshold = receiptSettings.discountThreshold || 0;
             const discountAmt = receiptSettings.discountAmount || 0;
@@ -1733,6 +1747,7 @@
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
+                            <div style="text-align:center; font-size:3em; margin-bottom:5px;">${logoIcon}</div>
                             <div class="restaurant-name">${restaurantConfig.name.toUpperCase()}</div>
                             <div class="est">Est. ${receiptSettings.established || '2022'}</div>
                             <div class="address">📍 ${receiptSettings.address || restaurantConfig.address}</div>
@@ -1889,6 +1904,7 @@
                 html += `
                     <div class="order-receipt-card">
                         <div class="receipt-header">
+                            <div style="text-align:center; font-size:2.5em; margin-bottom:3px;">${receiptSettings.logoIcon || '👨‍🍳'}</div>
                             <div class="restaurant-name">${config.name.toUpperCase()}</div>
                             <div class="est">Est. ${config.est}</div>
                             <div class="address">📍 ${config.address}</div>

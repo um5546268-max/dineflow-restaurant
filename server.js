@@ -152,7 +152,19 @@ app.get('/api/whatsapp-number', (req, res) => {
 // ⭐ RECEIPT SETTINGS API ⭐
 // ============================================
 app.get('/api/receipt-settings', (req, res) => {
-    res.json(receiptSettings);
+    const settings = {
+        logoIcon: receiptSettings.logoIcon || '👨‍🍳',
+        tagline: receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD',
+        established: receiptSettings.established || RESTAURANT_CONFIG.est,
+        address: receiptSettings.address || RESTAURANT_CONFIG.address,
+        phone: receiptSettings.phone || RESTAURANT_CONFIG.phone,
+        qrCodeUrl: receiptSettings.qrCodeUrl || '',
+        discountAmount: receiptSettings.discountAmount || RESTAURANT_CONFIG.discountAmount,
+        discountThreshold: receiptSettings.discountThreshold || RESTAURANT_CONFIG.discountThreshold,
+        thankYouMessage: receiptSettings.thankYouMessage || 'Thank You for Your Order!',
+        footerMessage: receiptSettings.footerMessage || 'Have a Great Day!'
+    };
+    res.json(settings);
 });
 
 app.post('/api/receipt-settings', (req, res) => {
@@ -168,6 +180,9 @@ app.post('/api/receipt-settings', (req, res) => {
                 receiptSettings[field] = req.body[field];
             }
         });
+        if (!receiptSettings.logoIcon) {
+            receiptSettings.logoIcon = '👨‍🍳';
+        }
         res.json({ success: true, settings: receiptSettings });
     } catch (error) {
         console.error('Error saving receipt settings:', error);
