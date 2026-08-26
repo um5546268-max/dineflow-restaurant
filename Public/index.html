@@ -876,12 +876,13 @@
                 <input type="text" id="orderName" placeholder="Full Name" required />
                 <input type="tel" id="orderPhone" placeholder="Phone Number" required />
                 
-                <!-- Order Type Buttons: Dine-In, Car Service, Takeaway, ThirdParty -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                <!-- 5 Order Types: Dine-In, Car Service, Takeaway, Delivery, ThirdParty -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
                     <button type="button" class="order-type-btn active" id="dineinBtn" onclick="selectOrderType('dinein')">🍽️ Dine-In</button>
-                    <button type="button" class="order-type-btn" id="carServiceBtn" onclick="selectOrderType('carService')">🚗 Car Service</button>
+                    <button type="button" class="order-type-btn" id="carServiceBtn" onclick="selectOrderType('carService')">🚗 Car</button>
                     <button type="button" class="order-type-btn" id="takeawayBtn" onclick="selectOrderType('takeaway')">🏪 Takeaway</button>
-                    <button type="button" class="order-type-btn" id="thirdpartyBtn" onclick="selectOrderType('thirdparty')">📦 ThirdParty</button>
+                    <button type="button" class="order-type-btn" id="deliveryBtn" onclick="selectOrderType('delivery')">🚚 Delivery</button>
+                    <button type="button" class="order-type-btn" id="thirdpartyBtn" onclick="selectOrderType('thirdparty')">📦 Third</button>
                 </div>
                 
                 <select id="paymentMethod" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
@@ -1447,24 +1448,27 @@
         }
 
         // ============================================================
-        // ORDER TYPE SELECTION - Dine-In, Car Service, Takeaway, ThirdParty
+        // ORDER TYPE SELECTION - 5 Types (Dine-In, Car, Takeaway, Delivery, ThirdParty)
         // ============================================================
         function selectOrderType(type) {
             selectedOrderType = type;
             const dineinBtn = document.getElementById('dineinBtn');
             const carServiceBtn = document.getElementById('carServiceBtn');
             const takeawayBtn = document.getElementById('takeawayBtn');
+            const deliveryBtn = document.getElementById('deliveryBtn');
             const thirdpartyBtn = document.getElementById('thirdpartyBtn');
             const dineinFields = document.getElementById('dineinFields');
             const carServiceFields = document.getElementById('carServiceFields');
             const deliveryFields = document.getElementById('deliveryFields');
             const thirdpartyFields = document.getElementById('thirdpartyFields');
 
-            [dineinBtn, carServiceBtn, takeawayBtn, thirdpartyBtn].forEach(b => {
-                b.classList.remove('active');
-                b.style.background = 'white';
-                b.style.color = '#2d3436';
-                b.style.borderColor = '#dfe6e9';
+            [dineinBtn, carServiceBtn, takeawayBtn, deliveryBtn, thirdpartyBtn].forEach(b => {
+                if (b) {
+                    b.classList.remove('active');
+                    b.style.background = 'white';
+                    b.style.color = '#2d3436';
+                    b.style.borderColor = '#dfe6e9';
+                }
             });
 
             if (dineinFields) dineinFields.style.display = 'none';
@@ -1492,6 +1496,13 @@
                 takeawayBtn.style.color = 'white';
                 takeawayBtn.style.borderColor = '#e74c3c';
                 document.getElementById('orderType').value = 'takeaway';
+            } else if (type === 'delivery') {
+                deliveryBtn.classList.add('active');
+                deliveryBtn.style.background = '#e74c3c';
+                deliveryBtn.style.color = 'white';
+                deliveryBtn.style.borderColor = '#e74c3c';
+                if (deliveryFields) deliveryFields.style.display = 'block';
+                document.getElementById('orderType').value = 'delivery';
             } else if (type === 'thirdparty') {
                 thirdpartyBtn.classList.add('active');
                 thirdpartyBtn.style.background = '#e74c3c';
@@ -1690,6 +1701,8 @@
                 fullAddress = 'Car Service - ' + carNumber + ' - ' + carServiceAddress;
             } else if (orderType === 'takeaway') {
                 fullAddress = 'Takeaway - ' + name;
+            } else if (orderType === 'delivery') {
+                fullAddress = address + ', ' + city;
             } else if (orderType === 'thirdparty') {
                 fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
             }
@@ -1766,7 +1779,7 @@
         }
 
         // ============================================================
-        // RECEIPT - ORIGINAL STYLE (NO AUTO-PRINT)
+        // RECEIPT - ORIGINAL STYLE (NO AUTO-PRINT IN CUSTOMER)
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -1884,6 +1897,72 @@
 
         function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
         function printReceipt() { window.print(); }
+
+        // ============================================================
+        // DEALS BUTTON - FIXED
+        // ============================================================
+        function openDeals() {
+            fetch('/api/deals?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    deals = data;
+                    dealsPopup.classList.add('show');
+                    renderDeals();
+                })
+                .catch(() => {
+                    if (deals.length === 0) {
+                        deals = [];
+                    }
+                    dealsPopup.classList.add('show');
+                    renderDeals();
+                });
+        }
+
+        function closeDeals() {
+            dealsPopup.classList.remove('show');
+        }
+
+        function renderDeals() {
+            dealsList.innerHTML = '';
+            if (!deals || deals.length === 0) {
+                dealsList.innerHTML = '<p style="color:#b2bec3; text-align:center; padding:20px;">No deals available</p>';
+                return;
+            }
+            deals.forEach(deal => {
+                const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
+                const div = document.createElement('div');
+                div.className = 'deal-item';
+                div.innerHTML = `
+                    <div class="deal-info">
+                        <div class="deal-icons">${icons}</div>
+                        <div class="deal-name">${deal.name}</div>
+                        <div class="deal-desc">${deal.desc || ''}</div>
+                        <div style="font-size:0.75em; color:#b2bec3;">
+                            ${deal.original ? `<del>${currencySymbol} ${deal.original.toFixed(2)}</del>` : ''}
+                            <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
+                `;
+                dealsList.appendChild(div);
+            });
+        }
+
+        function buyDeal(dealId) {
+            if (!isLoggedIn) {
+                closeDeals();
+                openLoginRequired();
+                return;
+            }
+            const deal = deals.find(d => d.id === dealId);
+            if (!deal) return;
+            pendingOrder = {
+                items: [{ name: deal.name, price: deal.price, qty: 1, isDeal: true }],
+                total: deal.price
+            };
+            closeDeals();
+            openOrderForm();
+        }
 
         // ============================================================
         // PANEL NAVIGATION
