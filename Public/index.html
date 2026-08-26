@@ -15,6 +15,56 @@
             flex-direction: column;
             overflow: hidden;
         }
+
+        /* Splash Screen */
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #splashScreen.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
+        #splashScreen .splash-logo { font-size: 5em; animation: pulse 1.5s infinite; }
+        #splashScreen .splash-name { 
+            color: white; 
+            font-size: 2.5em; 
+            font-weight: 700; 
+            margin-top: 10px; 
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        #splashScreen .splash-sub { 
+            color: rgba(255,255,255,0.7); 
+            font-size: 1em; 
+            margin-top: 5px; 
+        }
+        #splashScreen .splash-loader { 
+            margin-top: 30px; 
+            width: 200px; 
+            height: 4px; 
+            background: rgba(255,255,255,0.2); 
+            border-radius: 2px; 
+            overflow: hidden; 
+        }
+        #splashScreen .splash-loader .splash-progress { 
+            height: 100%; 
+            background: white; 
+            border-radius: 2px; 
+            width: 0%; 
+            animation: loadProgress 2s ease-in-out forwards; 
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
+
+        /* Top Header */
         .top-header {
             background: white;
             padding: 12px 16px;
@@ -61,7 +111,11 @@
             min-width: 20px; 
             text-align: center; 
         }
+
+        /* Main Layout */
         .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sidebar */
         .sidebar {
             width: 100px;
             background: white;
@@ -88,6 +142,8 @@
         .category-item .cat-icon { font-size: 1.5em; margin-bottom: 3px; }
         .category-item .cat-name { font-size: 0.65em; font-weight: 600; color: #636e72; line-height: 1.2; }
         .category-item.active .cat-name { color: #e74c3c; }
+
+        /* Menu Area */
         .menu-area {
             flex: 1;
             padding: 12px 16px;
@@ -156,6 +212,8 @@
             transition: all 0.3s; 
         }
         .btn-cart:hover { background: #dfe6e9; transform: scale(1.05); }
+
+        /* Bottom Navigation */
         .bottom-nav {
             background: white;
             display: flex;
@@ -198,6 +256,8 @@
             min-width: 18px; 
             text-align: center; 
         }
+
+        /* Popups */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -239,6 +299,7 @@
         .popup-close:hover { color: #e74c3c; transform: rotate(90deg); }
         .popup-title { font-size: 1.3em; font-weight: 700; color: #2d3436; margin-bottom: 4px; }
         .popup-subtitle { color: #636e72; margin-bottom: 15px; font-size: 0.85em; }
+
         .deal-item {
             display: flex;
             justify-content: space-between;
@@ -264,6 +325,8 @@
             transition: all 0.3s; 
         }
         .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
+
+        /* Order Form */
         .order-form input, .order-form select, .order-form textarea {
             width: 100%;
             padding: 10px 14px;
@@ -302,6 +365,7 @@
             border-radius: 10px; 
             margin-bottom: 15px; 
         }
+
         .order-type-btn {
             flex: 1;
             padding: 10px;
@@ -322,6 +386,7 @@
         .order-type-btn:hover {
             transform: scale(1.02);
         }
+
         .layer-options {
             display: flex;
             flex-wrap: wrap;
@@ -348,6 +413,7 @@
             color: #e74c3c;
             font-weight: 600;
         }
+
         .toast {
             position: fixed;
             bottom: 80px;
@@ -365,12 +431,14 @@
             text-align: center;
             font-size: 0.9em;
         }
+
         .status-pending { background: #fdf2f2; color: #e74c3c; }
         .status-confirmed { background: #e8f4fd; color: #3498db; }
         .status-preparing { background: #fef9e7; color: #f39c12; }
         .status-ready { background: #e8f8f0; color: #27ae60; }
         .status-delivered { background: #e8f8f0; color: #27ae60; }
         .status-cancelled { background: #fdf2f2; color: #e74c3c; }
+
         .star-btn {
             font-size: 2.2em;
             background: none;
@@ -389,6 +457,7 @@
         .star-btn:hover {
             transform: scale(1.2);
         }
+
         .support-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -422,6 +491,7 @@
             color: #b2bec3;
             margin-top: 3px;
         }
+
         #locationMap {
             width: 100%;
             height: 250px;
@@ -436,21 +506,17 @@
             height: 100%;
             border: 0;
         }
-        .order-status-badge {
-            display: inline-block;
-            padding: 2px 12px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: 600;
-        }
+
+        /* ============================================
+           RECEIPT STYLE - EXACT MATCH TO IMAGE
+           ============================================ */
         .receipt-style {
             font-family: 'Courier New', monospace;
             background: #fff;
             padding: 20px;
-            border-radius: 12px;
             max-width: 400px;
             margin: 0 auto;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
         }
         .receipt-style .receipt-header {
             text-align: center;
@@ -459,49 +525,129 @@
             margin-bottom: 10px;
         }
         .receipt-style .receipt-header h2 {
-            font-size: 20px;
+            font-size: 22px;
             margin: 0;
-            color: #e74c3c;
+            color: #000;
+            font-weight: 700;
+            letter-spacing: 2px;
         }
         .receipt-style .receipt-header .est {
-            font-size: 11px;
-            color: #777;
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
         }
         .receipt-style .receipt-header .address {
             font-size: 11px;
             color: #555;
+            line-height: 1.4;
+        }
+        .receipt-style .receipt-header .phone {
+            font-size: 11px;
+            color: #555;
+            font-weight: 600;
         }
         .receipt-style .receipt-divider {
             border-top: 1px dashed #999;
             margin: 8px 0;
         }
+        .receipt-style .receipt-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 4px;
+            margin: 5px 0;
+        }
+        .receipt-style .receipt-order-info {
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+        .receipt-style .receipt-order-info .order-left {
+            text-align: left;
+        }
+        .receipt-style .receipt-order-info .order-right {
+            text-align: right;
+        }
+        .receipt-style .receipt-customer {
+            font-size: 12px;
+            padding: 4px 0;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-table-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 13px;
+            border-bottom: 1px solid #999;
+            padding: 4px 0;
+            margin-top: 5px;
+        }
+        .receipt-style .receipt-table-header span {
+            flex: 1;
+        }
+        .receipt-style .receipt-table-header .col-qty {
+            text-align: center;
+            flex: 0.5;
+        }
+        .receipt-style .receipt-table-header .col-price {
+            text-align: right;
+            flex: 1;
+        }
+        .receipt-style .receipt-table-header .col-amount {
+            text-align: right;
+            flex: 1;
+        }
         .receipt-style .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 3px 0;
+        }
+        .receipt-style .receipt-row .item-name {
+            flex: 2;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-row .item-qty {
+            flex: 0.5;
+            text-align: center;
+        }
+        .receipt-style .receipt-row .item-price {
+            flex: 1;
+            text-align: right;
+        }
+        .receipt-style .receipt-row .item-amount {
+            flex: 1;
+            text-align: right;
+        }
+        .receipt-style .receipt-totals {
+            border-top: 2px double #333;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        .receipt-style .receipt-totals .total-row {
             display: flex;
             justify-content: space-between;
             font-size: 13px;
             padding: 2px 0;
         }
-        .receipt-style .receipt-row .item-name {
-            flex: 1;
+        .receipt-style .receipt-totals .total-row .label {
+            font-weight: 600;
         }
-        .receipt-style .receipt-row .item-qty {
-            width: 40px;
-            text-align: center;
+        .receipt-style .receipt-totals .total-row .value {
+            font-weight: 600;
         }
-        .receipt-style .receipt-row .item-price {
-            width: 70px;
-            text-align: right;
+        .receipt-style .receipt-totals .total-row.discount {
+            color: #e74c3c;
         }
-        .receipt-style .receipt-row .item-amount {
-            width: 70px;
-            text-align: right;
-        }
-        .receipt-style .receipt-total {
+        .receipt-style .receipt-grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 8px 0;
             border-top: 2px double #333;
-            padding-top: 8px;
-            margin-top: 8px;
-            font-weight: bold;
-            font-size: 16px;
+            margin-top: 5px;
         }
         .receipt-style .receipt-footer {
             text-align: center;
@@ -511,14 +657,37 @@
             font-size: 11px;
             color: #555;
         }
-        .receipt-style .receipt-qr {
-            text-align: center;
-            margin: 10px 0;
+        .receipt-style .receipt-footer .qr-section {
+            margin: 8px 0;
         }
-        .receipt-style .receipt-qr img {
-            max-width: 100px;
+        .receipt-style .receipt-footer .qr-section img {
+            max-width: 80px;
             height: auto;
         }
+        .receipt-style .receipt-footer .thank-you {
+            font-size: 13px;
+            font-weight: 700;
+            color: #000;
+            margin-top: 5px;
+        }
+        .receipt-style .receipt-footer .great-day {
+            font-size: 11px;
+            color: #555;
+        }
+        .receipt-style .receipt-item-sub {
+            font-size: 11px;
+            color: #666;
+            padding-left: 10px;
+        }
+
+        .order-status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
         .receipt-popup {
             display: none;
             position: fixed;
@@ -569,6 +738,7 @@
         .receipt-popup .btn-print-receipt:hover { background: #1e8449; }
         .receipt-popup .btn-close-receipt { background: #b2bec3; color: white; }
         .receipt-popup .btn-close-receipt:hover { background: #636e72; }
+
         @media print {
             body * { visibility: hidden; }
             #receiptPrint, #receiptPrint * { visibility: visible; }
@@ -584,6 +754,7 @@
                 color: black;
             }
         }
+
         @media (max-width: 600px) {
             .sidebar { width: 75px; }
             .category-item .cat-icon { font-size: 1.2em; }
@@ -612,6 +783,9 @@
             .btn-quick, .btn-cart { font-size: 0.55em; padding: 3px 8px; }
             .star-btn { font-size: 1.5em; }
         }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -1363,7 +1537,7 @@
         }
 
         // ============================================================
-        // RECEIPT
+        // RECEIPT - EXACT MATCH TO IMAGE STYLE
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -1371,22 +1545,28 @@
             const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const orderTime = order.date || `${dateStr} ${timeStr}`;
             const orderType = order.orderType || 'Delivery';
-            const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In' : 'Delivery';
-            const orderTypeIcon = orderType === 'takeaway' ? '🏪' : orderType === 'dinein' ? '🍽️' : '🚚';
+            const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
             const paymentMethod = order.paymentMethod || 'Cash';
             const orderId = order.id || '#' + (order.orderNumber || Math.floor(Math.random() * 1000));
             const tableInfo = order.table ? `Table: ${order.table}` : '';
 
+            // Calculate totals
             let subtotal = 0;
             let itemRows = '';
+            let totalItems = 0;
+            
             order.items.forEach(item => {
                 const qty = item.qty || 1;
                 const price = item.price || 0;
                 const amount = qty * price;
                 subtotal += amount;
+                totalItems += qty;
+                
+                const itemName = item.name || 'Item';
+                
                 itemRows += `
                     <div class="receipt-row">
-                        <span class="item-name">${item.name}</span>
+                        <span class="item-name">${itemName}</span>
                         <span class="item-qty">${qty}</span>
                         <span class="item-price">${currencySymbol} ${price.toFixed(2)}</span>
                         <span class="item-amount">${currencySymbol} ${amount.toFixed(2)}</span>
@@ -1394,6 +1574,7 @@
                 `;
             });
 
+            // Fixed discount of Rs 330 (like in your example)
             let discount = 0;
             if (subtotal > 2000) {
                 discount = 330;
@@ -1404,50 +1585,66 @@
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
-                            <h2>${restaurantName}</h2>
+                            <h2>${restaurantName.toUpperCase()}</h2>
                             <div class="est">Est. 2022</div>
                             <div class="address">📍 ${restaurantName} Restaurant</div>
-                            <div class="address">📞 ${whatsappNumber}</div>
+                            <div class="phone">📞 ${whatsappNumber}</div>
                             <div class="receipt-divider"></div>
-                            <div style="font-weight:bold;">BILL</div>
-                            <div>Order #: ${orderId}</div>
-                            ${tableInfo ? `<div>${tableInfo}</div>` : ''}
-                            <div>${orderTime}</div>
+                            <div class="receipt-title">BILL</div>
+                            <div class="receipt-order-info">
+                                <span class="order-left">Order #: ${orderId}</span>
+                                <span class="order-right">${tableInfo}</span>
+                            </div>
+                            <div class="receipt-order-info">
+                                <span class="order-left">${orderTime}</span>
+                            </div>
                             <div class="receipt-divider"></div>
-                            <div style="font-size:12px;">Customer: ${order.userName || 'Guest'}</div>
-                            <div style="font-size:12px;">${orderTypeIcon} ${orderTypeLabel} • 💳 ${paymentMethod}</div>
-                            ${order.lat && order.lng ? `<div style="font-size:10px; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db;">View Location</a></div>` : ''}
+                            <div class="receipt-customer">Customer: ${orderTypeLabel}</div>
+                            ${order.userName && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:11px;">Name: ${order.userName}</div>` : ''}
+                            ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:11px;">📞 ${order.phone}</div>` : ''}
+                            ${order.address && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:11px;">📍 ${order.address}</div>` : ''}
+                            ${order.lat && order.lng ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px; color:#3498db;">📍 <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" style="color:#3498db;">View Location</a></div>` : ''}
                         </div>
-                        <div class="receipt-divider"></div>
-                        <div class="receipt-row" style="font-weight:bold; border-bottom:1px solid #999; padding-bottom:4px;">
-                            <span class="item-name">Item</span>
-                            <span class="item-qty">Qty</span>
-                            <span class="item-price">Price</span>
-                            <span class="item-amount">Amount</span>
+                        
+                        <div class="receipt-table-header">
+                            <span>Item</span>
+                            <span class="col-qty">Qty</span>
+                            <span class="col-price">Price</span>
+                            <span class="col-amount">Amount</span>
                         </div>
                         ${itemRows}
+                        
                         <div class="receipt-divider"></div>
-                        <div class="receipt-row" style="font-weight:bold;">
-                            <span class="item-name">Total Items: ${order.items.reduce((sum, i) => sum + (i.qty || 1), 0)}</span>
-                            <span class="item-amount">Subtotal: ${currencySymbol} ${subtotal.toFixed(2)}</span>
-                        </div>
-                        ${discount > 0 ? `<div class="receipt-row" style="color:#e74c3c; font-weight:bold;">
-                            <span class="item-name">Discount (Fixed):</span>
-                            <span class="item-amount">-${currencySymbol} ${discount.toFixed(2)}</span>
-                        </div>` : ''}
-                        <div class="receipt-total">
-                            <div class="receipt-row" style="font-size:18px;">
-                                <span>Bill Total:</span>
-                                <span>${currencySymbol} ${grandTotal.toFixed(2)}</span>
+                        
+                        <div class="receipt-totals">
+                            <div class="total-row">
+                                <span class="label">Total Items:</span>
+                                <span class="value">${totalItems}</span>
                             </div>
+                            <div class="total-row">
+                                <span class="label">Subtotal:</span>
+                                <span class="value">${currencySymbol} ${subtotal.toFixed(2)}</span>
+                            </div>
+                            ${discount > 0 ? `
+                            <div class="total-row discount">
+                                <span class="label">Discount (Fixed):</span>
+                                <span class="value">-${currencySymbol} ${discount.toFixed(2)}</span>
+                            </div>` : ''}
                         </div>
+                        
+                        <div class="receipt-grand-total">
+                            <span>Bill Total:</span>
+                            <span>${currencySymbol} ${grandTotal.toFixed(2)}</span>
+                        </div>
+                        
                         <div class="receipt-footer">
-                            <div class="receipt-qr">
-                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IndoaXRlIi8+PCEtLSBRUiBjb2RlIGRhdGEgLS0+PC9zdmc+" alt="QR Code" />
+                            <div class="qr-section">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IndoaXRlIi8+PCEtLSBRUiBjb2RlIGRhdGEgLS0+PC9zdmc+" alt="QR Code" />
                                 <div style="font-size:10px; color:#555;">Scan QR Code To Download App</div>
                             </div>
-                            <div>Thank you! Status: ${(order.status || 'pending').toUpperCase()}</div>
-                            <div style="font-size:10px; margin-top:4px;">Powered by DineFlow</div>
+                            <div class="receipt-divider"></div>
+                            <div class="thank-you">Thank You for Your Order!</div>
+                            <div class="great-day">Have a Great Day!</div>
                         </div>
                     </div>
                 </div>
