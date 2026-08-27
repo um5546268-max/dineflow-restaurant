@@ -181,7 +181,7 @@
             border-radius: 16px;
             padding: 16px 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             text-align: center;
             cursor: pointer;
             position: relative;
@@ -193,13 +193,13 @@
             min-height: 180px;
             border: 1px solid rgba(0,0,0,0.03);
         }
+        /* FIXED: Removed transform for no movement */
         .menu-item-card:hover { 
-            transform: translateY(-6px) scale(1.02);
             box-shadow: 0 12px 35px rgba(0,0,0,0.12);
             border-color: #e74c3c;
         }
         .menu-item-card:active {
-            transform: scale(0.95);
+            opacity: 0.8;
         }
         
         .menu-item-card .item-icons { 
@@ -208,11 +208,9 @@
             margin-bottom: 6px;
             line-height: 1;
             filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: perspective(400px) rotateX(0deg) rotateY(0deg);
+            transition: all 0.3s ease;
         }
         .menu-item-card:hover .item-icons { 
-            transform: perspective(400px) rotateX(5deg) rotateY(-5deg) scale(1.1);
             filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
         }
         
@@ -1137,7 +1135,7 @@
         </div>
     </div>
 
-    <!-- ⭐ LOCATION POPUP - OPENSTREETMAP (FREE, NO API KEY) ⭐ -->
+    <!-- Location Popup -->
     <div class="popup-overlay" id="locationPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeLocationPopup()">✕</button>
@@ -1148,7 +1146,6 @@
                     ⏳ Please allow location access
                 </div>
                 <div id="locationMap">
-                    <!-- OpenStreetMap embed - No API key needed! -->
                     <iframe id="locationIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
                 </div>
                 <button class="order-submit-btn" onclick="getLocationForOrder()" style="margin-top:10px;">
@@ -1193,13 +1190,51 @@
 
     <script>
         // ============================================================
-        // GET RESTAURANT ID FROM URL
+        // ⭐ RESTAURANT ID - FIX: WORKS ON ANY NETWORK ⭐
         // ============================================================
         function getRestaurantId() {
+            // 1. Check URL params first
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('restaurant') || 'restaurant-1';
+            let id = urlParams.get('restaurant');
+            
+            // 2. Check localStorage
+            if (!id) {
+                id = localStorage.getItem('dineflow_restaurant');
+            }
+            
+            // 3. Check sessionStorage
+            if (!id) {
+                id = sessionStorage.getItem('dineflow_restaurant');
+            }
+            
+            // 4. Default
+            if (!id) {
+                id = 'restaurant-1';
+            }
+            
+            // 5. Save for future
+            localStorage.setItem('dineflow_restaurant', id);
+            sessionStorage.setItem('dineflow_restaurant', id);
+            
+            // 6. Update URL if missing
+            if (!urlParams.get('restaurant')) {
+                try {
+                    const newUrl = window.location.pathname + '?restaurant=' + id + window.location.hash;
+                    window.history.replaceState({}, '', newUrl);
+                } catch(e) {}
+            }
+            
+            return id;
         }
+
         const RESTAURANT_ID = getRestaurantId();
+        console.log('✅ Restaurant ID:', RESTAURANT_ID);
+
+        // Helper function to add restaurant to API calls
+        function apiUrl(endpoint) {
+            const separator = endpoint.includes('?') ? '&' : '?';
+            return endpoint + separator + 'restaurant=' + RESTAURANT_ID;
+        }
 
         // ============================================================
         // RESTAURANT CONFIG
@@ -1216,7 +1251,7 @@
         };
 
         function loadRestaurantConfig() {
-            fetch('/api/restaurant-config')
+            fetch(apiUrl('/api/restaurant-config'))
                 .then(r => r.json())
                 .then(data => {
                     restaurantConfig = data;
@@ -1291,7 +1326,7 @@
                     if (now - sessionData.timestamp < 24 * 60 * 60 * 1000) {
                         isLoggedIn = true;
                         user = userData;
-                        fetch('/api/user/profile')
+                        fetch(apiUrl('/api/user/profile'))
                             .then(r => r.json())
                             .then(data => {
                                 if (data.user) {
@@ -1324,7 +1359,7 @@
 
         function handleGoogleLogin() {
             localStorage.setItem('dineflow_restaurant', RESTAURANT_ID);
-            window.location.href = '/auth/google';
+            window.location.href = '/auth/google?restaurant=' + RESTAURANT_ID;
         }
 
         function loginUser(userData) {
@@ -1341,14 +1376,14 @@
             loadRestaurantConfig();
             checkPersistentLogin();
 
-            fetch('/api/receipt-settings')
+            fetch(apiUrl('/api/receipt-settings'))
                 .then(r => r.json())
                 .then(data => {
                     receiptSettings = data;
                 })
                 .catch(() => {});
 
-            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            fetch(apiUrl('/api/restaurant-name?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     restaurantName = data.name || 'The Heaven Slice';
@@ -1357,11 +1392,21 @@
                 })
                 .catch(() => {});
 
-            fetch('/api/whatsapp-number')
+            fetch(apiUrl('/api/whatsapp-number'))
                 .then(r => r.json())
                 .then(data => { 
                     whatsappNumber = data.number || '923001234567';
                     restaurantConfig.whatsapp = whatsappNumber;
+                })
+                .catch(() => {});
+
+            // Check if restaurant exists
+            fetch(apiUrl('/api/check-restaurant'))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.exists) {
+                        console.log('✅ Restaurant found:', data.restaurant.name);
+                    }
                 })
                 .catch(() => {});
 
@@ -1385,7 +1430,7 @@
         }
 
         function loadRestaurantName() {
-            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            fetch(apiUrl('/api/restaurant-name?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     restaurantName = data.name || 'The Heaven Slice';
@@ -1413,7 +1458,7 @@
         }
 
         function loadMenu() {
-            fetch('/api/menu?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            fetch(apiUrl('/api/menu?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     menuItems = data;
@@ -1426,7 +1471,7 @@
         }
 
         function loadDeals() {
-            fetch('/api/deals?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            fetch(apiUrl('/api/deals?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     deals = data;
@@ -1435,7 +1480,7 @@
         }
 
         function loadOrders() {
-            fetch('/api/orders/myorders?restaurant=' + RESTAURANT_ID)
+            fetch(apiUrl('/api/orders/myorders'))
                 .then(r => r.json())
                 .then(data => {
                     orders = data;
@@ -1448,7 +1493,7 @@
         }
 
         function loadAuthStatus() {
-            fetch('/api/user/profile')
+            fetch(apiUrl('/api/user/profile'))
                 .then(r => r.json())
                 .then(data => {
                     if (data.user) {
@@ -1496,7 +1541,7 @@
         }
 
         // ============================================================
-        // RENDER MENU
+        // RENDER MENU - NO MOVEMENT FIXED
         // ============================================================
         function renderMenu() {
             let filtered = menuItems;
@@ -1795,7 +1840,7 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION FUNCTIONS - OPENSTREETMAP ONLY (FREE) ⭐
+        // LOCATION FUNCTIONS
         // ============================================================
 
         const locationCache = {};
@@ -1846,11 +1891,8 @@
                     showToast('✅ Location found!');
                     
                     map.style.display = 'block';
-                    
-                    // ⭐ OpenStreetMap embed - No API key needed!
                     document.getElementById('locationIframe').src = getMapEmbedUrl(lat, lng);
                     
-                    // ⭐ Get address using OpenStreetMap
                     const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
                     if (locationCache[cacheKey]) {
                         orderLocation.address = locationCache[cacheKey];
@@ -1924,7 +1966,8 @@
                 lat: orderLocation.lat || null,
                 lng: orderLocation.lng || null,
                 table: pendingOrderData.table || null,
-                orderNumber: orderCounter++
+                orderNumber: orderCounter++,
+                restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
             };
 
             fetch('/api/orders', {
@@ -2012,7 +2055,8 @@
                 table, carNumber, carServiceAddress, address, city, 
                 thirdpartyName, thirdpartyOrderId, 
                 fullAddress: fullAddress,
-                orderType: orderType
+                orderType: orderType,
+                restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
             };
             closeOrderPopup();
 
@@ -2163,10 +2207,10 @@
         function printReceipt() { window.print(); }
 
         // ============================================================
-        // DEALS BUTTON - FIXED
+        // DEALS
         // ============================================================
         function openDeals() {
-            fetch('/api/deals?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            fetch(apiUrl('/api/deals?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     deals = data;
@@ -2411,7 +2455,11 @@
             fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: customerSelectedRating, comment: comment, restaurantId: RESTAURANT_ID })
+                body: JSON.stringify({ 
+                    rating: customerSelectedRating, 
+                    comment: comment, 
+                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                })
             })
             .then(r => r.json())
             .then(data => {
@@ -2508,7 +2556,10 @@
             fetch('/api/support', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subject, message, priority, restaurantId: RESTAURANT_ID })
+                body: JSON.stringify({ 
+                    subject, message, priority, 
+                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                })
             })
             .then(r => r.json())
             .then(data => {
@@ -2525,7 +2576,7 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION SECTION - WITH OPENSTREETMAP ⭐
+        // LOCATION SECTION
         // ============================================================
         let currentLat = null;
         let currentLng = null;
@@ -2604,8 +2655,6 @@
                     showToast('✅ Location found!');
                     
                     map.style.display = 'block';
-                    
-                    // ⭐ OpenStreetMap embed - No API key needed!
                     document.getElementById('locationIframe2').src = getMapEmbedUrl(currentLat, currentLng);
                     
                     shareBtn.disabled = false;
@@ -2670,7 +2719,7 @@
                     lat: currentLat,
                     lng: currentLng,
                     address: currentAddress,
-                    restaurantId: RESTAURANT_ID
+                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
                 })
             })
             .then(r => r.json())
@@ -2838,7 +2887,11 @@
             fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: selectedRating, comment: comment, restaurantId: RESTAURANT_ID })
+                body: JSON.stringify({ 
+                    rating: selectedRating, 
+                    comment: comment, 
+                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                })
             })
             .then(r => r.json())
             .then(data => {
@@ -2850,6 +2903,17 @@
                 }
             })
             .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // LOGIN REQUIRED
+        // ============================================================
+        function openLoginRequired() {
+            document.getElementById('loginRequiredPopup').classList.add('show');
+        }
+
+        function closeLoginRequired() {
+            document.getElementById('loginRequiredPopup').classList.remove('show');
         }
 
         // ============================================================
