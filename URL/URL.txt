@@ -1,0 +1,22 @@
+🏪 Restaurant: Heaven Slice
+🏪 Restaurant ID: restaurant-2
+👤 Owner: Azeem
+📧 Email: um5546268@gmail.com
+
+📱 Customer Panel Customer
+https://dineflow-restaurant-eq0b.onrender.com/?restaurant=restaurant-2
+📋 Copy
+👑 Admin Panel Admin
+https://dineflow-restaurant-eq0b.onrender.com/admin?restaurant=restaurant-2
+📋 Copy
+👨‍🍳 Staff Panel Staff
+https://dineflow-restaurant-eq0b.onrender.com/staff?restaurant=restaurant-2
+📋 Copy
+⬛ PixelPanel (Owner) Owner
+https://dineflow-restaurant-eq0b.onrender.com/pixelpanel?restaurant=restaurant-2
+📋 Copy
+💡 Quick Summary:
+🧑‍💼 Customer: Browse menu & place orders
+👨‍💼 Admin: Manage restaurant, orders & settings
+👨‍🍳 Staff: Take orders from customers
+👤 Owner: Full access to everything
