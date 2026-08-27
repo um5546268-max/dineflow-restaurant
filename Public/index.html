@@ -1137,7 +1137,7 @@
         </div>
     </div>
 
-    <!-- ⭐ LOCATION POPUP - FIXED ⭐ -->
+    <!-- ⭐ LOCATION POPUP - OPENSTREETMAP (FREE, NO API KEY) ⭐ -->
     <div class="popup-overlay" id="locationPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeLocationPopup()">✕</button>
@@ -1148,6 +1148,7 @@
                     ⏳ Please allow location access
                 </div>
                 <div id="locationMap">
+                    <!-- OpenStreetMap embed - No API key needed! -->
                     <iframe id="locationIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
                 </div>
                 <button class="order-submit-btn" onclick="getLocationForOrder()" style="margin-top:10px;">
@@ -1794,10 +1795,14 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION FUNCTIONS - FIXED FOR OPENSTREETMAP ⭐
+        // ⭐ LOCATION FUNCTIONS - OPENSTREETMAP ONLY (FREE) ⭐
         // ============================================================
-        // Location cache to reduce API calls
+
         const locationCache = {};
+
+        function getMapEmbedUrl(lat, lng) {
+            return `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
+        }
 
         function showLocationPopup(orderData) {
             pendingOrderData = orderData;
@@ -1842,11 +1847,10 @@
                     
                     map.style.display = 'block';
                     
-                    // ⭐ Use Google Maps embed (no API key needed)
-                    document.getElementById('locationIframe').src = 
-                        `https://www.google.com/maps/embed/v1/view?center=${lat},${lng}&zoom=15&maptype=roadmap`;
+                    // ⭐ OpenStreetMap embed - No API key needed!
+                    document.getElementById('locationIframe').src = getMapEmbedUrl(lat, lng);
                     
-                    // ⭐ Use server proxy for address (prevents OpenStreetMap blocking)
+                    // ⭐ Get address using OpenStreetMap
                     const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
                     if (locationCache[cacheKey]) {
                         orderLocation.address = locationCache[cacheKey];
@@ -2521,7 +2525,7 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION SECTION - FIXED ⭐
+        // ⭐ LOCATION SECTION - WITH OPENSTREETMAP ⭐
         // ============================================================
         let currentLat = null;
         let currentLng = null;
@@ -2601,14 +2605,12 @@
                     
                     map.style.display = 'block';
                     
-                    // ⭐ Use Google Maps embed
-                    document.getElementById('locationIframe2').src = 
-                        `https://www.google.com/maps/embed/v1/view?center=${currentLat},${currentLng}&zoom=15&maptype=roadmap`;
+                    // ⭐ OpenStreetMap embed - No API key needed!
+                    document.getElementById('locationIframe2').src = getMapEmbedUrl(currentLat, currentLng);
                     
                     shareBtn.disabled = false;
                     shareBtn.style.opacity = '1';
                     
-                    // ⭐ Use server proxy for address with cache
                     const cacheKey = `${currentLat.toFixed(4)},${currentLng.toFixed(4)}`;
                     if (locationCache[cacheKey]) {
                         currentAddress = locationCache[cacheKey];
@@ -2625,7 +2627,9 @@
                                 status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
                             }
                         })
-                        .catch(() => {});
+                        .catch(() => {
+                            status.innerHTML = `✅ Location found!<br><small>(${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})</small>`;
+                        });
                 },
                 function(error) {
                     console.error('Location error:', error);
