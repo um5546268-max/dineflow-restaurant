@@ -94,13 +94,11 @@ setInterval(() => saveData(), 30000);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS - Allow all origins for Render
 app.use(cors({ 
-    origin: true, // Allows any origin
+    origin: true,
     credentials: true 
 }));
 
-// Serve static files from Public directory
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // ============================================
@@ -120,6 +118,34 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// ============================================
+// ⭐ RESTAURANT ID MIDDLEWARE (FIXED) ⭐
+// ============================================
+app.use((req, res, next) => {
+    // 1. Check URL query params first
+    let restaurantId = req.query.restaurant;
+    
+    // 2. Check session
+    if (!restaurantId && req.session && req.session.restaurantId) {
+        restaurantId = req.session.restaurantId;
+    }
+    
+    // 3. Default
+    if (!restaurantId) {
+        restaurantId = 'restaurant-1';
+    }
+    
+    // Save to session
+    if (req.session) {
+        req.session.restaurantId = restaurantId;
+    }
+    
+    req.restaurantId = restaurantId;
+    res.locals.restaurantId = restaurantId;
+    
+    next();
+});
 
 // ============================================
 // ⭐ DATABASE REFERENCES ⭐
@@ -180,6 +206,45 @@ function getDefaultDeals() {
     ];
 }
 
+// ============================================
+// ⭐ CREATE OR GET RESTAURANT (FIXED) ⭐
+// ============================================
+function getOrCreateRestaurant(restaurantId) {
+    // Find restaurant by ID
+    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    
+    // If not found, try to find by numeric ID
+    if (!restaurant) {
+        const numId = parseInt(restaurantId.replace('restaurant-', ''));
+        if (!isNaN(numId)) {
+            restaurant = restaurants.find(r => r.id === numId);
+        }
+    }
+    
+    // If still not found, create it
+    if (!restaurant) {
+        const numId = restaurants.length + 1;
+        restaurant = {
+            id: numId,
+            restaurantId: restaurantId,
+            name: RESTAURANT_CONFIG.name + (numId > 1 ? ` (${numId})` : ''),
+            ownerName: 'Admin',
+            ownerEmail: `admin@${restaurantId}.com`,
+            createdAt: new Date().toLocaleString(),
+            menu: getDefaultMenu(),
+            deals: getDefaultDeals(),
+            orders: [],
+            restaurantName: RESTAURANT_CONFIG.name + (numId > 1 ? ` (${numId})` : ''),
+            status: 'active'
+        };
+        restaurants.push(restaurant);
+        syncAndSave();
+        console.log(`🏪 Created new restaurant: ${restaurantId}`);
+    }
+    
+    return restaurant;
+}
+
 function createDefaultRestaurant() {
     if (restaurants.length === 0) {
         const defaultRestaurant = {
@@ -202,8 +267,24 @@ function createDefaultRestaurant() {
 }
 
 // ============================================
-// ⭐ RESTAURANT CONFIG API ⭐
+// ⭐ API ROUTES ⭐
 // ============================================
+
+// Check restaurant exists (FIXED)
+app.get('/api/check-restaurant', (req, res) => {
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    res.json({ 
+        exists: true, 
+        restaurant: {
+            id: restaurant.id,
+            restaurantId: restaurant.restaurantId,
+            name: restaurant.restaurantName
+        }
+    });
+});
+
+// Restaurant config
 app.get('/api/restaurant-config', (req, res) => {
     res.json(RESTAURANT_CONFIG);
 });
@@ -216,7 +297,6 @@ app.get('/api/receipt-settings', (req, res) => {
     try {
         res.json(receiptSettings);
     } catch (error) {
-        console.error('Error getting receipt settings:', error);
         res.status(500).json({ error: 'Failed to get settings' });
     }
 });
@@ -247,19 +327,14 @@ app.post('/api/receipt-settings', (req, res) => {
     }
 });
 
-// ============================================
-// ⭐ LOCATION API - OPENSTREETMAP ONLY ⭐
-// ============================================
+// Location API
 app.get('/api/location/reverse', async (req, res) => {
     try {
         const { lat, lng } = req.query;
-        
         if (!lat || !lng) {
             return res.status(400).json({ error: 'Missing lat/lng' });
         }
-        
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-        
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'TheHeavenSlice-App/2.0',
@@ -267,11 +342,7 @@ app.get('/api/location/reverse', async (req, res) => {
                 'Accept-Language': 'en'
             }
         });
-        
-        if (!response.ok) {
-            throw new Error('OpenStreetMap API error');
-        }
-        
+        if (!response.ok) throw new Error('OpenStreetMap API error');
         const data = await response.json();
         res.json(data);
     } catch (error) {
@@ -282,103 +353,23 @@ app.get('/api/location/reverse', async (req, res) => {
 
 app.get('/api/map/embed', (req, res) => {
     const { lat, lng } = req.query;
-    
     if (!lat || !lng) {
         return res.status(400).json({ error: 'Missing lat/lng' });
     }
-    
     const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
-    
     res.json({ url: mapUrl });
-});
-
-// ============================================
-// RESTAURANT ID MIDDLEWARE
-// ============================================
-app.use((req, res, next) => {
-    if (req.query.restaurant) {
-        req.restaurantId = req.query.restaurant;
-    } else if (req.session && req.session.restaurantId) {
-        req.restaurantId = req.session.restaurantId;
-    } else {
-        req.restaurantId = 'restaurant-1';
-    }
-    if (req.session) {
-        req.session.restaurantId = req.restaurantId;
-    }
-    next();
-});
-
-// ============================================
-// ⭐ RESTAURANT CREATE API ⭐
-// ============================================
-app.post('/api/restaurant/create', (req, res) => {
-    try {
-        const { name, ownerName, ownerEmail } = req.body;
-        
-        if (!name || !ownerName || !ownerEmail) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Missing required fields' 
-            });
-        }
-        
-        const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
-        if (existing) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Restaurant already exists with this email' 
-            });
-        }
-        
-        const restaurantId = 'restaurant-' + (restaurants.length + 1);
-        
-        const newRestaurant = {
-            id: restaurants.length + 1,
-            restaurantId: restaurantId,
-            name: name,
-            ownerName: ownerName,
-            ownerEmail: ownerEmail,
-            createdAt: new Date().toLocaleString(),
-            menu: getDefaultMenu(),
-            deals: getDefaultDeals(),
-            orders: [],
-            restaurantName: name,
-            status: 'active'
-        };
-        
-        restaurants.push(newRestaurant);
-        syncAndSave();
-        
-        res.json({ 
-            success: true, 
-            restaurant: newRestaurant, 
-            restaurantId: restaurantId,
-            message: 'Restaurant created successfully!'
-        });
-    } catch (error) {
-        console.error('Error creating restaurant:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to create restaurant: ' + error.message 
-        });
-    }
 });
 
 // ============================================
 // RESTAURANT MANAGEMENT API ⭐
 // ============================================
 app.get('/api/restaurants/all', (req, res) => {
-    if (!req.user) {
-        return res.json([]);
-    }
+    if (!req.user) return res.json([]);
     res.json(restaurants);
 });
 
 app.get('/api/restaurants/summary', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const summary = restaurants.map(r => ({
         id: r.id,
         restaurantId: r.restaurantId,
@@ -402,109 +393,35 @@ app.get('/api/restaurants/:id', (req, res) => {
     res.json(restaurant);
 });
 
-app.delete('/api/restaurants/:id', (req, res) => {
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(401).json({ error: 'Not authorized' });
-    }
-    const index = restaurants.findIndex(r => r.restaurantId === req.params.id || r.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
-    const removed = restaurants.splice(index, 1);
-    syncAndSave();
-    res.json({ success: true, message: 'Restaurant deleted' });
-});
-
-app.put('/api/restaurants/:id', (req, res) => {
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(401).json({ error: 'Not authorized' });
-    }
-    const restaurant = restaurants.find(r => r.restaurantId === req.params.id || r.id === parseInt(req.params.id));
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
-    const { name, ownerName, ownerEmail, status } = req.body;
-    if (name) restaurant.name = name;
-    if (ownerName) restaurant.ownerName = ownerName;
-    if (ownerEmail) restaurant.ownerEmail = ownerEmail;
-    if (status) restaurant.status = status;
-    syncAndSave();
-    res.json({ success: true, restaurant });
-});
-
-app.post('/api/restaurants/all', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    const { restaurants: newRestaurants } = req.body;
-    if (newRestaurants && Array.isArray(newRestaurants)) {
-        res.json({ success: true, message: 'Restaurants data synced' });
-    } else {
-        res.status(400).json({ error: 'Invalid data' });
-    }
-});
-
 // ============================================
-// MENU ROUTES
+// MENU ROUTES (FIXED)
 // ============================================
 app.get('/api/menu', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
-    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        const id = parseInt(restaurantId.replace('restaurant-', ''));
-        restaurant = restaurants.find(r => r.id === id);
-    }
-    if (!restaurant) {
-        createDefaultRestaurant();
-        restaurant = restaurants[0];
-    }
-    if (restaurant && restaurant.menu) {
-        res.json(restaurant.menu);
-    } else {
-        res.json(getDefaultMenu());
-    }
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    res.json(restaurant.menu || getDefaultMenu());
 });
 
 app.get('/api/deals', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
-    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        const id = parseInt(restaurantId.replace('restaurant-', ''));
-        restaurant = restaurants.find(r => r.id === id);
-    }
-    if (!restaurant) {
-        createDefaultRestaurant();
-        restaurant = restaurants[0];
-    }
-    if (restaurant && restaurant.deals) {
-        res.json(restaurant.deals);
-    } else {
-        res.json(getDefaultDeals());
-    }
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    res.json(restaurant.deals || getDefaultDeals());
 });
 
 app.get('/api/restaurant-name', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
-    let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        const id = parseInt(restaurantId.replace('restaurant-', ''));
-        restaurant = restaurants.find(r => r.id === id);
-    }
-    if (!restaurant) {
-        createDefaultRestaurant();
-        restaurant = restaurants[0];
-    }
-    res.json({ name: restaurant ? restaurant.restaurantName : RESTAURANT_CONFIG.name });
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    res.json({ name: restaurant.restaurantName || RESTAURANT_CONFIG.name });
 });
 
 app.post('/api/restaurant-name', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const { name } = req.body;
     if (name) {
         restaurant.restaurantName = name;
+        restaurant.name = name;
         syncAndSave();
         res.json({ success: true, name: restaurant.restaurantName });
     } else {
@@ -515,8 +432,7 @@ app.post('/api/restaurant-name', (req, res) => {
 app.post('/api/menu', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const { name, price, category, icons, layers } = req.body;
     if (!name || !price || !category) return res.status(400).json({ error: 'Missing required fields' });
     if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
@@ -536,8 +452,7 @@ app.post('/api/menu', (req, res) => {
 app.delete('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const index = restaurant.menu.findIndex(i => i.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Item not found' });
     restaurant.menu.splice(index, 1);
@@ -548,34 +463,17 @@ app.delete('/api/menu/:id', (req, res) => {
 app.put('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const item = restaurant.menu.find(i => i.id === parseInt(req.params.id));
     if (!item) return res.status(404).json({ error: 'Item not found' });
-    const { name, price, category, icon } = req.body;
+    const { name, price, category, icons, layers } = req.body;
     if (name) item.name = name;
     if (price) item.price = parseFloat(price);
     if (category) item.category = category;
-    if (icon) item.icon = icon;
+    if (icons && icons.length) item.icons = icons.slice(0, 5);
+    if (layers !== undefined) item.layers = layers;
     syncAndSave();
     res.json({ success: true, item });
-});
-
-app.put('/api/menu/:id/layers', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
-    const item = restaurant.menu.find(i => i.id === parseInt(req.params.id));
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    const { layers } = req.body;
-    if (layers && Array.isArray(layers)) {
-        item.layers = layers;
-        syncAndSave();
-        res.json({ success: true, item });
-    } else {
-        res.status(400).json({ error: 'Invalid layers format' });
-    }
 });
 
 // ============================================
@@ -584,8 +482,7 @@ app.put('/api/menu/:id/layers', (req, res) => {
 app.post('/api/deals', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const { name, desc, price, original, icons } = req.body;
     if (!name || !price) return res.status(400).json({ error: 'Missing required fields' });
     if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
@@ -605,8 +502,7 @@ app.post('/api/deals', (req, res) => {
 app.delete('/api/deals/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const index = restaurant.deals.findIndex(d => d.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Deal not found' });
     restaurant.deals.splice(index, 1);
@@ -620,10 +516,7 @@ app.delete('/api/deals/:id', (req, res) => {
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    const restaurant = getOrCreateRestaurant(restaurantId);
     
     const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table } = req.body;
     if (!items || !items.length || !total) {
@@ -679,20 +572,14 @@ app.post('/api/orders', (req, res) => {
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    const restaurant = getOrCreateRestaurant(restaurantId);
     res.json(restaurant.orders);
 });
 
 app.get('/api/orders/myorders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const userOrders = restaurant.orders.filter(o => o.userId === req.user.id);
     res.json(userOrders);
 });
@@ -700,10 +587,7 @@ app.get('/api/orders/myorders', (req, res) => {
 app.put('/api/orders/:id/status', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant not found' });
-    }
+    const restaurant = getOrCreateRestaurant(restaurantId);
     const order = restaurant.orders.find(o => o.id === parseInt(req.params.id));
     if (!order) return res.status(404).json({ error: 'Order not found' });
     const { status } = req.body;
@@ -897,7 +781,7 @@ app.get('/api/users', (req, res) => {
 });
 
 // ============================================
-// GOOGLE OAUTH
+// GOOGLE OAUTH (FIXED)
 // ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -945,12 +829,19 @@ app.get('/callback',
     }),
     function(req, res) {
         try {
+            // Get restaurant ID from query or session
+            const restaurantId = req.query.restaurant || 
+                               req.session.restaurantId || 
+                               'restaurant-1';
+            
+            req.session.restaurantId = restaurantId;
+            
             req.session.save(function(err) {
                 if (err) {
                     console.error('Session save error:', err);
                     return res.redirect('/login-failed');
                 }
-                const restaurantId = req.session.restaurantId || 'restaurant-1';
+                
                 if (req.user && req.user.role === 'admin') {
                     res.redirect('/admin?restaurant=' + restaurantId);
                 } else {
@@ -1018,39 +909,20 @@ app.get('/create-restaurant', (req, res) => {
 
 app.get('/pixelpanel', (req, res) => {
     if (!req.user || req.user.role !== 'admin') {
-        return res.status(404).send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>404 - Page Not Found</title>
-                <style>
-                    body { font-family: Arial; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
-                    h1 { color: #e74c3c; font-size: 4em; }
-                    .btn { display: inline-block; padding: 12px 30px; background: #e74c3c; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-                    .btn:hover { background: #c0392b; }
-                </style>
-            </head>
-            <body>
-                <h1>404</h1>
-                <h2>Page Not Found</h2>
-                <p>The page you are looking for does not exist.</p>
-                <a href="/" class="btn">Go Home</a>
-            </body>
-            </html>
-        `);
+        return res.status(404).send('Page Not Found');
     }
     res.sendFile(path.join(__dirname, 'Public', 'pixelpanel.html'));
 });
 
 // ============================================
-// ⭐ TEST ENDPOINT ⭐
+// TEST ENDPOINT
 // ============================================
 app.get('/api/test', (req, res) => {
     res.json({ 
         status: 'ok', 
         message: 'Server is running',
         user: req.user ? req.user.displayName : 'Not logged in',
+        restaurantId: req.restaurantId,
         restaurants: restaurants.length
     });
 });
@@ -1061,6 +933,9 @@ app.get('/api/test', (req, res) => {
 loadData();
 createDefaultRestaurant();
 
+// Ensure restaurant-2 exists
+getOrCreateRestaurant('restaurant-2');
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log(`🍔 ${RESTAURANT_CONFIG.name} SERVER RUNNING`);
@@ -1068,7 +943,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`📱 Customer: http://localhost:${PORT}`);
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
     console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
-    console.log(`⬛ PixelPanel: http://localhost:${PORT}/pixelpanel`);
     console.log('========================================');
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);

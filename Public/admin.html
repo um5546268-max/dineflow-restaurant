@@ -23,6 +23,8 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .admin-header h1 {
             font-size: 1.5em;
@@ -34,7 +36,7 @@
         }
         .admin-header .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -233,6 +235,11 @@
             border-color: #e74c3c;
         }
         .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group .help-text {
+            font-size: 0.8em;
+            color: #b2bec3;
+            margin-top: 4px;
+        }
 
         .btn-submit {
             padding: 12px 30px;
@@ -246,6 +253,10 @@
             font-size: 1em;
         }
         .btn-submit:hover { background: #c0392b; transform: scale(1.02); }
+        .btn-submit-secondary {
+            background: #3498db;
+        }
+        .btn-submit-secondary:hover { background: #2980b9; }
 
         .icon-selector {
             display: flex;
@@ -275,7 +286,7 @@
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 999;
             justify-content: center;
             align-items: center;
@@ -338,6 +349,62 @@
             margin-bottom: 15px;
         }
 
+        .settings-card {
+            background: #2d2d44;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .settings-card h3 {
+            color: #b2bec3;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+        .settings-card .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #3d3d55;
+        }
+        .settings-card .setting-row:last-child {
+            border-bottom: none;
+        }
+        .settings-card .setting-row .setting-label {
+            font-weight: 600;
+        }
+        .settings-card .setting-row .setting-value {
+            color: #b2bec3;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: #dfe6e9;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .toggle-switch.active {
+            background: #27ae60;
+        }
+        .toggle-switch .toggle-dot {
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.active .toggle-dot {
+            left: 25px;
+        }
+
         @media (max-width: 768px) {
             .admin-container { flex-direction: column; padding: 10px; }
             .admin-sidebar { width: 100%; position: static; display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; }
@@ -350,6 +417,7 @@
             .admin-content { padding: 15px; }
             .admin-table { font-size: 0.7em; }
             .admin-table th, .admin-table td { padding: 6px 8px; }
+            .settings-card .setting-row { flex-direction: column; align-items: flex-start; gap: 8px; }
         }
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -374,7 +442,6 @@
     </header>
 
     <div class="admin-container">
-        <!-- Sidebar -->
         <aside class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-item active" data-section="dashboard" onclick="showSection('dashboard')">
                 <span class="icon">📊</span> Dashboard
@@ -403,10 +470,7 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="admin-content" id="adminContent">
-            <!-- Content will be rendered here -->
-        </main>
+        <main class="admin-content" id="adminContent"></main>
     </div>
 
     <!-- Add Item Popup -->
@@ -416,15 +480,15 @@
             <div class="popup-title">➕ Add Menu Item</div>
             <form id="addItemForm" onsubmit="submitMenuItem(event)">
                 <div class="form-group">
-                    <label>Item Name</label>
+                    <label>Item Name *</label>
                     <input type="text" id="itemName" required placeholder="e.g., Cheese Burger" />
                 </div>
                 <div class="form-group">
-                    <label>Price</label>
+                    <label>Price *</label>
                     <input type="number" id="itemPrice" required placeholder="e.g., 1299" step="0.01" />
                 </div>
                 <div class="form-group">
-                    <label>Category</label>
+                    <label>Category *</label>
                     <select id="itemCategory" required>
                         <option value="burgers">🍔 Burgers</option>
                         <option value="pizza">🍕 Pizza</option>
@@ -437,7 +501,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Icons (Click to select, max 5)</label>
+                    <label>Icons (Click to select, max 5) *</label>
                     <div class="icon-selector" id="iconSelector">
                         <span class="icon-option" data-icon="🍔">🍔</span>
                         <span class="icon-option" data-icon="🍕">🍕</span>
@@ -455,14 +519,85 @@
                         <span class="icon-option" data-icon="☕">☕</span>
                         <span class="icon-option" data-icon="🌶️">🌶️</span>
                         <span class="icon-option" data-icon="🧅">🧅</span>
+                        <span class="icon-option" data-icon="🥓">🥓</span>
+                        <span class="icon-option" data-icon="🍄">🍄</span>
+                        <span class="icon-option" data-icon="🧋">🧋</span>
+                        <span class="icon-option" data-icon="🎂">🎂</span>
                     </div>
                     <input type="hidden" id="itemIcons" value="" />
+                    <div class="help-text">Selected: <span id="selectedIconsDisplay">None</span></div>
                 </div>
                 <div class="form-group">
-                    <label>Layers (comma separated, e.g., Cheese, Lettuce, Tomato)</label>
+                    <label>Layers (comma separated)</label>
                     <input type="text" id="itemLayers" placeholder="e.g., 🧀 Cheese, 🥬 Lettuce, 🍅 Tomato" />
+                    <div class="help-text">Customers can customize these options</div>
                 </div>
                 <button type="submit" class="btn-submit">✅ Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Item Popup -->
+    <div class="popup-overlay" id="editItemPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeEditItemPopup()">✕</button>
+            <div class="popup-title">✏️ Edit Menu Item</div>
+            <form id="editItemForm" onsubmit="updateMenuItem(event)">
+                <input type="hidden" id="editItemId" />
+                <div class="form-group">
+                    <label>Item Name *</label>
+                    <input type="text" id="editItemName" required placeholder="e.g., Cheese Burger" />
+                </div>
+                <div class="form-group">
+                    <label>Price *</label>
+                    <input type="number" id="editItemPrice" required placeholder="e.g., 1299" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select id="editItemCategory" required>
+                        <option value="burgers">🍔 Burgers</option>
+                        <option value="pizza">🍕 Pizza</option>
+                        <option value="sandwiches">🥪 Sandwiches</option>
+                        <option value="sides">🍟 Sides</option>
+                        <option value="drinks">🥤 Drinks</option>
+                        <option value="salads">🥗 Salads</option>
+                        <option value="appetizers">🍤 Appetizers</option>
+                        <option value="desserts">🍰 Desserts</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Icons (Click to select, max 5) *</label>
+                    <div class="icon-selector" id="editIconSelector">
+                        <span class="icon-option" data-icon="🍔">🍔</span>
+                        <span class="icon-option" data-icon="🍕">🍕</span>
+                        <span class="icon-option" data-icon="🥪">🥪</span>
+                        <span class="icon-option" data-icon="🍟">🍟</span>
+                        <span class="icon-option" data-icon="🥤">🥤</span>
+                        <span class="icon-option" data-icon="🥗">🥗</span>
+                        <span class="icon-option" data-icon="🍤">🍤</span>
+                        <span class="icon-option" data-icon="🍰">🍰</span>
+                        <span class="icon-option" data-icon="🍗">🍗</span>
+                        <span class="icon-option" data-icon="🧀">🧀</span>
+                        <span class="icon-option" data-icon="🥩">🥩</span>
+                        <span class="icon-option" data-icon="🐔">🐔</span>
+                        <span class="icon-option" data-icon="🍫">🍫</span>
+                        <span class="icon-option" data-icon="☕">☕</span>
+                        <span class="icon-option" data-icon="🌶️">🌶️</span>
+                        <span class="icon-option" data-icon="🧅">🧅</span>
+                        <span class="icon-option" data-icon="🥓">🥓</span>
+                        <span class="icon-option" data-icon="🍄">🍄</span>
+                        <span class="icon-option" data-icon="🧋">🧋</span>
+                        <span class="icon-option" data-icon="🎂">🎂</span>
+                    </div>
+                    <input type="hidden" id="editItemIcons" value="" />
+                    <div class="help-text">Selected: <span id="editSelectedIconsDisplay">None</span></div>
+                </div>
+                <div class="form-group">
+                    <label>Layers (comma separated)</label>
+                    <input type="text" id="editItemLayers" placeholder="e.g., 🧀 Cheese, 🥬 Lettuce, 🍅 Tomato" />
+                    <div class="help-text">Customers can customize these options</div>
+                </div>
+                <button type="submit" class="btn-submit">💾 Update Item</button>
             </form>
         </div>
     </div>
@@ -474,7 +609,7 @@
             <div class="popup-title">🔥 Add Deal</div>
             <form id="addDealForm" onsubmit="submitDeal(event)">
                 <div class="form-group">
-                    <label>Deal Name</label>
+                    <label>Deal Name *</label>
                     <input type="text" id="dealName" required placeholder="e.g., Burger Combo" />
                 </div>
                 <div class="form-group">
@@ -482,15 +617,16 @@
                     <input type="text" id="dealDesc" placeholder="e.g., Cheese Burger + Fries + Drink" />
                 </div>
                 <div class="form-group">
-                    <label>Price</label>
+                    <label>Price *</label>
                     <input type="number" id="dealPrice" required placeholder="e.g., 1599" step="0.01" />
                 </div>
                 <div class="form-group">
                     <label>Original Price (for discount display)</label>
                     <input type="number" id="dealOriginal" placeholder="e.g., 2397" step="0.01" />
+                    <div class="help-text">Leave blank to auto-calculate 50% more</div>
                 </div>
                 <div class="form-group">
-                    <label>Icons (Click to select, max 5)</label>
+                    <label>Icons (Click to select, max 5) *</label>
                     <div class="icon-selector" id="dealIconSelector">
                         <span class="icon-option" data-icon="🍔">🍔</span>
                         <span class="icon-option" data-icon="🍕">🍕</span>
@@ -500,10 +636,62 @@
                         <span class="icon-option" data-icon="🔥">🔥</span>
                         <span class="icon-option" data-icon="🎉">🎉</span>
                         <span class="icon-option" data-icon="💯">💯</span>
+                        <span class="icon-option" data-icon="⭐">⭐</span>
+                        <span class="icon-option" data-icon="🏆">🏆</span>
+                        <span class="icon-option" data-icon="👑">👑</span>
+                        <span class="icon-option" data-icon="🎊">🎊</span>
                     </div>
                     <input type="hidden" id="dealIcons" value="" />
+                    <div class="help-text">Selected: <span id="selectedDealIconsDisplay">None</span></div>
                 </div>
                 <button type="submit" class="btn-submit">✅ Add Deal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Deal Popup -->
+    <div class="popup-overlay" id="editDealPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeEditDealPopup()">✕</button>
+            <div class="popup-title">✏️ Edit Deal</div>
+            <form id="editDealForm" onsubmit="updateDeal(event)">
+                <input type="hidden" id="editDealId" />
+                <div class="form-group">
+                    <label>Deal Name *</label>
+                    <input type="text" id="editDealName" required placeholder="e.g., Burger Combo" />
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="editDealDesc" placeholder="e.g., Cheese Burger + Fries + Drink" />
+                </div>
+                <div class="form-group">
+                    <label>Price *</label>
+                    <input type="number" id="editDealPrice" required placeholder="e.g., 1599" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Original Price (for discount display)</label>
+                    <input type="number" id="editDealOriginal" placeholder="e.g., 2397" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Icons (Click to select, max 5) *</label>
+                    <div class="icon-selector" id="editDealIconSelector">
+                        <span class="icon-option" data-icon="🍔">🍔</span>
+                        <span class="icon-option" data-icon="🍕">🍕</span>
+                        <span class="icon-option" data-icon="🥪">🥪</span>
+                        <span class="icon-option" data-icon="🍟">🍟</span>
+                        <span class="icon-option" data-icon="🥤">🥤</span>
+                        <span class="icon-option" data-icon="🔥">🔥</span>
+                        <span class="icon-option" data-icon="🎉">🎉</span>
+                        <span class="icon-option" data-icon="💯">💯</span>
+                        <span class="icon-option" data-icon="⭐">⭐</span>
+                        <span class="icon-option" data-icon="🏆">🏆</span>
+                        <span class="icon-option" data-icon="👑">👑</span>
+                        <span class="icon-option" data-icon="🎊">🎊</span>
+                    </div>
+                    <input type="hidden" id="editDealIcons" value="" />
+                    <div class="help-text">Selected: <span id="editSelectedDealIconsDisplay">None</span></div>
+                </div>
+                <button type="submit" class="btn-submit">💾 Update Deal</button>
             </form>
         </div>
     </div>
@@ -517,10 +705,12 @@
                 <div class="form-group">
                     <label>Logo Icon</label>
                     <input type="text" id="receiptLogoIcon" placeholder="e.g., 👨‍🍳" />
+                    <div class="help-text">Emoji that appears on receipt header</div>
                 </div>
                 <div class="form-group">
                     <label>Logo URL (optional)</label>
                     <input type="url" id="receiptLogoUrl" placeholder="https://example.com/logo.png" />
+                    <div class="help-text">Upload a logo image URL</div>
                 </div>
                 <div class="form-group">
                     <label>Tagline</label>
@@ -533,6 +723,53 @@
                 <div class="form-group">
                     <label>Footer Message</label>
                     <input type="text" id="receiptFooter" placeholder="Have a Great Day!" />
+                </div>
+                <div class="form-group">
+                    <label>Discount Amount</label>
+                    <input type="number" id="receiptDiscountAmount" placeholder="330" step="0.01" />
+                    <div class="help-text">Fixed discount amount applied above threshold</div>
+                </div>
+                <div class="form-group">
+                    <label>Discount Threshold</label>
+                    <input type="number" id="receiptDiscountThreshold" placeholder="2000" step="0.01" />
+                    <div class="help-text">Minimum order total to apply discount</div>
+                </div>
+                <button type="submit" class="btn-submit">💾 Save Settings</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Restaurant Settings Popup -->
+    <div class="popup-overlay" id="restaurantSettingsPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeRestaurantSettings()">✕</button>
+            <div class="popup-title">🏪 Restaurant Settings</div>
+            <form id="restaurantSettingsForm" onsubmit="saveRestaurantSettings(event)">
+                <div class="form-group">
+                    <label>Restaurant Name *</label>
+                    <input type="text" id="restaurantNameInput" required placeholder="The Heaven Slice" />
+                </div>
+                <div class="form-group">
+                    <label>Currency Symbol</label>
+                    <input type="text" id="restaurantCurrency" placeholder="Rs" maxlength="5" />
+                    <div class="help-text">e.g., Rs, $, €, £</div>
+                </div>
+                <div class="form-group">
+                    <label>Established Year</label>
+                    <input type="text" id="restaurantEst" placeholder="2022" />
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="restaurantAddress" placeholder="Gojra Road Near Ali Marriage Hall" />
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="restaurantPhone" placeholder="0300-0310275" />
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp Number</label>
+                    <input type="text" id="restaurantWhatsapp" placeholder="923001234567" />
+                    <div class="help-text">For WhatsApp chat support</div>
                 </div>
                 <button type="submit" class="btn-submit">💾 Save Settings</button>
             </form>
@@ -584,9 +821,12 @@
         let supportTickets = [];
         let selectedIcons = [];
         let selectedDealIcons = [];
+        let editSelectedIcons = [];
+        let editSelectedDealIcons = [];
         let restaurantName = 'The Heaven Slice';
         let currencySymbol = 'Rs';
         let isAdmin = false;
+        let restaurantConfig = {};
 
         // ============================================================
         // DOM REFS
@@ -598,8 +838,83 @@
         // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
-            loadData();
+            loadAllData();
+            setupIconSelectors();
         });
+
+        function setupIconSelectors() {
+            // Item icon selector
+            document.querySelectorAll('#iconSelector .icon-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    const icon = this.dataset.icon;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedIcons = selectedIcons.filter(i => i !== icon);
+                    } else if (selectedIcons.length < 5) {
+                        this.classList.add('selected');
+                        selectedIcons.push(icon);
+                    } else {
+                        showToast('⚠️ Maximum 5 icons allowed');
+                    }
+                    document.getElementById('itemIcons').value = selectedIcons.join(',');
+                    document.getElementById('selectedIconsDisplay').textContent = selectedIcons.join(' ') || 'None';
+                });
+            });
+
+            // Edit item icon selector
+            document.querySelectorAll('#editIconSelector .icon-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    const icon = this.dataset.icon;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        editSelectedIcons = editSelectedIcons.filter(i => i !== icon);
+                    } else if (editSelectedIcons.length < 5) {
+                        this.classList.add('selected');
+                        editSelectedIcons.push(icon);
+                    } else {
+                        showToast('⚠️ Maximum 5 icons allowed');
+                    }
+                    document.getElementById('editItemIcons').value = editSelectedIcons.join(',');
+                    document.getElementById('editSelectedIconsDisplay').textContent = editSelectedIcons.join(' ') || 'None';
+                });
+            });
+
+            // Deal icon selector
+            document.querySelectorAll('#dealIconSelector .icon-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    const icon = this.dataset.icon;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedDealIcons = selectedDealIcons.filter(i => i !== icon);
+                    } else if (selectedDealIcons.length < 5) {
+                        this.classList.add('selected');
+                        selectedDealIcons.push(icon);
+                    } else {
+                        showToast('⚠️ Maximum 5 icons allowed');
+                    }
+                    document.getElementById('dealIcons').value = selectedDealIcons.join(',');
+                    document.getElementById('selectedDealIconsDisplay').textContent = selectedDealIcons.join(' ') || 'None';
+                });
+            });
+
+            // Edit deal icon selector
+            document.querySelectorAll('#editDealIconSelector .icon-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    const icon = this.dataset.icon;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        editSelectedDealIcons = editSelectedDealIcons.filter(i => i !== icon);
+                    } else if (editSelectedDealIcons.length < 5) {
+                        this.classList.add('selected');
+                        editSelectedDealIcons.push(icon);
+                    } else {
+                        showToast('⚠️ Maximum 5 icons allowed');
+                    }
+                    document.getElementById('editDealIcons').value = editSelectedDealIcons.join(',');
+                    document.getElementById('editSelectedDealIconsDisplay').textContent = editSelectedDealIcons.join(' ') || 'None';
+                });
+            });
+        }
 
         // ============================================================
         // AUTH CHECK
@@ -632,9 +947,9 @@
         }
 
         // ============================================================
-        // LOAD DATA
+        // LOAD ALL DATA
         // ============================================================
-        function loadData() {
+        function loadAllData() {
             loadRestaurantName();
             loadMenu();
             loadDeals();
@@ -658,6 +973,7 @@
             fetch('/api/restaurant-config')
                 .then(r => r.json())
                 .then(data => {
+                    restaurantConfig = data;
                     if (data && data.currency) {
                         currencySymbol = data.currency;
                     }
@@ -765,6 +1081,7 @@
             const pendingOrders = orders ? orders.filter(o => o.status === 'pending').length : 0;
             const totalRevenue = orders ? orders.reduce((sum, o) => sum + (o.total || 0), 0) : 0;
             const totalItems = menuItems ? menuItems.length : 0;
+            const totalDeals = deals ? deals.length : 0;
 
             let html = `
                 <div class="section-title">📊 Dashboard</div>
@@ -785,34 +1102,44 @@
                         <div class="stat-number" style="color:#3498db;">${totalItems}</div>
                         <div class="stat-label">Menu Items</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#e74c3c;">${totalDeals}</div>
+                        <div class="stat-label">Active Deals</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#9b59b6;">${feedbacks ? feedbacks.length : 0}</div>
+                        <div class="stat-label">Feedbacks</div>
+                    </div>
                 </div>
                 <div style="margin-top:20px;">
                     <h3 style="color:#b2bec3; margin-bottom:10px;">📦 Recent Orders</h3>
                     ${orders && orders.length > 0 ? `
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Order #</th>
-                                    <th>Customer</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Type</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${orders.slice(-5).reverse().map(o => `
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
                                     <tr>
-                                        <td>#${o.id}</td>
-                                        <td>${o.userName || 'Guest'}</td>
-                                        <td>${currencySymbol} ${o.total.toFixed(2)}</td>
-                                        <td><span class="status-badge status-${o.status}">${o.status.toUpperCase()}</span></td>
-                                        <td>${o.orderType || 'Delivery'}</td>
-                                        <td>${o.date || 'Today'}</td>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                        <th>Date</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${orders.slice(-5).reverse().map(o => `
+                                        <tr>
+                                            <td>#${o.id}</td>
+                                            <td>${o.userName || 'Guest'}</td>
+                                            <td>${currencySymbol} ${o.total.toFixed(2)}</td>
+                                            <td><span class="status-badge status-${o.status}">${o.status.toUpperCase()}</span></td>
+                                            <td>${o.orderType || 'Delivery'}</td>
+                                            <td>${o.date || 'Today'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     ` : `<div class="empty-state"><div class="empty-icon">📦</div><p>No orders yet</p></div>`}
                 </div>
             `;
@@ -868,6 +1195,7 @@
                         <td>${o.paymentMethod || 'Cash'}</td>
                         <td>
                             <button class="btn-action btn-primary" onclick="openUpdateOrder(${o.id})">✏️ Status</button>
+                            <button class="btn-action btn-success" onclick="showReceiptForOrder(${o.id})">🧾 Receipt</button>
                         </td>
                     </tr>
                 `;
@@ -917,6 +1245,37 @@
             .catch(() => showToast('❌ Network error'));
         }
 
+        function showReceiptForOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) {
+                showToast('❌ Order not found');
+                return;
+            }
+            
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const orderTime = order.date || `${dateStr} ${timeStr}`;
+            const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In' : 'Delivery';
+            
+            let itemsHtml = order.items ? order.items.map(item => 
+                `${item.name} x${item.qty || 1} = ${currencySymbol} ${(item.price * (item.qty || 1)).toFixed(2)}`
+            ).join('\n') : 'N/A';
+
+            alert(`🧾 ORDER RECEIPT\n\n` +
+                `🍔 ${restaurantName}\n` +
+                `Order #: ${order.id}\n` +
+                `Time: ${orderTime}\n` +
+                `Customer: ${order.userName || 'Guest'}\n` +
+                `Phone: ${order.phone || 'N/A'}\n` +
+                `Type: ${orderTypeLabel}\n` +
+                `Payment: ${order.paymentMethod || 'Cash'}\n` +
+                `Status: ${order.status.toUpperCase()}\n\n` +
+                `Items:\n${itemsHtml}\n\n` +
+                `Total: ${currencySymbol} ${order.total.toFixed(2)}\n` +
+                `============================`);
+        }
+
         // ============================================================
         // MENU
         // ============================================================
@@ -962,6 +1321,7 @@
                         <td>${currencySymbol} ${item.price.toFixed(2)}</td>
                         <td style="font-size:0.8em; color:#f39c12;">${layers}</td>
                         <td>
+                            <button class="btn-action btn-primary" onclick="openEditItemPopup(${item.id})">✏️</button>
                             <button class="btn-action btn-danger" onclick="deleteMenuItem(${item.id})">🗑️</button>
                         </td>
                     </tr>
@@ -980,6 +1340,7 @@
             selectedIcons = [];
             document.querySelectorAll('#iconSelector .icon-option').forEach(el => el.classList.remove('selected'));
             document.getElementById('itemIcons').value = '';
+            document.getElementById('selectedIconsDisplay').textContent = 'None';
             document.getElementById('addItemForm').reset();
             document.getElementById('addItemPopup').classList.add('show');
         }
@@ -987,43 +1348,6 @@
         function closeAddItemPopup() {
             document.getElementById('addItemPopup').classList.remove('show');
         }
-
-        // Icon selection for menu items
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('#iconSelector .icon-option')) {
-                const el = e.target.closest('.icon-option');
-                const icon = el.dataset.icon;
-                const isSelected = el.classList.contains('selected');
-                
-                if (isSelected) {
-                    el.classList.remove('selected');
-                    selectedIcons = selectedIcons.filter(i => i !== icon);
-                } else if (selectedIcons.length < 5) {
-                    el.classList.add('selected');
-                    selectedIcons.push(icon);
-                } else {
-                    showToast('⚠️ Maximum 5 icons allowed');
-                }
-                document.getElementById('itemIcons').value = selectedIcons.join(',');
-            }
-
-            if (e.target.closest('#dealIconSelector .icon-option')) {
-                const el = e.target.closest('.icon-option');
-                const icon = el.dataset.icon;
-                const isSelected = el.classList.contains('selected');
-                
-                if (isSelected) {
-                    el.classList.remove('selected');
-                    selectedDealIcons = selectedDealIcons.filter(i => i !== icon);
-                } else if (selectedDealIcons.length < 5) {
-                    el.classList.add('selected');
-                    selectedDealIcons.push(icon);
-                } else {
-                    showToast('⚠️ Maximum 5 icons allowed');
-                }
-                document.getElementById('dealIcons').value = selectedDealIcons.join(',');
-            }
-        });
 
         function submitMenuItem(event) {
             event.preventDefault();
@@ -1052,6 +1376,70 @@
                     loadMenu();
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to add'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function openEditItemPopup(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            document.getElementById('editItemId').value = item.id;
+            document.getElementById('editItemName').value = item.name;
+            document.getElementById('editItemPrice').value = item.price;
+            document.getElementById('editItemCategory').value = item.category;
+            
+            const layers = item.layers && item.layers.length > 0 ? item.layers.join(', ') : '';
+            document.getElementById('editItemLayers').value = layers;
+
+            // Set icons
+            editSelectedIcons = item.icons || [];
+            document.querySelectorAll('#editIconSelector .icon-option').forEach(el => {
+                if (editSelectedIcons.includes(el.dataset.icon)) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+            document.getElementById('editItemIcons').value = editSelectedIcons.join(',');
+            document.getElementById('editSelectedIconsDisplay').textContent = editSelectedIcons.join(' ') || 'None';
+
+            document.getElementById('editItemPopup').classList.add('show');
+        }
+
+        function closeEditItemPopup() {
+            document.getElementById('editItemPopup').classList.remove('show');
+        }
+
+        function updateMenuItem(event) {
+            event.preventDefault();
+            const id = parseInt(document.getElementById('editItemId').value);
+            const name = document.getElementById('editItemName').value;
+            const price = parseFloat(document.getElementById('editItemPrice').value);
+            const category = document.getElementById('editItemCategory').value;
+            const icons = editSelectedIcons;
+            const layersInput = document.getElementById('editItemLayers').value;
+            const layers = layersInput ? layersInput.split(',').map(l => l.trim()).filter(l) : [];
+
+            if (icons.length === 0) {
+                showToast('⚠️ Please select at least one icon');
+                return;
+            }
+
+            fetch('/api/menu/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, category, icon: icons[0], icons, layers })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Menu item updated!');
+                    closeEditItemPopup();
+                    loadMenu();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to update'));
                 }
             })
             .catch(() => showToast('❌ Network error'));
@@ -1116,6 +1504,7 @@
                         <td style="color:#27ae60;">${currencySymbol} ${deal.price.toFixed(2)}</td>
                         <td><del>${currencySymbol} ${(deal.original || deal.price * 1.5).toFixed(2)}</del></td>
                         <td>
+                            <button class="btn-action btn-primary" onclick="openEditDealPopup(${deal.id})">✏️</button>
                             <button class="btn-action btn-danger" onclick="deleteDeal(${deal.id})">🗑️</button>
                         </td>
                     </tr>
@@ -1134,6 +1523,7 @@
             selectedDealIcons = [];
             document.querySelectorAll('#dealIconSelector .icon-option').forEach(el => el.classList.remove('selected'));
             document.getElementById('dealIcons').value = '';
+            document.getElementById('selectedDealIconsDisplay').textContent = 'None';
             document.getElementById('addDealForm').reset();
             document.getElementById('addDealPopup').classList.add('show');
         }
@@ -1171,6 +1561,72 @@
                 }
             })
             .catch(() => showToast('❌ Network error'));
+        }
+
+        function openEditDealPopup(dealId) {
+            const deal = deals.find(d => d.id === dealId);
+            if (!deal) return;
+
+            document.getElementById('editDealId').value = deal.id;
+            document.getElementById('editDealName').value = deal.name;
+            document.getElementById('editDealDesc').value = deal.desc || '';
+            document.getElementById('editDealPrice').value = deal.price;
+            document.getElementById('editDealOriginal').value = deal.original || '';
+
+            editSelectedDealIcons = deal.icons || [];
+            document.querySelectorAll('#editDealIconSelector .icon-option').forEach(el => {
+                if (editSelectedDealIcons.includes(el.dataset.icon)) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+            document.getElementById('editDealIcons').value = editSelectedDealIcons.join(',');
+            document.getElementById('editSelectedDealIconsDisplay').textContent = editSelectedDealIcons.join(' ') || 'None';
+
+            document.getElementById('editDealPopup').classList.add('show');
+        }
+
+        function closeEditDealPopup() {
+            document.getElementById('editDealPopup').classList.remove('show');
+        }
+
+        function updateDeal(event) {
+            event.preventDefault();
+            const id = parseInt(document.getElementById('editDealId').value);
+            const name = document.getElementById('editDealName').value;
+            const desc = document.getElementById('editDealDesc').value;
+            const price = parseFloat(document.getElementById('editDealPrice').value);
+            const original = document.getElementById('editDealOriginal').value ? parseFloat(document.getElementById('editDealOriginal').value) : null;
+            const icons = editSelectedDealIcons;
+
+            if (icons.length === 0) {
+                showToast('⚠️ Please select at least one icon');
+                return;
+            }
+
+            // Since we don't have a PUT endpoint for deals, we'll delete and recreate
+            if (!confirm('This will delete and recreate the deal. Continue?')) return;
+
+            fetch('/api/deals/' + id, { method: 'DELETE' })
+                .then(() => {
+                    return fetch('/api/deals', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, desc, price, original, icons })
+                    });
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('✅ Deal updated!');
+                        closeEditDealPopup();
+                        loadDeals();
+                    } else {
+                        showToast('❌ ' + (data.error || 'Failed to update'));
+                    }
+                })
+                .catch(() => showToast('❌ Network error'));
         }
 
         function deleteDeal(dealId) {
@@ -1407,58 +1863,139 @@
         }
 
         // ============================================================
-        // SETTINGS
+        // SETTINGS - COMPLETE WITH ALL OPTIONS
         // ============================================================
         function renderSettings() {
             let html = `
                 <div class="section-title">⚙️ Settings</div>
                 
-                <div style="background:#2d2d44; border-radius:12px; padding:20px; margin-bottom:20px;">
-                    <h3 style="color:#b2bec3; margin-bottom:15px;">🏪 Restaurant Name</h3>
-                    <div class="form-group">
-                        <label>Restaurant Name</label>
-                        <input type="text" id="restaurantNameInput" value="${restaurantName}" placeholder="Enter restaurant name" />
+                <div class="settings-card">
+                    <h3>🏪 Restaurant Settings</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">Restaurant Name</span>
+                        <span class="setting-value" id="settingsRestaurantName">${restaurantName}</span>
                     </div>
-                    <button class="btn-submit" onclick="updateRestaurantName()" style="margin-top:10px;">💾 Save Name</button>
+                    <div class="setting-row">
+                        <span class="setting-label">Currency</span>
+                        <span class="setting-value" id="settingsCurrency">${currencySymbol}</span>
+                    </div>
+                    <button class="btn-submit btn-submit-secondary" onclick="openRestaurantSettings()" style="margin-top:10px;">✏️ Edit Restaurant Settings</button>
                 </div>
 
-                <div style="background:#2d2d44; border-radius:12px; padding:20px; margin-bottom:20px;">
-                    <h3 style="color:#b2bec3; margin-bottom:15px;">🧾 Receipt Settings</h3>
-                    <button class="btn-submit" onclick="openReceiptSettings()">📝 Edit Receipt Settings</button>
+                <div class="settings-card">
+                    <h3>🧾 Receipt Settings</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">Logo Icon</span>
+                        <span class="setting-value" id="settingsLogoIcon">${restaurantConfig.logoIcon || '👨‍🍳'}</span>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Tagline</span>
+                        <span class="setting-value" id="settingsTagline">${restaurantConfig.tagline || 'PIZZA • BURGER • FAST FOOD'}</span>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Discount</span>
+                        <span class="setting-value" id="settingsDiscount">${currencySymbol} ${restaurantConfig.discountAmount || 330} off on ${currencySymbol} ${restaurantConfig.discountThreshold || 2000}+</span>
+                    </div>
+                    <button class="btn-submit btn-submit-secondary" onclick="openReceiptSettings()" style="margin-top:10px;">✏️ Edit Receipt Settings</button>
                 </div>
 
-                <div style="background:#2d2d44; border-radius:12px; padding:20px;">
-                    <h3 style="color:#b2bec3; margin-bottom:15px;">📊 Data Management</h3>
-                    <button class="btn-submit" onclick="refreshData()" style="background:#3498db;">🔄 Refresh All Data</button>
-                    <button class="btn-submit" onclick="clearAllData()" style="background:#e74c3c; margin-top:10px;">🗑️ Clear All Data (Warning!)</button>
+                <div class="settings-card">
+                    <h3>📊 Data Management</h3>
+                    <button class="btn-submit btn-submit-secondary" onclick="refreshAllData()" style="margin-right:10px;">🔄 Refresh All Data</button>
+                    <button class="btn-submit" onclick="exportAllData()" style="margin-right:10px; background:#9b59b6;">📤 Export Data</button>
+                    <button class="btn-submit" onclick="clearAllData()" style="background:#e74c3c;">🗑️ Clear All Data</button>
+                    <div style="margin-top:10px;">
+                        <label style="color:#b2bec3; font-size:0.8em;">
+                            <input type="checkbox" id="autoRefreshToggle" checked onchange="toggleAutoRefresh()" /> 
+                            Auto-refresh data every 30 seconds
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>📱 About</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">App Version</span>
+                        <span class="setting-value">DineFlow Admin v2.0.0</span>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Restaurant ID</span>
+                        <span class="setting-value">${RESTAURANT_ID}</span>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">Environment</span>
+                        <span class="setting-value" style="color:#27ae60;">✅ Production</span>
+                    </div>
                 </div>
             `;
             content.innerHTML = html;
         }
 
-        function updateRestaurantName() {
-            const name = document.getElementById('restaurantNameInput').value.trim();
-            if (!name) {
-                showToast('⚠️ Please enter a name');
-                return;
-            }
+        // Restaurant Settings Popup
+        function openRestaurantSettings() {
+            fetch('/api/restaurant-config')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('restaurantNameInput').value = restaurantName;
+                    document.getElementById('restaurantCurrency').value = data.currency || 'Rs';
+                    document.getElementById('restaurantEst').value = data.est || '2022';
+                    document.getElementById('restaurantAddress').value = data.address || '';
+                    document.getElementById('restaurantPhone').value = data.phone || '';
+                    document.getElementById('restaurantWhatsapp').value = data.whatsapp || '';
+                    document.getElementById('restaurantSettingsPopup').classList.add('show');
+                })
+                .catch(() => showToast('❌ Failed to load settings'));
+        }
+
+        function closeRestaurantSettings() {
+            document.getElementById('restaurantSettingsPopup').classList.remove('show');
+        }
+
+        function saveRestaurantSettings(event) {
+            event.preventDefault();
+            const settings = {
+                name: document.getElementById('restaurantNameInput').value,
+                currency: document.getElementById('restaurantCurrency').value,
+                est: document.getElementById('restaurantEst').value,
+                address: document.getElementById('restaurantAddress').value,
+                phone: document.getElementById('restaurantPhone').value,
+                whatsapp: document.getElementById('restaurantWhatsapp').value
+            };
+
+            // Save restaurant name separately
             fetch('/api/restaurant-name', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name })
+                body: JSON.stringify({ name: settings.name })
             })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    restaurantName = name;
-                    showToast('✅ Restaurant name updated!');
-                } else {
-                    showToast('❌ ' + (data.error || 'Failed to update'));
+                    restaurantName = settings.name;
+                    // Update receipt settings with other data
+                    return fetch('/api/receipt-settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            established: settings.est,
+                            address: settings.address,
+                            phone: settings.phone
+                        })
+                    });
                 }
+                throw new Error('Failed to update name');
             })
-            .catch(() => showToast('❌ Network error'));
+            .then(r => r.json())
+            .then(() => {
+                showToast('✅ Restaurant settings saved!');
+                closeRestaurantSettings();
+                loadConfig();
+                renderSettings();
+            })
+            .catch(() => showToast('❌ Failed to save settings'));
         }
 
+        // Receipt Settings
         function openReceiptSettings() {
             fetch('/api/receipt-settings')
                 .then(r => r.json())
@@ -1468,9 +2005,11 @@
                     document.getElementById('receiptTagline').value = data.tagline || 'PIZZA • BURGER • FAST FOOD';
                     document.getElementById('receiptThankYou').value = data.thankYouMessage || 'Thank You for Your Order!';
                     document.getElementById('receiptFooter').value = data.footerMessage || 'Have a Great Day!';
+                    document.getElementById('receiptDiscountAmount').value = data.discountAmount || 330;
+                    document.getElementById('receiptDiscountThreshold').value = data.discountThreshold || 2000;
                     document.getElementById('receiptSettingsPopup').classList.add('show');
                 })
-                .catch(() => showToast('❌ Failed to load settings'));
+                .catch(() => showToast('❌ Failed to load receipt settings'));
         }
 
         function closeReceiptSettings() {
@@ -1484,7 +2023,9 @@
                 logoUrl: document.getElementById('receiptLogoUrl').value || '',
                 tagline: document.getElementById('receiptTagline').value || 'PIZZA • BURGER • FAST FOOD',
                 thankYouMessage: document.getElementById('receiptThankYou').value || 'Thank You for Your Order!',
-                footerMessage: document.getElementById('receiptFooter').value || 'Have a Great Day!'
+                footerMessage: document.getElementById('receiptFooter').value || 'Have a Great Day!',
+                discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 330,
+                discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 2000
             };
 
             fetch('/api/receipt-settings', {
@@ -1497,6 +2038,8 @@
                 if (data.success) {
                     showToast('✅ Receipt settings saved!');
                     closeReceiptSettings();
+                    loadConfig();
+                    renderSettings();
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to save'));
                 }
@@ -1504,16 +2047,65 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        function refreshData() {
+        // Data Management
+        function refreshAllData() {
             showToast('🔄 Refreshing data...');
-            loadData();
-            setTimeout(() => showToast('✅ Data refreshed!'), 1000);
+            loadAllData();
+            setTimeout(() => showToast('✅ All data refreshed!'), 1500);
+        }
+
+        function exportAllData() {
+            const data = {
+                restaurant: restaurantName,
+                restaurantId: RESTAURANT_ID,
+                menu: menuItems,
+                deals: deals,
+                orders: orders,
+                feedbacks: feedbacks,
+                locations: locations,
+                supportTickets: supportTickets,
+                config: restaurantConfig,
+                exportedAt: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dineflow-data-${RESTAURANT_ID}-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('📤 Data exported!');
         }
 
         function clearAllData() {
             if (!confirm('⚠️ WARNING: This will delete ALL data! Are you sure?')) return;
             if (!confirm('⚠️ FINAL WARNING: This cannot be undone! Continue?')) return;
             showToast('❌ This feature is disabled for safety');
+        }
+
+        let autoRefreshInterval = null;
+
+        function toggleAutoRefresh() {
+            const checked = document.getElementById('autoRefreshToggle').checked;
+            if (checked) {
+                autoRefreshInterval = setInterval(() => {
+                    if (currentSection === 'orders') loadOrders();
+                    if (currentSection === 'dashboard') loadOrders();
+                    if (currentSection === 'menu') loadMenu();
+                    if (currentSection === 'deals') loadDeals();
+                    if (currentSection === 'feedback') loadFeedback();
+                    if (currentSection === 'locations') loadLocations();
+                    if (currentSection === 'support') loadSupport();
+                }, 30000);
+                showToast('🔄 Auto-refresh enabled');
+            } else {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+                showToast('⏸️ Auto-refresh disabled');
+            }
         }
 
         // ============================================================
@@ -1534,12 +2126,12 @@
         }
 
         // ============================================================
-        // AUTO REFRESH
+        // START AUTO REFRESH
         // ============================================================
-        setInterval(() => {
+        autoRefreshInterval = setInterval(() => {
             if (currentSection === 'orders') loadOrders();
             if (currentSection === 'dashboard') loadOrders();
-        }, 15000);
+        }, 30000);
     </script>
 </body>
 </html>
