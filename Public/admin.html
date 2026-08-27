@@ -1264,7 +1264,7 @@
                     </div>
                 </div>
 
-                <!-- ⭐ NEW: Restaurant Hours / Open-Close Settings -->
+                <!-- Restaurant Hours / Open-Close Settings -->
                 <div class="settings-card">
                     <h4>🕐 Restaurant Hours</h4>
                     <p style="font-size:0.75em; color:#b2bec3; margin-bottom:10px;">Set when your restaurant is open for orders</p>
@@ -1299,7 +1299,7 @@
                     <button class="admin-submit-btn" onclick="saveRestaurantHours()" style="margin-top:10px;">💾 Save Hours</button>
                 </div>
 
-                <!-- ⭐ NEW: Order Cancellation Settings -->
+                <!-- Order Cancellation Settings -->
                 <div class="settings-card">
                     <h4>⏱️ Order Cancellation Settings</h4>
                     <p style="font-size:0.75em; color:#b2bec3; margin-bottom:10px;">Control how customers can cancel their orders</p>
@@ -1610,7 +1610,7 @@
         ];
 
         // ============================================================
-        // ⭐ HYBRID REAL-TIME ORDERS (SSE + Polling) ⭐
+        // HYBRID REAL-TIME ORDERS (SSE + Polling)
         // ============================================================
         let eventSource = null;
         let isSSEConnected = false;
@@ -1862,7 +1862,7 @@
         });
 
         // ============================================================
-        // ⭐ RESTAURANT STATUS FUNCTIONS ⭐
+        // RESTAURANT STATUS FUNCTIONS
         // ============================================================
         function loadRestaurantStatus() {
             fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID)
@@ -1948,7 +1948,7 @@
         }
 
         // ============================================================
-        // ⭐ CANCELLATION SETTINGS FUNCTIONS ⭐
+        // CANCELLATION SETTINGS FUNCTIONS
         // ============================================================
         function loadCancellationSettings() {
             fetch('/api/cancellation-settings?restaurant=' + RESTAURANT_ID)
@@ -1991,7 +1991,7 @@
         }
 
         // ============================================================
-        // ⭐ ORDER DELETE FUNCTION (Admin) ⭐
+        // ORDER DELETE FUNCTION (Admin)
         // ============================================================
         function deleteOrderPermanently(orderId) {
             if (!confirm('⚠️ Are you sure you want to permanently delete this order? This cannot be undone!')) return;
@@ -2125,7 +2125,6 @@
                 .then(r => r.json())
                 .then(data => { customerLocations = data; allLocations = data; renderAdminDelivery(); });
 
-            // Load new settings
             loadRestaurantStatus();
             loadCancellationSettings();
         }
@@ -2241,121 +2240,18 @@
         }
 
         // ============================================================
-        // RECEIPT FUNCTIONS
+        // RECEIPT - Shows Customer's Device Time
         // ============================================================
-        function saveReceiptSettings() {
-            const payload = {
-                logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
-                logoUrl: document.getElementById('receiptLogoUrl').value || '',
-                tagline: document.getElementById('receiptTagline').value || '',
-                established: document.getElementById('receiptEstablished').value || '2022',
-                address: document.getElementById('receiptAddress').value || '',
-                phone: document.getElementById('receiptPhone').value || '',
-                qrCodeUrl: document.getElementById('receiptQrUrl').value || '',
-                discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 0,
-                discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 0,
-                thankYouMessage: document.getElementById('receiptThankYou').value || 'Thank You for Your Order!',
-                footerMessage: document.getElementById('receiptFooterNote').value || 'Have a Great Day!'
-            };
-
-            const saveBtn = document.querySelector('.admin-submit-btn');
-            const originalText = saveBtn.textContent;
-            saveBtn.textContent = '⏳ Saving...';
-            saveBtn.disabled = true;
-
-            fetch('/api/receipt-settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.error || 'Server error');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    receiptSettings = Object.assign(receiptSettings, data.settings);
-
-                    return fetch('/api/restaurant-config-update', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            discountAmount: payload.discountAmount,
-                            discountThreshold: payload.discountThreshold,
-                            currency: restaurantConfig.currency || 'Rs',
-                            address: payload.address,
-                            phone: payload.phone,
-                            est: payload.established,
-                            whatsapp: restaurantConfig.whatsapp || '923001234567'
-                        })
-                    });
-                } else {
-                    throw new Error(data.error || 'Save failed');
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to update restaurant config');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    restaurantConfig.discountAmount = payload.discountAmount;
-                    restaurantConfig.discountThreshold = payload.discountThreshold;
-                    restaurantConfig.address = payload.address;
-                    restaurantConfig.phone = payload.phone;
-                    restaurantConfig.est = payload.established;
-
-                    showToast('✅ Settings saved and synced with customer panel!');
-
-                    if (payload.logoUrl) {
-                        document.getElementById('receiptLogoImagePreview').src = payload.logoUrl;
-                        document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
-                    }
-                } else {
-                    showToast('❌ ' + (data.error || 'Config update failed'));
-                }
-            })
-            .catch(err => {
-                console.error('Save error:', err);
-                showToast('❌ Error: ' + err.message);
-            })
-            .finally(() => {
-                saveBtn.textContent = originalText;
-                saveBtn.disabled = false;
-            });
-        }
-
-        function previewSampleReceipt() {
-            const sampleOrder = {
-                id: 999,
-                orderNumber: 999,
-                userName: 'John Doe',
-                phone: '0300-1234567',
-                address: 'Test Address 123',
-                orderType: 'delivery',
-                paymentMethod: 'cash',
-                status: 'pending',
-                date: new Date().toLocaleString(),
-                items: [
-                    { name: 'Cheese Burger', qty: 2, price: 1299 },
-                    { name: 'French Fries', qty: 1, price: 499 },
-                    { name: 'Chocolate Shake', qty: 1, price: 599 }
-                ],
-                layers: ['🧀 Extra Cheese', '🥬 Lettuce']
-            };
-            showReceipt(sampleOrder, true);
-        }
-
         function showReceipt(order, isPreview) {
-            const orderTime = order.date || new Date(order.createdAt).toLocaleString();
+            let orderTime;
+            if (order.deviceTime) {
+                orderTime = order.deviceTime;
+            } else if (isPreview) {
+                orderTime = new Date().toLocaleString();
+            } else {
+                orderTime = order.date || new Date().toLocaleString();
+            }
+            
             const orderNum = String(order.orderNumber || order.id).padStart(3, '0');
             const tableInfo = order.table ? `Table: ${order.table}` : '';
             const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
@@ -2520,7 +2416,7 @@
                 const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In' : 'Delivery';
                 const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
                 const tableInfo = order.table ? `Table: ${order.table}` : '';
-                const orderTime = order.date || new Date(order.createdAt).toLocaleString();
+                const orderTime = order.deviceTime || order.date || new Date(order.createdAt).toLocaleString();
 
                 let logoHtml = '';
                 if (receiptSettings && receiptSettings.logoUrl) {
@@ -2644,7 +2540,7 @@
                             <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp</a>
                             ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">🗺️ Map</a>` : ''}
                             ${locationHtml}
-                            <!-- ⭐ NEW: Delete Order Button (Admin only) -->
+                            <!-- Delete Order Button -->
                             <button class="btn-delete" onclick="deleteOrderPermanently(${order.id})" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️ Delete</button>
                         </div>
                     </div>
@@ -2684,7 +2580,7 @@
                             <div style="font-weight:700; font-size:12px;">#${order.id} ${orderTypeIcon} ${order.userName || 'Guest'}</div>
                             <div><span class="receipt-badge ${statusClass}">${order.status.toUpperCase()}</span></div>
                         </div>
-                        <div style="font-size:10px; color:#636e72;">${order.date || 'Today'}</div>
+                        <div style="font-size:10px; color:#636e72;">${order.deviceTime || order.date || 'Today'}</div>
                         <div style="font-size:12px; font-weight:700; color:#e74c3c;">${config.currency} ${order.total.toFixed(2)}</div>
                         <button onclick="showReceiptForOrder(${order.id})" style="margin-top:4px; padding:2px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">🖨️ View</button>
                     </div>

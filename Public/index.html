@@ -63,6 +63,29 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
 
+        /* Restaurant Status Banner */
+        .restaurant-status-banner {
+            padding: 6px 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .restaurant-status-banner.open {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .restaurant-status-banner.closed {
+            background: #fdf2f2;
+            color: #e74c3c;
+            animation: pulseBanner 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseBanner {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         .top-header {
             background: white;
             padding: 12px 16px;
@@ -108,28 +131,6 @@
             border-radius: 50%; 
             min-width: 20px; 
             text-align: center; 
-        }
-        /* ⭐ Restaurant Status Banner */
-        .restaurant-status-banner {
-            padding: 6px 16px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.85em;
-            flex-shrink: 0;
-            transition: all 0.3s;
-        }
-        .restaurant-status-banner.open {
-            background: #e8f8f0;
-            color: #27ae60;
-        }
-        .restaurant-status-banner.closed {
-            background: #fdf2f2;
-            color: #e74c3c;
-            animation: pulseBanner 1.5s ease-in-out infinite;
-        }
-        @keyframes pulseBanner {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
         }
 
         .main-container { display: flex; flex: 1; overflow: hidden; }
@@ -232,7 +233,6 @@
             filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
             transition: all 0.3s ease;
         }
-        /* FIXED: No icon movement */
         .menu-item-card:hover .item-icons { 
             filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
         }
@@ -1022,7 +1022,7 @@
 </head>
 <body>
 
-    <!-- ⭐ Restaurant Status Banner -->
+    <!-- Restaurant Status Banner -->
     <div id="restaurantStatusBanner" class="restaurant-status-banner open">
         🟢 Restaurant is OPEN - Order Now!
     </div>
@@ -1218,7 +1218,7 @@
 
     <script>
         // ============================================================
-        // ⭐ RESTAURANT ID - WORKS ON ANY NETWORK ⭐
+        // RESTAURANT ID - WORKS ON ANY NETWORK
         // ============================================================
         function getRestaurantId() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1305,14 +1305,13 @@
                         restaurantConfig.allowCancellation = data.allowCancellation;
                     }
                     
-                    // Update status banner
                     updateRestaurantStatusBanner();
                 })
                 .catch(() => {});
         }
 
         // ============================================================
-        // ⭐ RESTAURANT STATUS FUNCTIONS ⭐
+        // RESTAURANT STATUS FUNCTIONS
         // ============================================================
         function updateRestaurantStatusBanner() {
             const banner = document.getElementById('restaurantStatusBanner');
@@ -1346,7 +1345,7 @@
         }
 
         // ============================================================
-        // ⭐ CANCEL ORDER FUNCTION ⭐
+        // CANCEL ORDER FUNCTION
         // ============================================================
         function cancelOrder(orderId) {
             if (!restaurantConfig.allowCancellation) {
@@ -1489,7 +1488,6 @@
             loadRestaurantConfig();
             checkPersistentLogin();
             
-            // Check restaurant status on load
             checkRestaurantStatus();
 
             fetch(apiUrl('/api/receipt-settings'))
@@ -1814,7 +1812,6 @@
                 return;
             }
             
-            // Check if restaurant is open
             checkRestaurantStatus().then(isOpen => {
                 if (!isOpen) {
                     showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
@@ -1837,7 +1834,6 @@
                 return;
             }
             
-            // Check if restaurant is open
             checkRestaurantStatus().then(isOpen => {
                 if (!isOpen) {
                     showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
@@ -2083,11 +2079,22 @@
         }
 
         // ============================================================
-        // ⭐ SUBMIT ORDER WITH RETRY ⭐
+        // SUBMIT ORDER WITH DEVICE TIME
         // ============================================================
         function submitOrderWithLocation() {
             if (!pendingOrderData) return;
             const { name, phone, items, total, layers, orderType, paymentMethod, fullAddress } = pendingOrderData;
+            
+            const now = new Date();
+            const deviceTime = now.toLocaleString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour12: true 
+            });
             
             const orderData = {
                 items: items,
@@ -2102,7 +2109,9 @@
                 lng: orderLocation.lng || null,
                 table: pendingOrderData.table || null,
                 orderNumber: orderCounter++,
-                restaurantId: RESTAURANT_ID
+                restaurantId: RESTAURANT_ID,
+                deviceTime: deviceTime,
+                deviceTimestamp: now.toISOString()
             };
 
             let attempts = 0;
@@ -2126,7 +2135,8 @@
                             ...orderData, 
                             id: data.order?.id || orderCounter - 1, 
                             status: 'pending', 
-                            date: new Date().toLocaleString() 
+                            date: deviceTime,
+                            deviceTime: deviceTime
                         };
                         
                         showReceipt(orderObj);
@@ -2135,7 +2145,6 @@
                         loadOrders();
                         showPanel('orders');
                         
-                        // Try real-time confirmation
                         tryListenForOrderConfirmation(orderObj.id);
                     } else {
                         if (attempts < maxAttempts) {
@@ -2161,7 +2170,7 @@
         }
 
         // ============================================================
-        // ⭐ REAL-TIME ORDER CONFIRMATION ⭐
+        // REAL-TIME ORDER CONFIRMATION
         // ============================================================
         function tryListenForOrderConfirmation(orderId) {
             try {
@@ -2212,7 +2221,6 @@
         function submitOrder(event) {
             event.preventDefault();
             
-            // ⭐ Check if restaurant is open
             checkRestaurantStatus().then(isOpen => {
                 if (!isOpen) {
                     showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
@@ -2281,13 +2289,11 @@
         }
 
         // ============================================================
-        // RECEIPT
+        // RECEIPT - SHOWS CUSTOMER'S DEVICE TIME
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
-            const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const orderTime = order.date || `${dateStr} ${timeStr}`;
+            const orderTime = order.deviceTime || now.toLocaleString();
             const orderType = order.orderType || 'Delivery';
             const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
             const orderId = order.id || '#' + String(order.orderNumber || Math.floor(Math.random() * 1000)).padStart(3, '0');
@@ -2339,13 +2345,17 @@
             }
             const grandTotal = subtotal - discount;
 
-            // ⭐ Show cancellation deadline on receipt
             let cancellationInfo = '';
             if (config.allowCancellation && config.cancellationTimeLimit > 0) {
-                const deadline = new Date(Date.now() + (config.cancellationTimeLimit * 60000));
+                const deadline = new Date(now.getTime() + (config.cancellationTimeLimit * 60000));
+                const deadlineStr = deadline.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
                 cancellationInfo = `
                     <div class="receipt-customer" style="font-weight:normal; font-size:9px; color:#f39c12;">
-                        ⏱️ You can cancel this order within ${config.cancellationTimeLimit} minutes
+                        ⏱️ You can cancel this order until ${deadlineStr} (within ${config.cancellationTimeLimit} minutes)
                     </div>
                 `;
             }
@@ -2369,6 +2379,7 @@
                             </div>
                             <div class="receipt-order-info">
                                 <span class="order-left">${orderTime}</span>
+                                <span class="order-right">${now.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
                             </div>
                             <div class="receipt-divider"></div>
                             <div class="receipt-customer">Customer: ${orderTypeLabel}</div>
@@ -2415,8 +2426,11 @@
                                 <div class="qr-text">Scan QR Code To Download App</div>
                             </div>
                             <div class="receipt-divider"></div>
-                            <div class="thank-you"><span class="heart">❤️</span> Thank You for Your Order!</div>
-                            <div class="great-day">Have a Great Day!</div>
+                            <div class="thank-you"><span class="heart">❤️</span> ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}</div>
+                            <div class="great-day">${receiptSettings.footerMessage || 'Have a Great Day!'}</div>
+                            <div style="font-size:8px; color:#aaa; margin-top:4px;">
+                                Printed: ${now.toLocaleString()}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2550,8 +2564,6 @@
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
                 const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
-                
-                // Check if order can be cancelled
                 const canCancel = order.status === 'pending' && restaurantConfig.allowCancellation;
                 
                 html += `
@@ -2560,7 +2572,7 @@
                             <div style="font-weight:700;">Order #${order.id} ${orderTypeIcon} ${order.orderType || 'Delivery'}</div>
                             <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">${currencySymbol} ${order.total.toFixed(2)}</div>
                         </div>
-                        <div style="font-size:0.75em; color:#636e72;">🕐 ${order.date || 'Today'}</div>
+                        <div style="font-size:0.75em; color:#636e72;">🕐 ${order.deviceTime || order.date || 'Today'}</div>
                         ${order.layers && order.layers.length ? `<div style="font-size:0.7em; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
                         <span class="order-status-badge ${statusClass}" style="font-size:0.7em; font-weight:600; padding:2px 12px; border-radius:12px; display:inline-block; margin-top:4px;">${order.status.toUpperCase()}</span>
                         <div style="font-size:0.75em; color:#636e72; margin-top:4px;">

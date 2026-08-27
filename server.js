@@ -22,12 +22,10 @@ let RESTAURANT_CONFIG = {
     currency: 'Rs',
     discountAmount: 330,
     discountThreshold: 2000,
-    // ⭐ NEW: Restaurant Hours
     openingTime: '09:00',
     closingTime: '23:00',
     isOpen: true,
-    // ⭐ NEW: Order cancellation settings
-    cancellationTimeLimit: 5, // minutes
+    cancellationTimeLimit: 5,
     allowCancellation: true
 };
 
@@ -60,11 +58,9 @@ let data = {
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
         thankYouMessage: 'Thank You for Your Order!',
         footerMessage: 'Have a Great Day!',
-        // ⭐ NEW: Cancellation time on receipt
         showCancellationTime: true
     },
     restaurantConfig: RESTAURANT_CONFIG,
-    // ⭐ NEW: Track restaurant open/close status
     restaurantStatus: {
         isOpen: true,
         openingTime: '09:00',
@@ -585,12 +581,10 @@ app.get('/api/restaurant-status', (req, res) => {
     const now = new Date();
     const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
     
-    // Check if within opening hours
     const opening = RESTAURANT_CONFIG.openingTime || '09:00';
     const closing = RESTAURANT_CONFIG.closingTime || '23:00';
     const isWithinHours = currentTime >= opening && currentTime <= closing;
     
-    // Override if admin manually set
     const isOpen = RESTAURANT_CONFIG.isOpen !== undefined ? RESTAURANT_CONFIG.isOpen : isWithinHours;
     
     res.json({
@@ -654,17 +648,14 @@ app.post('/api/orders/:id/cancel', (req, res) => {
         return res.status(404).json({ error: 'Order not found' });
     }
     
-    // Check if user owns this order (for customer cancellation)
     if (req.body.isCustomer && order.userId !== req.user.id) {
         return res.status(403).json({ error: 'You can only cancel your own orders' });
     }
     
-    // Check if cancellation is allowed
     if (req.body.isCustomer && !RESTAURANT_CONFIG.allowCancellation) {
         return res.status(400).json({ error: 'Order cancellation is disabled by restaurant' });
     }
     
-    // Check if within time limit (for customer cancellation)
     if (req.body.isCustomer && RESTAURANT_CONFIG.cancellationTimeLimit > 0) {
         const orderTime = new Date(order.createdAt || order.date);
         const now = new Date();
@@ -678,7 +669,6 @@ app.post('/api/orders/:id/cancel', (req, res) => {
         }
     }
     
-    // Check if order can be cancelled
     if (order.status === 'delivered' || order.status === 'cancelled') {
         return res.status(400).json({ error: 'Order cannot be cancelled' });
     }
@@ -686,13 +676,11 @@ app.post('/api/orders/:id/cancel', (req, res) => {
     order.status = 'cancelled';
     syncAndSave();
     
-    // Broadcast update
     broadcastOrderUpdate(order, restaurantId);
     
     res.json({ success: true, message: 'Order cancelled successfully', order: order });
 });
 
-// ⭐ NEW: Admin delete order permanently
 app.delete('/api/orders/:id', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -710,7 +698,6 @@ app.delete('/api/orders/:id', (req, res) => {
     restaurant.orders.splice(index, 1);
     syncAndSave();
     
-    // Broadcast update
     broadcastOrderUpdate({ ...deletedOrder, status: 'deleted' }, restaurantId);
     
     res.json({ success: true, message: 'Order deleted permanently' });
@@ -964,7 +951,6 @@ app.post('/api/orders', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
     
-    // ⭐ Check if restaurant is open
     const now = new Date();
     const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
     const opening = RESTAURANT_CONFIG.openingTime || '09:00';
@@ -981,7 +967,7 @@ app.post('/api/orders', (req, res) => {
         });
     }
     
-    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table } = req.body;
+    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table, deviceTime, deviceTimestamp } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -1006,7 +992,9 @@ app.post('/api/orders', (req, res) => {
         locationShared: orderType === 'delivery' && !!(lat && lng),
         table: table || null,
         orderNumber: orderCounter++,
-        // ⭐ NEW: Track cancellation eligibility
+        // ⭐ Store customer's device time
+        deviceTime: deviceTime || new Date().toLocaleString(),
+        deviceTimestamp: deviceTimestamp || new Date().toISOString(),
         cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString()
     };
     
