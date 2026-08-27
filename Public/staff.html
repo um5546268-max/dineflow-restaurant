@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
-    <!-- ⭐ ADD FAVICON HERE ⭐ -->
+    <!-- ⭐ FAVICON ⭐ -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -12,8 +13,8 @@
     <link rel="manifest" href="/site.webmanifest">
     
     <title>The Heaven Slice - Staff Panel</title>
-    <!-- ... rest of your head ... -->
-</head>
+    
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -68,6 +69,12 @@
         }
         .staff-header .header-actions .view-site-btn:hover {
             background: #1e8449;
+        }
+        .staff-header .header-actions .admin-btn {
+            background: #3498db;
+        }
+        .staff-header .header-actions .admin-btn:hover {
+            background: #2980b9;
         }
 
         .staff-body {
@@ -249,6 +256,10 @@
             font-weight: 700;
             font-size: 1.1em;
             color: #e74c3c;
+        }
+        .staff-bottom-bar .cart-summary .cart-items-text {
+            font-size: 0.8em;
+            color: #b2bec3;
         }
         .staff-bottom-bar .cart-actions {
             display: flex;
@@ -562,7 +573,7 @@
         <h2>👨‍🍳 The <span>Heaven Slice</span> <span style="font-size:0.6em; color:#b2bec3; font-weight:400;">Staff Panel</span></h2>
         <div class="header-actions">
             <a href="/" class="view-site-btn">📱 View Site</a>
-            <a href="/admin?restaurant=restaurant-1" class="view-site-btn" style="background:#3498db;">👑 Admin</a>
+            <a href="/admin?restaurant=restaurant-1" class="admin-btn">👑 Admin</a>
             <a href="/logout" class="logout-btn">🚪 Logout</a>
         </div>
     </header>
@@ -572,7 +583,6 @@
         <main class="staff-menu-area" id="staffMenuArea"></main>
     </div>
 
-    <!-- Bottom Bar -->
     <div class="staff-bottom-bar">
         <div class="cart-summary">
             <span class="cart-icon" onclick="openStaffCartPopup()" style="cursor:pointer;">
@@ -580,7 +590,7 @@
                 <span class="cart-count" id="staffCartCount">0</span>
             </span>
             <span class="cart-total" id="staffCartTotal">Rs 0.00</span>
-            <span style="font-size:0.8em; color:#b2bec3;" id="staffCartItems">0 items</span>
+            <span class="cart-items-text" id="staffCartItems">0 items</span>
         </div>
         <div class="cart-actions">
             <button class="btn-clear" onclick="clearStaffCart()">🗑️ Clear</button>
@@ -658,16 +668,37 @@
 
     <script>
         // ============================================================
-        // GET RESTAURANT ID FROM URL
+        // RESTAURANT ID
         // ============================================================
         function getRestaurantId() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('restaurant') || 'restaurant-1';
+            let id = urlParams.get('restaurant');
+            if (!id) id = localStorage.getItem('dineflow_restaurant');
+            if (!id) id = sessionStorage.getItem('dineflow_restaurant');
+            if (!id) id = 'restaurant-1';
+            
+            localStorage.setItem('dineflow_restaurant', id);
+            sessionStorage.setItem('dineflow_restaurant', id);
+            
+            if (!urlParams.get('restaurant')) {
+                try {
+                    const newUrl = window.location.pathname + '?restaurant=' + id + window.location.hash;
+                    window.history.replaceState({}, '', newUrl);
+                } catch(e) {}
+            }
+            return id;
         }
+
         const RESTAURANT_ID = getRestaurantId();
+        console.log('✅ Staff Restaurant ID:', RESTAURANT_ID);
+
+        function apiUrl(endpoint) {
+            const separator = endpoint.includes('?') ? '&' : '?';
+            return endpoint + separator + 'restaurant=' + RESTAURANT_ID;
+        }
 
         // ============================================================
-        // DATA
+        // STATE
         // ============================================================
         let menuItems = [];
         let staffCart = [];
@@ -703,6 +734,7 @@
         // LOAD DATA
         // ============================================================
         function loadStaffData() {
+            // Check if user is logged in
             fetch('/api/user/profile')
                 .then(r => r.json())
                 .then(data => {
@@ -711,7 +743,8 @@
                     }
                 });
 
-            fetch('/api/menu?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            // Load menu
+            fetch(apiUrl('/api/menu?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     menuItems = data;
@@ -728,6 +761,7 @@
                     `;
                 });
 
+            // Load restaurant config for currency
             fetch('/api/restaurant-config')
                 .then(r => r.json())
                 .then(data => {
@@ -737,7 +771,8 @@
                 })
                 .catch(() => {});
 
-            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+            // Load restaurant name
+            fetch(apiUrl('/api/restaurant-name?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
                     restaurantName = data.name || 'The Heaven Slice';
@@ -824,11 +859,13 @@
             const item = menuItems.find(i => i.id === itemId);
             if (!item) return;
 
+            // Check if item has layers
             if (item.layers && item.layers.length > 0) {
                 showLayerSelection(item);
                 return;
             }
 
+            // Add directly if no layers
             const existing = staffCart.find(c => c.id === itemId);
             if (existing) {
                 existing.qty = (existing.qty || 1) + 1;
@@ -843,6 +880,7 @@
             const container = document.getElementById('staffLayerContainer');
             if (!container) return;
 
+            // Store the item we're adding layers for
             window.staffLayerItem = item;
 
             let html = `
@@ -862,6 +900,7 @@
 
             container.innerHTML = html;
 
+            // Open a popup for layer selection
             const popup = document.createElement('div');
             popup.className = 'popup-overlay show';
             popup.id = 'staffLayerPopup';
@@ -895,6 +934,7 @@
                 staffCart.push({ ...item, qty: 1, selectedLayers: layers });
             }
 
+            // Remove popup
             const popup = document.getElementById('staffLayerPopup');
             if (popup) popup.remove();
 
@@ -1036,12 +1076,15 @@
                 return;
             }
 
+            // Reset form
             document.getElementById('staffOrderForm').reset();
             document.getElementById('staffOrderTotal').textContent = `Total: ${currencySymbol} ${getStaffCartTotal().toFixed(2)}`;
             document.getElementById('staffOrderItems').value = JSON.stringify(staffCart);
             document.getElementById('staffOrderTotal').value = getStaffCartTotal();
 
+            // Default to Dine-In
             staffSelectOrderType('dinein');
+
             document.getElementById('staffCheckoutPopup').classList.add('show');
         }
 
@@ -1153,6 +1196,7 @@
                 fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
             }
 
+            // Collect layers from items
             const allLayers = [];
             items.forEach(item => {
                 if (item.selectedLayers && item.selectedLayers.length > 0) {
@@ -1169,7 +1213,8 @@
                 layers: allLayers,
                 orderType: orderType,
                 paymentMethod: paymentMethod,
-                table: table || null
+                table: table || null,
+                restaurantId: RESTAURANT_ID
             };
 
             fetch('/api/orders', {
@@ -1185,6 +1230,7 @@
                     staffCart = [];
                     updateStaffCartUI();
                     
+                    // Show receipt
                     const orderObj = data.order || { 
                         ...orderData, 
                         id: data.order?.id || Math.floor(Math.random() * 1000), 
@@ -1230,7 +1276,7 @@
         }
 
         // ============================================================
-        // TOAST
+        // TOAST NOTIFICATION
         // ============================================================
         function showToast(message) {
             const existing = document.querySelector('.toast');
@@ -1243,7 +1289,7 @@
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s';
                 setTimeout(() => toast.remove(), 300);
-            }, 2500);
+            }, 3000);
         }
 
         // ============================================================

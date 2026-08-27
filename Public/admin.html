@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
-    <!-- ⭐ ADD FAVICON HERE ⭐ -->
+    <!-- ⭐ FAVICON ⭐ -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -12,9 +13,8 @@
     <link rel="manifest" href="/site.webmanifest">
     
     <title>The Heaven Slice - Admin Panel</title>
-    <!-- ... rest of your head ... -->
-</head>
-        /* All existing styles remain the same - keeping full CSS */
+    
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -2001,7 +2001,7 @@
         }
 
         // ============================================================
-        // ORDER DELETE FUNCTION (Admin) - FIXED
+        // ORDER DELETE FUNCTION (Admin)
         // ============================================================
         function deleteOrderPermanently(orderId) {
             if (!confirm('⚠️ Are you sure you want to permanently delete this order? This cannot be undone!')) return;
@@ -2022,7 +2022,6 @@
             .then(data => {
                 if (data.success) {
                     showToast('✅ Order #' + orderId + ' deleted permanently!');
-                    // Remove from local array
                     orders = orders.filter(o => o.id !== orderId);
                     lastOrderCount = orders.length;
                     renderAdminDashboard();
@@ -2038,7 +2037,7 @@
         }
 
         // ============================================================
-        // ⭐ SAVE RECEIPT SETTINGS - FIXED ⭐
+        // SAVE RECEIPT SETTINGS
         // ============================================================
         function saveReceiptSettings() {
             const payload = {
@@ -2057,7 +2056,6 @@
 
             const saveBtn = document.querySelector('.settings-card .admin-submit-btn');
             if (!saveBtn) {
-                // Find the first admin-submit-btn in settings
                 const btns = document.querySelectorAll('.settings-card .admin-submit-btn');
                 if (btns.length > 0) saveBtn = btns[0];
             }
@@ -2121,7 +2119,7 @@
         }
 
         // ============================================================
-        // ⭐ LOAD FEEDBACK - FIXED ⭐
+        // LOAD FEEDBACK
         // ============================================================
         function loadFeedback() {
             fetch('/api/feedback/all?restaurant=' + RESTAURANT_ID)
@@ -2147,7 +2145,7 @@
         }
 
         // ============================================================
-        // ⭐ LOAD SUPPORT - FIXED ⭐
+        // LOAD SUPPORT
         // ============================================================
         function loadSupport() {
             fetch('/api/support/all?restaurant=' + RESTAURANT_ID)
@@ -2163,7 +2161,7 @@
         }
 
         // ============================================================
-        // ⭐ LOAD ORDERS - FIXED ⭐
+        // LOAD ORDERS
         // ============================================================
         function loadOrders() {
             fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
@@ -2183,7 +2181,7 @@
         }
 
         // ============================================================
-        // ⭐ LOAD ALL DATA - FIXED ⭐
+        // LOAD ALL DATA
         // ============================================================
         function loadAdminData() {
             fetch('/api/user/profile')
@@ -2296,7 +2294,7 @@
         }
 
         // ============================================================
-        // RENDER FEEDBACK - FIXED
+        // RENDER FEEDBACK
         // ============================================================
         function renderFeedback() {
             const container = document.getElementById('feedbackList');
@@ -2336,7 +2334,7 @@
         }
 
         // ============================================================
-        // RENDER SUPPORT - FIXED
+        // RENDER SUPPORT
         // ============================================================
         function renderSupport() {
             const container = document.getElementById('supportList');
@@ -2391,7 +2389,7 @@
         }
 
         // ============================================================
-        // UPDATE TICKET STATUS - FIXED
+        // UPDATE TICKET STATUS
         // ============================================================
         function updateTicketStatus(id, status) {
             fetch('/api/support/' + id + '/status?restaurant=' + RESTAURANT_ID, {
@@ -2423,7 +2421,7 @@
         }
 
         // ============================================================
-        // VIEW TICKET - FIXED
+        // VIEW TICKET
         // ============================================================
         function viewTicket(id) {
             const ticket = supportTickets.find(t => t.id === id);
@@ -2432,7 +2430,7 @@
         }
 
         // ============================================================
-        // DELETE FEEDBACK - FIXED
+        // DELETE FEEDBACK
         // ============================================================
         function deleteFeedback(id) {
             if (!confirm('Delete this feedback?')) return;

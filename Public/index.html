@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
-    <!-- ⭐ ADD FAVICON HERE - AFTER meta tags, BEFORE title ⭐ -->
+    <!-- ⭐ FAVICON ⭐ -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -12,8 +13,7 @@
     <link rel="manifest" href="/site.webmanifest">
     
     <title>The Heaven Slice - Restaurant</title>
-    <!-- ... rest of your head ... -->
-</head>
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -72,7 +72,6 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
 
-        /* Restaurant Status Banner */
         .restaurant-status-banner {
             padding: 6px 16px;
             text-align: center;
@@ -225,7 +224,6 @@
             min-height: 180px;
             border: 1px solid rgba(0,0,0,0.03);
         }
-        /* FIXED: No movement on hover */
         .menu-item-card:hover { 
             box-shadow: 0 12px 35px rgba(0,0,0,0.12);
             border-color: #e74c3c;
@@ -1031,7 +1029,6 @@
 </head>
 <body>
 
-    <!-- Restaurant Status Banner -->
     <div id="restaurantStatusBanner" class="restaurant-status-banner open">
         🟢 Restaurant is OPEN - Order Now!
     </div>
@@ -1093,7 +1090,6 @@
         </div>
     </div>
 
-    <!-- Order Popup -->
     <div class="popup-overlay" id="orderPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeOrderPopup()">✕</button>
@@ -1143,7 +1139,6 @@
         </div>
     </div>
 
-    <!-- Cart Popup -->
     <div class="popup-overlay" id="cartPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeCartPopup()">✕</button>
@@ -1172,7 +1167,6 @@
         </div>
     </div>
 
-    <!-- Location Popup -->
     <div class="popup-overlay" id="locationPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeLocationPopup()">✕</button>
@@ -1226,9 +1220,7 @@
     </div>
 
     <script>
-        // ============================================================
-        // RESTAURANT ID - WORKS ON ANY NETWORK
-        // ============================================================
+        // RESTAURANT ID
         function getRestaurantId() {
             const urlParams = new URLSearchParams(window.location.search);
             let id = urlParams.get('restaurant');
@@ -1256,9 +1248,7 @@
             return endpoint + separator + 'restaurant=' + RESTAURANT_ID;
         }
 
-        // ============================================================
         // RESTAURANT CONFIG
-        // ============================================================
         let restaurantConfig = {
             name: 'The Heaven Slice',
             est: '2022',
@@ -1319,9 +1309,6 @@
                 .catch(() => {});
         }
 
-        // ============================================================
-        // RESTAURANT STATUS FUNCTIONS
-        // ============================================================
         function updateRestaurantStatusBanner() {
             const banner = document.getElementById('restaurantStatusBanner');
             if (!banner) return;
@@ -1353,9 +1340,6 @@
                 .catch(() => true);
         }
 
-        // ============================================================
-        // CANCEL ORDER FUNCTION
-        // ============================================================
         function cancelOrder(orderId) {
             if (!restaurantConfig.allowCancellation) {
                 showToast('❌ Order cancellation is disabled by the restaurant');
@@ -1381,9 +1365,7 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        // ============================================================
         // DATA
-        // ============================================================
         let categories = [
             { id: 'all', name: 'All', icon: '🍽️' },
             { id: 'burgers', name: 'Burgers', icon: '🍔' },
@@ -1425,17 +1407,11 @@
         const restaurantNameEl = document.getElementById('restaurantName');
         const splashNameEl = document.getElementById('splashName');
 
-        // ============================================================
-        // ICON ANIMATION CLASSES
-        // ============================================================
         const iconAnimations = ['bounce', 'float', 'pulse', 'rotate', 'wiggle'];
         function getIconAnimation(index) {
             return iconAnimations[index % iconAnimations.length];
         }
 
-        // ============================================================
-        // PERSISTENT LOGIN
-        // ============================================================
         function checkPersistentLogin() {
             const savedUser = localStorage.getItem('dineflow_user');
             const savedSession = localStorage.getItem('dineflow_session');
@@ -1490,9 +1466,6 @@
             localStorage.setItem('dineflow_session', JSON.stringify({ timestamp: new Date().getTime() }));
         }
 
-        // ============================================================
-        // SPLASH SCREEN
-        // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             loadRestaurantConfig();
             checkPersistentLogin();
@@ -1641,9 +1614,6 @@
                 });
         }
 
-        // ============================================================
-        // RENDER CATEGORIES
-        // ============================================================
         function renderCategories() {
             sidebar.innerHTML = '';
             categories.forEach(cat => {
@@ -1662,9 +1632,6 @@
             });
         }
 
-        // ============================================================
-        // RENDER MENU - NO MOVEMENT FIXED
-        // ============================================================
         function renderMenu() {
             let filtered = menuItems;
             if (currentCategory !== 'all') {
@@ -1715,9 +1682,6 @@
             menuArea.innerHTML = html;
         }
 
-        // ============================================================
-        // CART FUNCTIONS
-        // ============================================================
         function addToCart(itemId) {
             const item = menuItems.find(i => i.id === itemId);
             if (!item) return;
@@ -1853,9 +1817,6 @@
             });
         }
 
-        // ============================================================
-        // ORDER TYPE SELECTION
-        // ============================================================
         function selectOrderType(type) {
             selectedOrderType = type;
             const dineinBtn = document.getElementById('dineinBtn');
@@ -1919,9 +1880,6 @@
             }
         }
 
-        // ============================================================
-        // ORDER FORM
-        // ============================================================
         function openOrderForm() {
             if (!pendingOrder) return;
             selectOrderType('dinein');
@@ -1975,10 +1933,6 @@
             pendingOrder = null;
             window.selectedLayersMap = {};
         }
-
-        // ============================================================
-        // LOCATION FUNCTIONS
-        // ============================================================
 
         const locationCache = {};
 
@@ -2087,9 +2041,6 @@
             submitOrderWithLocation();
         }
 
-        // ============================================================
-        // SUBMIT ORDER WITH DEVICE TIME
-        // ============================================================
         function submitOrderWithLocation() {
             if (!pendingOrderData) return;
             const { name, phone, items, total, layers, orderType, paymentMethod, fullAddress } = pendingOrderData;
@@ -2178,9 +2129,6 @@
             pendingOrderData = null;
         }
 
-        // ============================================================
-        // REAL-TIME ORDER CONFIRMATION
-        // ============================================================
         function tryListenForOrderConfirmation(orderId) {
             try {
                 const customerSSE = new EventSource('/api/orders/stream?restaurant=' + RESTAURANT_ID);
@@ -2224,9 +2172,6 @@
             }, 5000);
         }
 
-        // ============================================================
-        // SUBMIT ORDER
-        // ============================================================
         function submitOrder(event) {
             event.preventDefault();
             
@@ -2297,9 +2242,6 @@
             });
         }
 
-        // ============================================================
-        // RECEIPT - SHOWS CUSTOMER'S DEVICE TIME
-        // ============================================================
         function showReceipt(order) {
             const now = new Date();
             const orderTime = order.deviceTime || now.toLocaleString();
@@ -2452,9 +2394,6 @@
         function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
         function printReceipt() { window.print(); }
 
-        // ============================================================
-        // DEALS
-        // ============================================================
         function openDeals() {
             fetch(apiUrl('/api/deals?t=' + Date.now()))
                 .then(r => r.json())
@@ -2526,9 +2465,6 @@
             });
         }
 
-        // ============================================================
-        // PANEL NAVIGATION
-        // ============================================================
         function showPanel(panel) {
             currentPanel = panel;
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -2554,9 +2490,6 @@
             }
         }
 
-        // ============================================================
-        // RENDER ORDERS (with Cancel button)
-        // ============================================================
         function renderOrders() {
             if (!orders || orders.length === 0) {
                 menuArea.innerHTML = `
@@ -2619,9 +2552,6 @@
             }
         }
 
-        // ============================================================
-        // ACCOUNT, FEEDBACK, SUPPORT, LOCATION, SETTINGS
-        // ============================================================
         function renderAccount() {
             loadAuthStatus();
             let html = `
@@ -2659,7 +2589,6 @@
             window.location.href = '/logout?restaurant=' + RESTAURANT_ID;
         }
 
-        // Feedback Section
         let customerSelectedRating = 0;
         function renderFeedbackSection() {
             if (!isLoggedIn) {
@@ -2737,7 +2666,6 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        // Support Section
         function renderSupportSection() {
             let html = `
                 <div style="padding:10px 5px;">
@@ -2835,9 +2763,6 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        // ============================================================
-        // LOCATION SECTION
-        // ============================================================
         let currentLat = null;
         let currentLng = null;
         let currentAddress = '';
@@ -2994,7 +2919,6 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        // Settings
         function renderSettings() {
             const theme = localStorage.getItem('theme') || 'light';
             let html = `
@@ -3077,9 +3001,6 @@
             menuArea.innerHTML = html;
         }
 
-        // ============================================================
-        // THEME TOGGLE
-        // ============================================================
         function toggleTheme() {
             const toggle = document.querySelector('.toggle-switch');
             toggle.classList.toggle('active');
@@ -3114,9 +3035,6 @@
             }
         }
 
-        // ============================================================
-        // FEEDBACK FUNCTIONS
-        // ============================================================
         let selectedRating = 0;
         function showFeedbackPopup() {
             selectedRating = 0;
@@ -3165,9 +3083,6 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        // ============================================================
-        // LOGIN REQUIRED
-        // ============================================================
         function openLoginRequired() {
             document.getElementById('loginRequiredPopup').classList.add('show');
         }
@@ -3176,9 +3091,6 @@
             document.getElementById('loginRequiredPopup').classList.remove('show');
         }
 
-        // ============================================================
-        // TOAST NOTIFICATION
-        // ============================================================
         function showToast(message) {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
@@ -3193,9 +3105,6 @@
             }, 3000);
         }
 
-        // ============================================================
-        // DATA REFRESH
-        // ============================================================
         setInterval(function() {
             loadMenu();
             loadDeals();
@@ -3204,9 +3113,6 @@
             checkRestaurantStatus();
         }, 10000);
 
-        // ============================================================
-        // LOAD THEME ON START
-        // ============================================================
         const theme = localStorage.getItem('theme');
         if (theme === 'dark') {
             document.body.style.background = '#1a1a2e';
