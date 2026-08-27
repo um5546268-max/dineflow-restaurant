@@ -441,6 +441,13 @@
         .order-receipt-card .receipt-actions .btn-copy:hover {
             background: #5a4bd1;
         }
+        .order-receipt-card .receipt-actions .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        .order-receipt-card .receipt-actions .btn-delete:hover {
+            background: #c0392b;
+        }
         .order-receipt-card .receipt-badge {
             display: inline-block;
             padding: 2px 12px;
@@ -708,7 +715,8 @@
         }
         .settings-option select,
         .settings-option input[type="text"],
-        .settings-option input[type="number"] {
+        .settings-option input[type="number"],
+        .settings-option input[type="time"] {
             padding: 6px 12px;
             border-radius: 8px;
             border: 1px solid #dfe6e9;
@@ -1073,6 +1081,11 @@
                         <div class="stat-number" id="statRealTime" style="color: #27ae60; font-size: 1.2em;">🟢 Live</div>
                         <div class="stat-label">Real-time Status</div>
                     </div>
+                    <div class="admin-stat-card" style="border: 2px solid #f39c12;">
+                        <div class="stat-icon">🕐</div>
+                        <div class="stat-number" id="statRestaurantStatus" style="color: #27ae60; font-size: 1.2em;">🟢 OPEN</div>
+                        <div class="stat-label">Restaurant Status</div>
+                    </div>
                 </div>
                 <h4 style="margin-bottom:10px;">📋 Recent Orders</h4>
                 <div id="adminRecentOrders">
@@ -1249,6 +1262,67 @@
                         <input type="text" id="adminRestaurantName" placeholder="Restaurant Name" style="width:200px;" />
                         <button class="admin-submit-btn" onclick="adminUpdateRestaurantName()" style="padding:6px 16px; font-size:0.85em;">Update</button>
                     </div>
+                </div>
+
+                <!-- ⭐ NEW: Restaurant Hours / Open-Close Settings -->
+                <div class="settings-card">
+                    <h4>🕐 Restaurant Hours</h4>
+                    <p style="font-size:0.75em; color:#b2bec3; margin-bottom:10px;">Set when your restaurant is open for orders</p>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Restaurant Status</div>
+                            <div class="option-desc">Open or Closed for orders</div>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <span id="restaurantStatusText" style="font-weight:700; padding:4px 12px; border-radius:12px; font-size:0.85em;">Loading...</span>
+                            <button class="admin-submit-btn" onclick="toggleRestaurantStatus()" style="padding:6px 16px; font-size:0.85em;" id="toggleStatusBtn">Toggle</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Opening Time</div>
+                            <div class="option-desc">When restaurant opens</div>
+                        </div>
+                        <input type="time" id="restaurantOpeningTime" style="width:120px;" />
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Closing Time</div>
+                            <div class="option-desc">When restaurant closes</div>
+                        </div>
+                        <input type="time" id="restaurantClosingTime" style="width:120px;" />
+                    </div>
+                    
+                    <button class="admin-submit-btn" onclick="saveRestaurantHours()" style="margin-top:10px;">💾 Save Hours</button>
+                </div>
+
+                <!-- ⭐ NEW: Order Cancellation Settings -->
+                <div class="settings-card">
+                    <h4>⏱️ Order Cancellation Settings</h4>
+                    <p style="font-size:0.75em; color:#b2bec3; margin-bottom:10px;">Control how customers can cancel their orders</p>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Allow Customer Cancellation</div>
+                            <div class="option-desc">Enable/disable order cancellation for customers</div>
+                        </div>
+                        <div class="toggle-switch" id="allowCancellationToggle" onclick="toggleCancellation()">
+                            <div class="toggle-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Cancellation Time Limit (minutes)</div>
+                            <div class="option-desc">Time after which customer cannot cancel</div>
+                        </div>
+                        <input type="number" id="cancellationTimeLimit" min="1" max="60" style="width:100px;" placeholder="5" />
+                    </div>
+                    
+                    <button class="admin-submit-btn" onclick="saveCancellationSettings()" style="margin-top:10px;">💾 Save Cancellation Settings</button>
                 </div>
 
                 <div class="settings-card">
@@ -1502,7 +1576,12 @@
             whatsapp: '923001234567',
             currency: 'Rs',
             discountAmount: 330,
-            discountThreshold: 2000
+            discountThreshold: 2000,
+            openingTime: '09:00',
+            closingTime: '23:00',
+            isOpen: true,
+            cancellationTimeLimit: 5,
+            allowCancellation: true
         };
 
         let selectedIcons = { menu: [], deal: [] };
@@ -1542,7 +1621,6 @@
         let pingCheckInterval = null;
 
         function connectToOrderStream() {
-            // Always start polling as backup
             startPolling();
 
             if (eventSource) {
@@ -1670,7 +1748,6 @@
             }
 
             pollInterval = setInterval(() => {
-                // Only poll if SSE is not connected
                 if (!isSSEConnected) {
                     fetch('/api/orders/poll?restaurant=' + RESTAURANT_ID + '&lastId=' + lastOrderId + '&timeout=5000')
                         .then(r => r.json())
@@ -1762,7 +1839,6 @@
             });
         }
 
-        // Clean up on page unload
         window.addEventListener('beforeunload', function() {
             if (eventSource) {
                 eventSource.close();
@@ -1778,13 +1854,164 @@
             }
         });
 
-        // Reconnect if page becomes visible again
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden && !isSSEConnected) {
                 console.log('📱 Page became visible, reconnecting...');
                 connectToOrderStream();
             }
         });
+
+        // ============================================================
+        // ⭐ RESTAURANT STATUS FUNCTIONS ⭐
+        // ============================================================
+        function loadRestaurantStatus() {
+            fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    const statusText = document.getElementById('restaurantStatusText');
+                    const toggleBtn = document.getElementById('toggleStatusBtn');
+                    const statusDisplay = document.getElementById('statRestaurantStatus');
+                    
+                    if (data.isOpen) {
+                        statusText.textContent = '🟢 OPEN';
+                        statusText.style.background = '#e8f8f0';
+                        statusText.style.color = '#27ae60';
+                        toggleBtn.textContent = '🔴 Close';
+                        toggleBtn.style.background = '#e74c3c';
+                        if (statusDisplay) {
+                            statusDisplay.textContent = '🟢 OPEN';
+                            statusDisplay.style.color = '#27ae60';
+                        }
+                    } else {
+                        statusText.textContent = '🔴 CLOSED';
+                        statusText.style.background = '#fdf2f2';
+                        statusText.style.color = '#e74c3c';
+                        toggleBtn.textContent = '🟢 Open';
+                        toggleBtn.style.background = '#27ae60';
+                        if (statusDisplay) {
+                            statusDisplay.textContent = '🔴 CLOSED';
+                            statusDisplay.style.color = '#e74c3c';
+                        }
+                    }
+                    
+                    document.getElementById('restaurantOpeningTime').value = data.openingTime || '09:00';
+                    document.getElementById('restaurantClosingTime').value = data.closingTime || '23:00';
+                })
+                .catch(() => {});
+        }
+
+        function toggleRestaurantStatus() {
+            const statusText = document.getElementById('restaurantStatusText');
+            const isCurrentlyOpen = statusText.textContent.includes('OPEN');
+            
+            fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isOpen: !isCurrentlyOpen })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Restaurant status updated!');
+                    loadRestaurantStatus();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to update'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function saveRestaurantHours() {
+            const openingTime = document.getElementById('restaurantOpeningTime').value;
+            const closingTime = document.getElementById('restaurantClosingTime').value;
+            
+            if (!openingTime || !closingTime) {
+                showToast('⚠️ Please set both opening and closing times');
+                return;
+            }
+            
+            fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ openingTime, closingTime })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Restaurant hours saved!');
+                    loadRestaurantStatus();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to save'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // ⭐ CANCELLATION SETTINGS FUNCTIONS ⭐
+        // ============================================================
+        function loadCancellationSettings() {
+            fetch('/api/cancellation-settings?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    const toggle = document.getElementById('allowCancellationToggle');
+                    if (data.allowCancellation) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
+                    document.getElementById('cancellationTimeLimit').value = data.cancellationTimeLimit || 5;
+                })
+                .catch(() => {});
+        }
+
+        function toggleCancellation() {
+            const toggle = document.getElementById('allowCancellationToggle');
+            toggle.classList.toggle('active');
+        }
+
+        function saveCancellationSettings() {
+            const allowCancellation = document.getElementById('allowCancellationToggle').classList.contains('active');
+            const cancellationTimeLimit = parseInt(document.getElementById('cancellationTimeLimit').value) || 5;
+            
+            fetch('/api/cancellation-settings?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ allowCancellation, cancellationTimeLimit })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Cancellation settings saved!');
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to save'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // ⭐ ORDER DELETE FUNCTION (Admin) ⭐
+        // ============================================================
+        function deleteOrderPermanently(orderId) {
+            if (!confirm('⚠️ Are you sure you want to permanently delete this order? This cannot be undone!')) return;
+            
+            fetch('/api/orders/' + orderId + '?restaurant=' + RESTAURANT_ID, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Order #' + orderId + ' deleted permanently!');
+                    loadOrders();
+                    renderAdminDashboard();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to delete order'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
 
         // ============================================================
         // LOAD DATA
@@ -1897,6 +2124,10 @@
             fetch('/api/locations/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => { customerLocations = data; allLocations = data; renderAdminDelivery(); });
+
+            // Load new settings
+            loadRestaurantStatus();
+            loadCancellationSettings();
         }
 
         // ============================================================
@@ -2265,7 +2496,7 @@
         function printReceipt() { window.print(); }
 
         // ============================================================
-        // RENDER ADMIN ORDERS
+        // RENDER ADMIN ORDERS (with Delete button)
         // ============================================================
         function renderAdminOrders() {
             const container = document.getElementById('adminAllOrders');
@@ -2413,6 +2644,8 @@
                             <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp</a>
                             ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">🗺️ Map</a>` : ''}
                             ${locationHtml}
+                            <!-- ⭐ NEW: Delete Order Button (Admin only) -->
+                            <button class="btn-delete" onclick="deleteOrderPermanently(${order.id})" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️ Delete</button>
                         </div>
                     </div>
                 `;
@@ -3297,7 +3530,6 @@
 
             loadAdminData();
 
-            // Get last order ID from existing orders
             if (orders.length > 0) {
                 lastOrderId = Math.max(...orders.map(o => o.id));
             }

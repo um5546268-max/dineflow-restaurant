@@ -109,6 +109,28 @@
             min-width: 20px; 
             text-align: center; 
         }
+        /* ⭐ Restaurant Status Banner */
+        .restaurant-status-banner {
+            padding: 6px 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .restaurant-status-banner.open {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .restaurant-status-banner.closed {
+            background: #fdf2f2;
+            color: #e74c3c;
+            animation: pulseBanner 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseBanner {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
 
         .main-container { display: flex; flex: 1; overflow: hidden; }
 
@@ -1000,6 +1022,11 @@
 </head>
 <body>
 
+    <!-- ⭐ Restaurant Status Banner -->
+    <div id="restaurantStatusBanner" class="restaurant-status-banner open">
+        🟢 Restaurant is OPEN - Order Now!
+    </div>
+
     <div id="splashScreen">
         <div class="splash-logo">🍔</div>
         <div class="splash-name" id="splashName">The Heaven Slice</div>
@@ -1231,7 +1258,12 @@
             whatsapp: '923001234567',
             currency: 'Rs',
             discountAmount: 330,
-            discountThreshold: 2000
+            discountThreshold: 2000,
+            openingTime: '09:00',
+            closingTime: '23:00',
+            isOpen: true,
+            cancellationTimeLimit: 5,
+            allowCancellation: true
         };
 
         function loadRestaurantConfig() {
@@ -1257,8 +1289,88 @@
                     if (data.est) {
                         receiptSettings.established = data.est;
                     }
+                    if (data.openingTime) {
+                        restaurantConfig.openingTime = data.openingTime;
+                    }
+                    if (data.closingTime) {
+                        restaurantConfig.closingTime = data.closingTime;
+                    }
+                    if (data.isOpen !== undefined) {
+                        restaurantConfig.isOpen = data.isOpen;
+                    }
+                    if (data.cancellationTimeLimit !== undefined) {
+                        restaurantConfig.cancellationTimeLimit = data.cancellationTimeLimit;
+                    }
+                    if (data.allowCancellation !== undefined) {
+                        restaurantConfig.allowCancellation = data.allowCancellation;
+                    }
+                    
+                    // Update status banner
+                    updateRestaurantStatusBanner();
                 })
                 .catch(() => {});
+        }
+
+        // ============================================================
+        // ⭐ RESTAURANT STATUS FUNCTIONS ⭐
+        // ============================================================
+        function updateRestaurantStatusBanner() {
+            const banner = document.getElementById('restaurantStatusBanner');
+            if (!banner) return;
+            
+            if (restaurantConfig.isOpen) {
+                banner.className = 'restaurant-status-banner open';
+                banner.textContent = '🟢 Restaurant is OPEN - Order Now!';
+            } else {
+                banner.className = 'restaurant-status-banner closed';
+                banner.textContent = '🔴 Restaurant is CLOSED - Opens at ' + (restaurantConfig.openingTime || '09:00');
+            }
+        }
+
+        function checkRestaurantStatus() {
+            return fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    restaurantConfig.isOpen = data.isOpen;
+                    restaurantConfig.openingTime = data.openingTime;
+                    restaurantConfig.closingTime = data.closingTime;
+                    updateRestaurantStatusBanner();
+                    
+                    if (!data.isOpen) {
+                        showToast('🔴 Restaurant is currently closed. Opens at ' + data.openingTime);
+                        return false;
+                    }
+                    return true;
+                })
+                .catch(() => true);
+        }
+
+        // ============================================================
+        // ⭐ CANCEL ORDER FUNCTION ⭐
+        // ============================================================
+        function cancelOrder(orderId) {
+            if (!restaurantConfig.allowCancellation) {
+                showToast('❌ Order cancellation is disabled by the restaurant');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            
+            fetch('/api/orders/' + orderId + '/cancel?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isCustomer: true })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Order #' + orderId + ' cancelled successfully!');
+                    loadOrders();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to cancel order'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
         }
 
         // ============================================================
@@ -1376,6 +1488,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadRestaurantConfig();
             checkPersistentLogin();
+            
+            // Check restaurant status on load
+            checkRestaurantStatus();
 
             fetch(apiUrl('/api/receipt-settings'))
                 .then(r => r.json())
@@ -1698,11 +1813,20 @@
                 openLoginRequired();
                 return;
             }
-            const items = cart.map(item => ({ ...item, qty: item.qty || 1 }));
-            const total = getCartTotal();
-            pendingOrder = { items: items, total: total };
-            closeCartPopup();
-            openOrderForm();
+            
+            // Check if restaurant is open
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                const items = cart.map(item => ({ ...item, qty: item.qty || 1 }));
+                const total = getCartTotal();
+                pendingOrder = { items: items, total: total };
+                closeCartPopup();
+                openOrderForm();
+            });
         }
 
         function quickBuy(itemId) {
@@ -1712,8 +1836,16 @@
                 openLoginRequired();
                 return;
             }
-            pendingOrder = { items: [{ ...item, qty: 1, id: itemId }], total: item.price };
-            openOrderForm();
+            
+            // Check if restaurant is open
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                pendingOrder = { items: [{ ...item, qty: 1, id: itemId }], total: item.price };
+                openOrderForm();
+            });
         }
 
         // ============================================================
@@ -2079,64 +2211,73 @@
         // ============================================================
         function submitOrder(event) {
             event.preventDefault();
-            const name = document.getElementById('orderName').value;
-            const phone = document.getElementById('orderPhone').value;
-            const table = document.getElementById('orderTable')?.value || '';
-            const carNumber = document.getElementById('carNumber')?.value || '';
-            const carServiceAddress = document.getElementById('carServiceAddress')?.value || '';
-            const address = document.getElementById('orderAddress')?.value || '';
-            const city = document.getElementById('orderCity')?.value || '';
-            const thirdpartyName = document.getElementById('thirdpartyName')?.value || '';
-            const thirdpartyOrderId = document.getElementById('thirdpartyOrderId')?.value || '';
-            const items = JSON.parse(document.getElementById('orderItems').value);
-            const total = parseFloat(document.getElementById('orderTotal').value);
             
-            const layers = [];
-            if (window.selectedLayersMap) {
-                Object.keys(window.selectedLayersMap).forEach(itemId => {
-                    if (window.selectedLayersMap[itemId].length > 0) {
-                        layers.push(...window.selectedLayersMap[itemId]);
-                    }
-                });
-            }
-            
-            const orderType = document.getElementById('orderType').value;
+            // ⭐ Check if restaurant is open
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                const name = document.getElementById('orderName').value;
+                const phone = document.getElementById('orderPhone').value;
+                const table = document.getElementById('orderTable')?.value || '';
+                const carNumber = document.getElementById('carNumber')?.value || '';
+                const carServiceAddress = document.getElementById('carServiceAddress')?.value || '';
+                const address = document.getElementById('orderAddress')?.value || '';
+                const city = document.getElementById('orderCity')?.value || '';
+                const thirdpartyName = document.getElementById('thirdpartyName')?.value || '';
+                const thirdpartyOrderId = document.getElementById('thirdpartyOrderId')?.value || '';
+                const items = JSON.parse(document.getElementById('orderItems').value);
+                const total = parseFloat(document.getElementById('orderTotal').value);
+                
+                const layers = [];
+                if (window.selectedLayersMap) {
+                    Object.keys(window.selectedLayersMap).forEach(itemId => {
+                        if (window.selectedLayersMap[itemId].length > 0) {
+                            layers.push(...window.selectedLayersMap[itemId]);
+                        }
+                    });
+                }
+                
+                const orderType = document.getElementById('orderType').value;
 
-            if (!name || !phone) {
-                showToast('⚠️ Please fill name and phone');
-                return;
-            }
+                if (!name || !phone) {
+                    showToast('⚠️ Please fill name and phone');
+                    return;
+                }
 
-            let fullAddress = '';
-            if (orderType === 'dinein') {
-                fullAddress = 'Dine-In - Table ' + table;
-            } else if (orderType === 'carService') {
-                fullAddress = 'Car Service - ' + carNumber + ' - ' + carServiceAddress;
-            } else if (orderType === 'takeaway') {
-                fullAddress = 'Takeaway - ' + name;
-            } else if (orderType === 'delivery') {
-                fullAddress = address + ', ' + city;
-            } else if (orderType === 'thirdparty') {
-                fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
-            }
+                let fullAddress = '';
+                if (orderType === 'dinein') {
+                    fullAddress = 'Dine-In - Table ' + table;
+                } else if (orderType === 'carService') {
+                    fullAddress = 'Car Service - ' + carNumber + ' - ' + carServiceAddress;
+                } else if (orderType === 'takeaway') {
+                    fullAddress = 'Takeaway - ' + name;
+                } else if (orderType === 'delivery') {
+                    fullAddress = address + ', ' + city;
+                } else if (orderType === 'thirdparty') {
+                    fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
+                }
 
-            const orderData = { 
-                name, phone, items, total, layers, 
-                table, carNumber, carServiceAddress, address, city, 
-                thirdpartyName, thirdpartyOrderId, 
-                fullAddress: fullAddress,
-                orderType: orderType,
-                restaurantId: RESTAURANT_ID
-            };
-            closeOrderPopup();
+                const orderData = { 
+                    name, phone, items, total, layers, 
+                    table, carNumber, carServiceAddress, address, city, 
+                    thirdpartyName, thirdpartyOrderId, 
+                    fullAddress: fullAddress,
+                    orderType: orderType,
+                    restaurantId: RESTAURANT_ID
+                };
+                closeOrderPopup();
 
-            if (orderType === 'delivery') {
-                showLocationPopup(orderData);
-            } else {
-                pendingOrderData = orderData;
-                orderLocation = { lat: null, lng: null, address: '' };
-                submitOrderWithLocation();
-            }
+                if (orderType === 'delivery') {
+                    showLocationPopup(orderData);
+                } else {
+                    pendingOrderData = orderData;
+                    orderLocation = { lat: null, lng: null, address: '' };
+                    submitOrderWithLocation();
+                }
+            });
         }
 
         // ============================================================
@@ -2198,6 +2339,17 @@
             }
             const grandTotal = subtotal - discount;
 
+            // ⭐ Show cancellation deadline on receipt
+            let cancellationInfo = '';
+            if (config.allowCancellation && config.cancellationTimeLimit > 0) {
+                const deadline = new Date(Date.now() + (config.cancellationTimeLimit * 60000));
+                cancellationInfo = `
+                    <div class="receipt-customer" style="font-weight:normal; font-size:9px; color:#f39c12;">
+                        ⏱️ You can cancel this order within ${config.cancellationTimeLimit} minutes
+                    </div>
+                `;
+            }
+
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(window.location.origin)}`;
 
             const html = `
@@ -2223,6 +2375,7 @@
                             ${order.userName && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">Name: ${order.userName}</div>` : ''}
                             ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📞 ${order.phone}</div>` : ''}
                             ${order.address && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📍 ${order.address}</div>` : ''}
+                            ${cancellationInfo}
                         </div>
                         
                         <div class="receipt-table-header">
@@ -2332,14 +2485,22 @@
                 openLoginRequired();
                 return;
             }
-            const deal = deals.find(d => d.id === dealId);
-            if (!deal) return;
-            pendingOrder = {
-                items: [{ name: deal.name, price: deal.price, qty: 1, isDeal: true }],
-                total: deal.price
-            };
-            closeDeals();
-            openOrderForm();
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                const deal = deals.find(d => d.id === dealId);
+                if (!deal) return;
+                pendingOrder = {
+                    items: [{ name: deal.name, price: deal.price, qty: 1, isDeal: true }],
+                    total: deal.price
+                };
+                closeDeals();
+                openOrderForm();
+            });
         }
 
         // ============================================================
@@ -2371,7 +2532,7 @@
         }
 
         // ============================================================
-        // RENDER ORDERS
+        // RENDER ORDERS (with Cancel button)
         // ============================================================
         function renderOrders() {
             if (!orders || orders.length === 0) {
@@ -2389,6 +2550,10 @@
             orders.slice().reverse().forEach(order => {
                 const statusClass = `status-${order.status}`;
                 const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
+                
+                // Check if order can be cancelled
+                const canCancel = order.status === 'pending' && restaurantConfig.allowCancellation;
+                
                 html += `
                     <div style="background:white; border-radius:12px; padding:12px 15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
@@ -2404,7 +2569,11 @@
                         ${order.address ? `<div style="font-size:0.7em; color:#b2bec3;">📍 ${order.address}</div>` : ''}
                         ${order.phone ? `<div style="font-size:0.7em; color:#b2bec3;">📞 ${order.phone}</div>` : ''}
                         <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
-                        <button onclick="showReceiptForOrder(${order.id})" style="margin-top:6px; padding:4px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer;">🖨️ Receipt</button>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                            <button onclick="showReceiptForOrder(${order.id})" style="padding:4px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">🖨️ Receipt</button>
+                            ${canCancel ? `<button onclick="cancelOrder(${order.id})" style="padding:4px 12px; border:none; border-radius:12px; background:#e74c3c; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">❌ Cancel</button>` : ''}
+                        </div>
+                        ${order.status === 'cancelled' ? `<div style="font-size:0.7em; color:#e74c3c; margin-top:4px;">⚠️ This order was cancelled</div>` : ''}
                     </div>
                 `;
             });
@@ -3011,6 +3180,7 @@
             loadDeals();
             loadRestaurantName();
             loadOrders();
+            checkRestaurantStatus();
         }, 10000);
 
         // ============================================================

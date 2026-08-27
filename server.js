@@ -21,7 +21,14 @@ let RESTAURANT_CONFIG = {
     whatsapp: '923001234567',
     currency: 'Rs',
     discountAmount: 330,
-    discountThreshold: 2000
+    discountThreshold: 2000,
+    // ⭐ NEW: Restaurant Hours
+    openingTime: '09:00',
+    closingTime: '23:00',
+    isOpen: true,
+    // ⭐ NEW: Order cancellation settings
+    cancellationTimeLimit: 5, // minutes
+    allowCancellation: true
 };
 
 // ============================================
@@ -52,9 +59,18 @@ let data = {
         discountAmount: RESTAURANT_CONFIG.discountAmount,
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
         thankYouMessage: 'Thank You for Your Order!',
-        footerMessage: 'Have a Great Day!'
+        footerMessage: 'Have a Great Day!',
+        // ⭐ NEW: Cancellation time on receipt
+        showCancellationTime: true
     },
-    restaurantConfig: RESTAURANT_CONFIG
+    restaurantConfig: RESTAURANT_CONFIG,
+    // ⭐ NEW: Track restaurant open/close status
+    restaurantStatus: {
+        isOpen: true,
+        openingTime: '09:00',
+        closingTime: '23:00',
+        lastUpdated: new Date().toISOString()
+    }
 };
 
 function loadData() {
@@ -70,9 +86,15 @@ function loadData() {
             if (data.receiptSettings) {
                 data.receiptSettings = { ...data.receiptSettings };
             }
+            if (data.restaurantStatus) {
+                RESTAURANT_CONFIG.isOpen = data.restaurantStatus.isOpen;
+                RESTAURANT_CONFIG.openingTime = data.restaurantStatus.openingTime;
+                RESTAURANT_CONFIG.closingTime = data.restaurantStatus.closingTime;
+            }
             
             console.log('✅ Data loaded from file');
             console.log(`📊 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
+            console.log(`🕐 Restaurant: ${RESTAURANT_CONFIG.isOpen ? 'OPEN' : 'CLOSED'} (${RESTAURANT_CONFIG.openingTime} - ${RESTAURANT_CONFIG.closingTime})`);
             return true;
         }
         return false;
@@ -95,6 +117,12 @@ function saveData() {
             address: RESTAURANT_CONFIG.address,
             phone: RESTAURANT_CONFIG.phone,
             established: RESTAURANT_CONFIG.est
+        };
+        data.restaurantStatus = {
+            isOpen: RESTAURANT_CONFIG.isOpen,
+            openingTime: RESTAURANT_CONFIG.openingTime,
+            closingTime: RESTAURANT_CONFIG.closingTime,
+            lastUpdated: new Date().toISOString()
         };
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
         console.log('💾 Data saved to file');
@@ -179,6 +207,12 @@ function syncAndSave() {
     data.orderCounter = orderCounter;
     data.receiptSettings = receiptSettings;
     data.restaurantConfig = RESTAURANT_CONFIG;
+    data.restaurantStatus = {
+        isOpen: RESTAURANT_CONFIG.isOpen,
+        openingTime: RESTAURANT_CONFIG.openingTime,
+        closingTime: RESTAURANT_CONFIG.closingTime,
+        lastUpdated: new Date().toISOString()
+    };
     saveData();
 }
 
@@ -276,13 +310,9 @@ function createDefaultRestaurant() {
 // ============================================
 const adminClients = new Set();
 let clientIdCounter = 0;
-let lastOrderCheck = {};
-
-// Store order updates to send to new connections
 let orderUpdateBuffer = [];
 const MAX_BUFFER_SIZE = 100;
 
-// ⭐ SSE Endpoint
 app.get('/api/orders/stream', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -291,7 +321,6 @@ app.get('/api/orders/stream', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const clientId = ++clientIdCounter;
     
-    // Set headers for SSE
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
@@ -300,10 +329,8 @@ app.get('/api/orders/stream', (req, res) => {
         'X-Accel-Buffering': 'no'
     });
     
-    // Send initial connection message
     res.write(`data: ${JSON.stringify({ type: 'connected', clientId: clientId })}\n\n`);
     
-    // Send any recent orders (last 5) to catch up
     const restaurant = getOrCreateRestaurant(restaurantId);
     const recentOrders = restaurant.orders.slice(-5);
     if (recentOrders.length > 0) {
@@ -323,7 +350,6 @@ app.get('/api/orders/stream', (req, res) => {
     
     console.log(`✅ Admin client ${clientId} connected (Total: ${adminClients.size})`);
     
-    // Ping every 10 seconds
     const pingInterval = setInterval(() => {
         try {
             if (client.connected) {
@@ -337,7 +363,6 @@ app.get('/api/orders/stream', (req, res) => {
         }
     }, 10000);
     
-    // Handle disconnect
     req.on('close', () => {
         client.connected = false;
         clearInterval(pingInterval);
@@ -345,7 +370,6 @@ app.get('/api/orders/stream', (req, res) => {
         console.log(`❌ Admin client ${clientId} disconnected (Total: ${adminClients.size})`);
     });
     
-    // Handle timeout (2 minutes)
     req.setTimeout(120000, () => {
         client.connected = false;
         clearInterval(pingInterval);
@@ -355,7 +379,6 @@ app.get('/api/orders/stream', (req, res) => {
     });
 });
 
-// ⭐ Long-polling fallback endpoint
 app.get('/api/orders/poll', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -366,14 +389,12 @@ app.get('/api/orders/poll', (req, res) => {
     const lastOrderId = parseInt(req.query.lastId) || 0;
     const timeout = parseInt(req.query.timeout) || 30000;
     
-    // Check if there are new orders
     const newOrders = restaurant.orders.filter(o => o.id > lastOrderId);
     
     if (newOrders.length > 0) {
         return res.json({ orders: newOrders, lastId: restaurant.orders.length });
     }
     
-    // Wait for new orders (long polling)
     const startTime = Date.now();
     const checkInterval = setInterval(() => {
         const currentOrders = getOrCreateRestaurant(restaurantId);
@@ -388,7 +409,6 @@ app.get('/api/orders/poll', (req, res) => {
         }
     }, 1000);
     
-    // Clean up on client disconnect
     req.on('close', () => {
         clearInterval(checkInterval);
     });
@@ -418,7 +438,6 @@ function broadcastNewOrder(order, restaurantId) {
     
     console.log(`📡 Broadcasted order #${order.id} to ${sentCount} admin clients (Total: ${adminClients.size})`);
     
-    // Store in buffer for new connections
     orderUpdateBuffer.push({ order, restaurantId, timestamp: Date.now() });
     if (orderUpdateBuffer.length > MAX_BUFFER_SIZE) {
         orderUpdateBuffer.shift();
@@ -526,7 +545,7 @@ app.post('/api/receipt-settings', (req, res) => {
         const allowedFields = [
             'logoIcon', 'logoUrl', 'tagline', 'established', 'address', 'phone',
             'qrCodeUrl', 'discountAmount', 'discountThreshold',
-            'thankYouMessage', 'footerMessage'
+            'thankYouMessage', 'footerMessage', 'showCancellationTime'
         ];
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined && req.body[field] !== null) {
@@ -556,6 +575,185 @@ app.post('/api/receipt-settings', (req, res) => {
     } catch (error) {
         console.error('Error saving receipt settings:', error);
         res.status(500).json({ error: 'Failed to save settings' });
+    }
+});
+
+// ============================================
+// ⭐ RESTAURANT STATUS ROUTES (Open/Close) ⭐
+// ============================================
+app.get('/api/restaurant-status', (req, res) => {
+    const now = new Date();
+    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    
+    // Check if within opening hours
+    const opening = RESTAURANT_CONFIG.openingTime || '09:00';
+    const closing = RESTAURANT_CONFIG.closingTime || '23:00';
+    const isWithinHours = currentTime >= opening && currentTime <= closing;
+    
+    // Override if admin manually set
+    const isOpen = RESTAURANT_CONFIG.isOpen !== undefined ? RESTAURANT_CONFIG.isOpen : isWithinHours;
+    
+    res.json({
+        isOpen: isOpen,
+        openingTime: opening,
+        closingTime: closing,
+        currentTime: currentTime,
+        message: isOpen ? 'Restaurant is open' : 'Restaurant is closed',
+        autoMode: RESTAURANT_CONFIG.isOpen === undefined
+    });
+});
+
+app.post('/api/restaurant-status', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const { isOpen, openingTime, closingTime } = req.body;
+        
+        if (isOpen !== undefined) {
+            RESTAURANT_CONFIG.isOpen = isOpen;
+        }
+        if (openingTime) {
+            RESTAURANT_CONFIG.openingTime = openingTime;
+        }
+        if (closingTime) {
+            RESTAURANT_CONFIG.closingTime = closingTime;
+        }
+        
+        syncAndSave();
+        
+        res.json({
+            success: true,
+            message: 'Restaurant status updated',
+            status: {
+                isOpen: RESTAURANT_CONFIG.isOpen,
+                openingTime: RESTAURANT_CONFIG.openingTime,
+                closingTime: RESTAURANT_CONFIG.closingTime
+            }
+        });
+    } catch (error) {
+        console.error('Error updating restaurant status:', error);
+        res.status(500).json({ error: 'Failed to update status' });
+    }
+});
+
+// ============================================
+// ⭐ ORDER CANCELLATION ROUTES ⭐
+// ============================================
+app.post('/api/orders/:id/cancel', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    const order = restaurant.orders.find(o => o.id === parseInt(req.params.id));
+    
+    if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    // Check if user owns this order (for customer cancellation)
+    if (req.body.isCustomer && order.userId !== req.user.id) {
+        return res.status(403).json({ error: 'You can only cancel your own orders' });
+    }
+    
+    // Check if cancellation is allowed
+    if (req.body.isCustomer && !RESTAURANT_CONFIG.allowCancellation) {
+        return res.status(400).json({ error: 'Order cancellation is disabled by restaurant' });
+    }
+    
+    // Check if within time limit (for customer cancellation)
+    if (req.body.isCustomer && RESTAURANT_CONFIG.cancellationTimeLimit > 0) {
+        const orderTime = new Date(order.createdAt || order.date);
+        const now = new Date();
+        const minutesDiff = (now - orderTime) / (1000 * 60);
+        
+        if (minutesDiff > RESTAURANT_CONFIG.cancellationTimeLimit) {
+            return res.status(400).json({ 
+                error: `Cancellation time limit exceeded. You can only cancel within ${RESTAURANT_CONFIG.cancellationTimeLimit} minutes.`,
+                timeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
+            });
+        }
+    }
+    
+    // Check if order can be cancelled
+    if (order.status === 'delivered' || order.status === 'cancelled') {
+        return res.status(400).json({ error: 'Order cannot be cancelled' });
+    }
+    
+    order.status = 'cancelled';
+    syncAndSave();
+    
+    // Broadcast update
+    broadcastOrderUpdate(order, restaurantId);
+    
+    res.json({ success: true, message: 'Order cancelled successfully', order: order });
+});
+
+// ⭐ NEW: Admin delete order permanently
+app.delete('/api/orders/:id', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    const index = restaurant.orders.findIndex(o => o.id === parseInt(req.params.id));
+    
+    if (index === -1) {
+        return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    const deletedOrder = restaurant.orders[index];
+    restaurant.orders.splice(index, 1);
+    syncAndSave();
+    
+    // Broadcast update
+    broadcastOrderUpdate({ ...deletedOrder, status: 'deleted' }, restaurantId);
+    
+    res.json({ success: true, message: 'Order deleted permanently' });
+});
+
+// ============================================
+// ⭐ ORDER CANCELLATION SETTINGS ⭐
+// ============================================
+app.get('/api/cancellation-settings', (req, res) => {
+    res.json({
+        allowCancellation: RESTAURANT_CONFIG.allowCancellation,
+        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
+    });
+});
+
+app.post('/api/cancellation-settings', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const { allowCancellation, cancellationTimeLimit } = req.body;
+        
+        if (allowCancellation !== undefined) {
+            RESTAURANT_CONFIG.allowCancellation = allowCancellation;
+        }
+        if (cancellationTimeLimit !== undefined && !isNaN(cancellationTimeLimit)) {
+            RESTAURANT_CONFIG.cancellationTimeLimit = Number(cancellationTimeLimit);
+        }
+        
+        syncAndSave();
+        
+        res.json({
+            success: true,
+            message: 'Cancellation settings updated',
+            settings: {
+                allowCancellation: RESTAURANT_CONFIG.allowCancellation,
+                cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
+            }
+        });
+    } catch (error) {
+        console.error('Error updating cancellation settings:', error);
+        res.status(500).json({ error: 'Failed to update settings' });
     }
 });
 
@@ -766,6 +964,23 @@ app.post('/api/orders', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
     
+    // ⭐ Check if restaurant is open
+    const now = new Date();
+    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    const opening = RESTAURANT_CONFIG.openingTime || '09:00';
+    const closing = RESTAURANT_CONFIG.closingTime || '23:00';
+    const isWithinHours = currentTime >= opening && currentTime <= closing;
+    const isOpen = RESTAURANT_CONFIG.isOpen !== undefined ? RESTAURANT_CONFIG.isOpen : isWithinHours;
+    
+    if (!isOpen) {
+        return res.status(403).json({ 
+            error: 'restaurant_closed',
+            message: `Restaurant is currently closed. Opens at ${opening} and closes at ${closing}`,
+            openingTime: opening,
+            closingTime: closing
+        });
+    }
+    
     const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -790,13 +1005,14 @@ app.post('/api/orders', (req, res) => {
         lng: orderType === 'delivery' ? (lng || null) : null,
         locationShared: orderType === 'delivery' && !!(lat && lng),
         table: table || null,
-        orderNumber: orderCounter++
+        orderNumber: orderCounter++,
+        // ⭐ NEW: Track cancellation eligibility
+        cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString()
     };
     
     restaurant.orders.push(newOrder);
     syncAndSave();
     
-    // ⭐ BROADCAST TO ALL ADMIN CLIENTS ⭐
     broadcastNewOrder(newOrder, restaurantId);
     
     if (orderType === 'delivery' && lat && lng) {
@@ -849,7 +1065,6 @@ app.put('/api/orders/:id/status', (req, res) => {
     order.status = status;
     syncAndSave();
     
-    // ⭐ BROADCAST STATUS UPDATE ⭐
     broadcastOrderUpdate(order, restaurantId);
     
     res.json({ success: true, order });
@@ -1035,9 +1250,6 @@ app.get('/api/users', (req, res) => {
     res.json({ total: users.length, users: users });
 });
 
-// ============================================
-// ⭐ SSE STATUS ENDPOINT ⭐
-// ============================================
 app.get('/api/sse-status', (req, res) => {
     res.json({
         connected: adminClients.size > 0,
@@ -1191,7 +1403,9 @@ app.get('/api/test', (req, res) => {
         restaurants: restaurants.length,
         discountAmount: RESTAURANT_CONFIG.discountAmount,
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
-        sseClients: adminClients.size
+        sseClients: adminClients.size,
+        isOpen: RESTAURANT_CONFIG.isOpen,
+        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
     });
 });
 
@@ -1211,6 +1425,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
     console.log('========================================');
     console.log(`💰 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
+    console.log(`🕐 Restaurant: ${RESTAURANT_CONFIG.isOpen ? 'OPEN' : 'CLOSED'} (${RESTAURANT_CONFIG.openingTime} - ${RESTAURANT_CONFIG.closingTime})`);
+    console.log(`⏱️ Cancellation Time Limit: ${RESTAURANT_CONFIG.cancellationTimeLimit} minutes`);
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
