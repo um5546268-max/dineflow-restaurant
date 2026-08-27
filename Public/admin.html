@@ -114,6 +114,10 @@
             background: #3a1a1a;
             color: #e74c3c;
         }
+        .connection-status.polling {
+            background: #3a3a1a;
+            color: #f39c12;
+        }
 
         .admin-body {
             display: flex;
@@ -1486,6 +1490,7 @@
         let customerLocations = [];
         let availableLayers = [];
         let lastOrderCount = 0;
+        let lastOrderId = 0;
         let currencySymbol = 'Rs';
         let whatsappNumber = '923001234567';
         let allLocations = [];
@@ -1526,18 +1531,20 @@
         ];
 
         // ============================================================
-        // ⭐ REAL-TIME ORDER STREAM (SSE) - WITH RECONNECTION ⭐
+        // ⭐ HYBRID REAL-TIME ORDERS (SSE + Polling) ⭐
         // ============================================================
         let eventSource = null;
         let isSSEConnected = false;
         let reconnectAttempts = 0;
-        let maxReconnectAttempts = 50;
-        let reconnectDelay = 1000;
+        let pollInterval = null;
         let notificationSoundEnabled = true;
         let lastPingTime = Date.now();
         let pingCheckInterval = null;
 
         function connectToOrderStream() {
+            // Always start polling as backup
+            startPolling();
+
             if (eventSource) {
                 eventSource.close();
                 eventSource = null;
@@ -1552,13 +1559,12 @@
                 eventSource.onopen = function(e) {
                     isSSEConnected = true;
                     reconnectAttempts = 0;
-                    reconnectDelay = 1000;
                     console.log('✅ Real-time order stream connected!');
                     updateConnectionStatus(true);
-                    document.getElementById('statRealTime').textContent = '🟢 Live';
+                    document.getElementById('statRealTime').textContent = '🟢 Live (SSE)';
                     document.getElementById('statRealTime').style.color = '#27ae60';
                     lastPingTime = Date.now();
-                    
+
                     if (pingCheckInterval) clearInterval(pingCheckInterval);
                     pingCheckInterval = setInterval(checkPing, 15000);
                 };
@@ -1574,29 +1580,37 @@
                         }
 
                         if (data.type === 'new_order') {
-                            console.log('🆕 New order #' + data.order.id + ' received in real-time!');
-                            
-                            showToast('🆕 New Order #' + data.order.id + ' received!');
-                            playNotificationSound();
+                            if (data.catchup) {
+                                console.log('📋 Catch-up order #' + data.order.id);
+                            } else {
+                                console.log('🆕 New order #' + data.order.id + ' received in real-time!');
+                                showToast('🆕 New Order #' + data.order.id + ' received!');
+                                playNotificationSound();
+                            }
 
-                            orders.push(data.order);
-                            lastOrderCount = orders.length;
-
-                            renderAdminDashboard();
-                            renderAdminOrders();
-                            renderAdminDelivery();
-                            flashNewOrder(data.order.id);
+                            const exists = orders.some(o => o.id === data.order.id);
+                            if (!exists) {
+                                orders.push(data.order);
+                                lastOrderCount = orders.length;
+                                if (data.order.id > lastOrderId) {
+                                    lastOrderId = data.order.id;
+                                }
+                                renderAdminDashboard();
+                                renderAdminOrders();
+                                renderAdminDelivery();
+                                flashNewOrder(data.order.id);
+                            }
                         }
 
                         if (data.type === 'order_update') {
                             console.log('🔄 Order #' + data.order.id + ' status updated to: ' + data.order.status);
                             showToast('🔄 Order #' + data.order.id + ' is now ' + data.order.status);
-                            
+
                             const index = orders.findIndex(o => o.id === data.order.id);
                             if (index !== -1) {
                                 orders[index] = data.order;
                             }
-                            
+
                             renderAdminDashboard();
                             renderAdminOrders();
                         }
@@ -1610,18 +1624,18 @@
                     console.error('❌ SSE connection error:', e);
                     isSSEConnected = false;
                     updateConnectionStatus(false);
-                    document.getElementById('statRealTime').textContent = '🔴 Disconnected';
-                    document.getElementById('statRealTime').style.color = '#e74c3c';
-                    
+                    document.getElementById('statRealTime').textContent = '🟡 Polling';
+                    document.getElementById('statRealTime').style.color = '#f39c12';
+
                     if (pingCheckInterval) {
                         clearInterval(pingCheckInterval);
                         pingCheckInterval = null;
                     }
 
                     reconnectAttempts++;
-                    const delay = Math.min(reconnectDelay * Math.pow(1.5, reconnectAttempts - 1), 30000);
+                    const delay = Math.min(3000 * Math.pow(1.5, reconnectAttempts - 1), 30000);
                     console.log('🔄 Reconnecting in ' + (delay/1000) + ' seconds...');
-                    
+
                     setTimeout(() => {
                         if (!isSSEConnected) {
                             connectToOrderStream();
@@ -1635,8 +1649,8 @@
         }
 
         function checkPing() {
-            if (Date.now() - lastPingTime > 20000) {
-                console.log('⚠️ No ping received for 20 seconds, reconnecting...');
+            if (Date.now() - lastPingTime > 25000) {
+                console.log('⚠️ No ping received for 25 seconds, reconnecting...');
                 if (eventSource) {
                     eventSource.close();
                     eventSource = null;
@@ -1646,15 +1660,58 @@
             }
         }
 
+        function startPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+
+            if (orders.length > 0) {
+                lastOrderId = Math.max(...orders.map(o => o.id));
+            }
+
+            pollInterval = setInterval(() => {
+                // Only poll if SSE is not connected
+                if (!isSSEConnected) {
+                    fetch('/api/orders/poll?restaurant=' + RESTAURANT_ID + '&lastId=' + lastOrderId + '&timeout=5000')
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.orders && data.orders.length > 0) {
+                                console.log('📡 Polling received ' + data.orders.length + ' new orders');
+                                data.orders.forEach(order => {
+                                    const exists = orders.some(o => o.id === order.id);
+                                    if (!exists) {
+                                        orders.push(order);
+                                        lastOrderCount = orders.length;
+                                        if (order.id > lastOrderId) {
+                                            lastOrderId = order.id;
+                                        }
+                                        showToast('🆕 New Order #' + order.id + ' received (polling)');
+                                        playNotificationSound();
+                                        renderAdminDashboard();
+                                        renderAdminOrders();
+                                        renderAdminDelivery();
+                                        flashNewOrder(order.id);
+                                    }
+                                });
+                            }
+                            if (data.lastId) {
+                                lastOrderId = data.lastId;
+                            }
+                        })
+                        .catch(() => {});
+                }
+            }, 3000);
+        }
+
         function updateConnectionStatus(connected) {
             const statusEl = document.getElementById('connectionStatus');
             if (statusEl) {
                 if (connected) {
                     statusEl.className = 'connection-status connected';
-                    statusEl.textContent = '🟢 Live';
+                    statusEl.textContent = '🟢 Live (SSE)';
                 } else {
-                    statusEl.className = 'connection-status disconnected';
-                    statusEl.textContent = '🔴 Reconnecting... (' + (reconnectAttempts + 1) + ')';
+                    statusEl.className = 'connection-status polling';
+                    statusEl.textContent = '🟡 Polling...';
                 }
             }
         }
@@ -1663,7 +1720,7 @@
             if (!notificationSoundEnabled) return;
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
+
                 const osc1 = audioContext.createOscillator();
                 const gain1 = audioContext.createGain();
                 osc1.connect(gain1);
@@ -1674,7 +1731,7 @@
                 gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
                 osc1.start(audioContext.currentTime);
                 osc1.stop(audioContext.currentTime + 0.2);
-                
+
                 setTimeout(() => {
                     const osc2 = audioContext.createOscillator();
                     const gain2 = audioContext.createGain();
@@ -1705,33 +1762,15 @@
             });
         }
 
-        function startFallbackPolling() {
-            setInterval(() => {
-                if (!isSSEConnected) {
-                    fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.length > lastOrderCount) {
-                                const newOrders = data.slice(lastOrderCount);
-                                newOrders.forEach(order => {
-                                    showToast('🆕 New Order #' + order.id + ' (fallback)');
-                                    orders.push(order);
-                                    lastOrderCount = orders.length;
-                                    renderAdminDashboard();
-                                    renderAdminOrders();
-                                    renderAdminDelivery();
-                                });
-                            }
-                        })
-                        .catch(() => {});
-                }
-            }, 5000);
-        }
-
+        // Clean up on page unload
         window.addEventListener('beforeunload', function() {
             if (eventSource) {
                 eventSource.close();
                 eventSource = null;
+            }
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
             }
             if (pingCheckInterval) {
                 clearInterval(pingCheckInterval);
@@ -1739,6 +1778,7 @@
             }
         });
 
+        // Reconnect if page becomes visible again
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden && !isSSEConnected) {
                 console.log('📱 Page became visible, reconnecting...');
@@ -1766,8 +1806,7 @@
                     whatsappNumber = data.whatsapp || '923001234567';
                     document.querySelector('.admin-header h2').textContent = `👑 ${data.name} - Admin`;
                     document.getElementById('whatsappNumberDisplay').textContent = whatsappNumber;
-                    
-                    // Update discount display
+
                     document.getElementById('receiptDiscountAmount').value = data.discountAmount || 0;
                     document.getElementById('receiptDiscountThreshold').value = data.discountThreshold || 0;
                 })
@@ -1819,6 +1858,9 @@
                 .then(data => {
                     orders = data;
                     lastOrderCount = orders.length;
+                    if (orders.length > 0) {
+                        lastOrderId = Math.max(...orders.map(o => o.id));
+                    }
                     renderAdminDashboard();
                     renderAdminOrders();
                 });
@@ -1931,17 +1973,17 @@
         function uploadLogoFile(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             if (!file.type.startsWith('image/')) {
                 showToast('❌ Please select an image file');
                 return;
             }
-            
+
             if (file.size > 2 * 1024 * 1024) {
                 showToast('❌ File size should be less than 2MB');
                 return;
             }
-            
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 const base64 = e.target.result;
@@ -2007,7 +2049,7 @@
             .then(data => {
                 if (data.success) {
                     receiptSettings = Object.assign(receiptSettings, data.settings);
-                    
+
                     return fetch('/api/restaurant-config-update', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2039,9 +2081,9 @@
                     restaurantConfig.address = payload.address;
                     restaurantConfig.phone = payload.phone;
                     restaurantConfig.est = payload.established;
-                    
+
                     showToast('✅ Settings saved and synced with customer panel!');
-                    
+
                     if (payload.logoUrl) {
                         document.getElementById('receiptLogoImagePreview').src = payload.logoUrl;
                         document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
@@ -2157,7 +2199,7 @@
                             ${order.paymentMethod ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">💳 ${order.paymentMethod}</div>` : ''}
                             ${order.layers && order.layers.length ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
                         </div>
-                        
+
                         <div class="receipt-table-header">
                             <span>Item</span>
                             <span class="col-qty">Qty</span>
@@ -2165,9 +2207,9 @@
                             <span class="col-amount">Amount</span>
                         </div>
                         ${itemRows}
-                        
+
                         <div class="receipt-divider"></div>
-                        
+
                         <div class="receipt-totals">
                             <div class="total-row">
                                 <span class="label">Total Items:</span>
@@ -2183,12 +2225,12 @@
                                 <span class="value">-${currencySymbol} ${discount.toFixed(2)}</span>
                             </div>` : ''}
                         </div>
-                        
+
                         <div class="receipt-grand-total">
                             <span>Bill Total:</span>
                             <span>${currencySymbol} ${billTotal.toFixed(2)}</span>
                         </div>
-                        
+
                         <div class="receipt-footer">
                             <div class="qr-section" style="margin:6px 0;">
                                 <img src="${qrSrc}" alt="QR Code" style="max-width:70px; height:auto;" />
@@ -2204,7 +2246,7 @@
 
             document.getElementById('receiptPrint').innerHTML = html;
             document.getElementById('receiptPopup').classList.add('show');
-            
+
             if (!isPreview) {
                 setTimeout(function() {
                     if (window.print) {
@@ -2227,7 +2269,7 @@
         // ============================================================
         function renderAdminOrders() {
             const container = document.getElementById('adminAllOrders');
-            
+
             if (!orders || orders.length === 0) {
                 container.innerHTML = `
                     <div style="text-align:center; padding:40px 20px; color:#b2bec3;">
@@ -2259,7 +2301,7 @@
                 let subtotal = 0;
                 let itemRows = '';
                 let totalItems = 0;
-                
+
                 order.items.forEach(item => {
                     const qty = item.qty || 1;
                     const price = item.price || 0;
@@ -2267,7 +2309,7 @@
                     subtotal += amount;
                     totalItems += qty;
                     const itemName = item.name || 'Item';
-                    
+
                     itemRows += `
                         <div class="receipt-row">
                             <span class="item-name">${itemName}</span>
@@ -2284,7 +2326,7 @@
                 }
                 const grandTotal = subtotal - discount;
 
-                const locationHtml = order.lat && order.lng ? 
+                const locationHtml = order.lat && order.lng ?
                     `<div style="display:flex; flex-direction:column; gap:3px;">
                         <a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:2px 8px; border:none; border-radius:12px; font-size:0.65em; font-weight:600; cursor:pointer; background:#3498db; color:white; text-align:center;">🗺️ Map</a>
                         <button onclick="copyMapLink(${order.lat}, ${order.lng})" class="btn-copy" style="padding:2px 8px; border:none; border-radius:12px; font-size:0.65em; font-weight:600; cursor:pointer; background:#6c5ce7; color:white;">📋 Copy</button>
@@ -2321,7 +2363,7 @@
                             ${order.paymentMethod ? `<div class="receipt-customer" style="font-weight:normal; font-size:9px;">💳 ${order.paymentMethod}</div>` : ''}
                             ${order.layers && order.layers.length ? `<div class="receipt-customer" style="font-weight:normal; font-size:9px; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
                         </div>
-                        
+
                         <div class="receipt-table-header">
                             <span>Item</span>
                             <span class="col-qty">Qty</span>
@@ -2329,9 +2371,9 @@
                             <span class="col-amount">Amount</span>
                         </div>
                         ${itemRows}
-                        
+
                         <div class="receipt-divider"></div>
-                        
+
                         <div class="receipt-totals">
                             <div class="total-row">
                                 <span class="label">Total Items:</span>
@@ -2347,12 +2389,12 @@
                                 <span class="value">-${config.currency} ${discount.toFixed(2)}</span>
                             </div>` : ''}
                         </div>
-                        
+
                         <div class="receipt-grand-total">
                             <span>Bill Total:</span>
                             <span>${config.currency} ${grandTotal.toFixed(2)}</span>
                         </div>
-                        
+
                         <div class="receipt-footer">
                             <div class="thank-you"><span class="heart">❤️</span> Thank You for Your Order!</div>
                             <div class="great-day">Have a Great Day!</div>
@@ -2463,8 +2505,8 @@
             `;
             menuItems.forEach(item => {
                 const icons = item.icons ? item.icons.join(' ') : (item.icon || '🍽️');
-                const layers = item.layers && item.layers.length ? 
-                    item.layers.map(l => `<span style="font-size:0.7em; background:#f1f2f6; padding:2px 8px; border-radius:10px; margin:2px; display:inline-block;">${l}</span>`).join('') : 
+                const layers = item.layers && item.layers.length ?
+                    item.layers.map(l => `<span style="font-size:0.7em; background:#f1f2f6; padding:2px 8px; border-radius:10px; margin:2px; display:inline-block;">${l}</span>`).join('') :
                     '<span style="color:#b2bec3; font-size:0.8em;">-</span>';
                 html += `
                     <tr id="menu-row-${item.id}">
@@ -2549,7 +2591,7 @@
             const price = parseFloat(document.getElementById(`edit-price-${id}`).value);
             const category = document.getElementById(`edit-category-${id}`).value;
             const icon = document.getElementById(`edit-icon-${id}`).value;
-            
+
             const layerCheckboxes = document.querySelectorAll(`.layer-checkbox-${id}:checked`);
             const layers = Array.from(layerCheckboxes).map(el => el.value);
 
@@ -2623,7 +2665,7 @@
             element.classList.toggle('selected');
             element.style.borderColor = element.classList.contains('selected') ? '#e74c3c' : '#dfe6e9';
             element.style.background = element.classList.contains('selected') ? '#fdf2f2' : '#f8f9fa';
-            
+
             const index = selectedAddLayers.indexOf(layer);
             if (index === -1) {
                 selectedAddLayers.push(layer);
@@ -2731,7 +2773,7 @@
                 .then(data => {
                     const feedbacks = data || [];
                     document.getElementById('totalFeedbacks').textContent = feedbacks.length;
-                    
+
                     if (feedbacks.length > 0) {
                         const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
                         const avg = (total / feedbacks.length).toFixed(1);
@@ -2739,12 +2781,12 @@
                     } else {
                         document.getElementById('avgRating').textContent = '0.0';
                     }
-                    
+
                     if (feedbacks.length === 0) {
                         document.getElementById('feedbackList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No feedback yet</p>';
                         return;
                     }
-                    
+
                     let html = `<table>
                         <tr>
                             <th>Customer</th>
@@ -2754,7 +2796,7 @@
                             <th>Action</th>
                         </tr>
                     `;
-                    
+
                     feedbacks.slice().reverse().forEach(f => {
                         const stars = '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
                         html += `
@@ -2797,7 +2839,7 @@
                         document.getElementById('supportList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No support tickets</p>';
                         return;
                     }
-                    
+
                     let html = `<table>
                         <tr>
                             <th>#</th>
@@ -2809,7 +2851,7 @@
                             <th>Action</th>
                         </tr>
                     `;
-                    
+
                     tickets.slice().reverse().forEach(t => {
                         const priorityColors = {
                             low: '🟢',
@@ -2879,14 +2921,14 @@
                         document.getElementById('layersList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No layers defined</p>';
                         return;
                     }
-                    
+
                     let html = `<table>
                         <tr>
                             <th>Layer</th>
                             <th>Action</th>
                         </tr>
                     `;
-                    
+
                     layers.forEach(layer => {
                         const icon = layer.split(' ')[0] || '🧅';
                         html += `
@@ -2911,7 +2953,7 @@
                 showToast('⚠️ Please enter a layer name');
                 return;
             }
-            
+
             fetch('/api/layers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2934,7 +2976,7 @@
         function deleteLayer(encodedLayer) {
             const layer = decodeURIComponent(encodedLayer);
             if (!confirm(`Delete layer "${layer}"?`)) return;
-            
+
             fetch('/api/layers/' + encodedLayer, {
                 method: 'DELETE'
             })
@@ -2960,14 +3002,14 @@
                 .then(data => {
                     allLocations = data || [];
                     document.getElementById('totalLocations').textContent = allLocations.length;
-                    
+
                     const today = new Date().toDateString();
                     const todayLocations = allLocations.filter(l => {
                         const date = l.updatedAt ? new Date(l.updatedAt) : new Date();
                         return date.toDateString() === today;
                     });
                     document.getElementById('todayLocations').textContent = todayLocations.length;
-                    
+
                     renderDeliveryList();
                     updateDeliveryMap();
                 })
@@ -2978,12 +3020,12 @@
 
         function renderDeliveryList() {
             const container = document.getElementById('deliveryLocationsList');
-            
+
             if (allLocations.length === 0) {
                 container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No customer locations shared yet</p>';
                 return;
             }
-            
+
             let html = `<table>
                 <tr>
                     <th>Customer</th>
@@ -2996,7 +3038,7 @@
                     <th>Action</th>
                 </tr>
             `;
-            
+
             allLocations.slice().reverse().forEach(loc => {
                 const mapUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
                 html += `
@@ -3027,31 +3069,31 @@
         function updateDeliveryMap() {
             const iframe = document.getElementById('deliveryMapIframe');
             const status = document.getElementById('mapStatus');
-            
+
             if (allLocations.length === 0) {
                 iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=66.9%2C24.7%2C67.2%2C25.0&layer=mapnik&marker=24.9%2C67.05';
                 status.textContent = '📍 No locations to show';
                 return;
             }
-            
+
             const validLocations = allLocations.filter(l => l.lat && l.lng);
             if (validLocations.length === 0) {
                 iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=66.9%2C24.7%2C67.2%2C25.0&layer=mapnik&marker=24.9%2C67.05';
                 status.textContent = '📍 No valid locations';
                 return;
             }
-            
+
             const avgLat = validLocations.reduce((sum, l) => sum + l.lat, 0) / validLocations.length;
             const avgLng = validLocations.reduce((sum, l) => sum + l.lng, 0) / validLocations.length;
-            
+
             let markersParam = '';
             validLocations.forEach(l => {
                 markersParam += `&marker=${l.lat}%2C${l.lng}`;
             });
-            
+
             const bbox = `${avgLng-0.1}%2C${avgLat-0.1}%2C${avgLng+0.1}%2C${avgLat+0.1}`;
             iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik${markersParam}`;
-            
+
             status.textContent = `📍 Showing ${validLocations.length} customer locations`;
         }
 
@@ -3117,7 +3159,7 @@
             currentPickerTarget = target;
             const popup = document.getElementById('iconPickerPopup');
             const grid = document.getElementById('emojiGrid');
-            
+
             grid.innerHTML = '';
             emojiList.forEach(emoji => {
                 const btn = document.createElement('button');
@@ -3135,7 +3177,7 @@
                 };
                 grid.appendChild(btn);
             });
-            
+
             popup.classList.add('show');
         }
 
@@ -3146,9 +3188,9 @@
         function updateIconDisplay(target) {
             const container = document.getElementById(target + 'SelectedIcons');
             const icons = selectedIcons[target];
-            
+
             container.innerHTML = '';
-            
+
             if (icons.length === 0) {
                 const hint = document.createElement('span');
                 hint.className = 'icon-hint';
@@ -3158,7 +3200,7 @@
                 container.appendChild(hint);
                 return;
             }
-            
+
             icons.forEach((icon, index) => {
                 const span = document.createElement('span');
                 span.className = 'selected-icon';
@@ -3254,16 +3296,20 @@
             }
 
             loadAdminData();
-            
+
+            // Get last order ID from existing orders
+            if (orders.length > 0) {
+                lastOrderId = Math.max(...orders.map(o => o.id));
+            }
+
             setTimeout(function() {
                 connectToOrderStream();
-                startFallbackPolling();
             }, 2000);
-            
+
             updateIconDisplay('menu');
             updateIconDisplay('deal');
             renderAddLayers();
-            
+
             document.getElementById('iconPickerPopup').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeIconPicker();

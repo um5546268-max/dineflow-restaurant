@@ -272,39 +272,64 @@ function createDefaultRestaurant() {
 }
 
 // ============================================
-// ⭐ SERVER-SENT EVENTS FOR REAL-TIME ORDERS ⭐
+// ⭐ SSE + LONG POLLING FOR REAL-TIME ORDERS ⭐
 // ============================================
 const adminClients = new Set();
 let clientIdCounter = 0;
+let lastOrderCheck = {};
 
+// Store order updates to send to new connections
+let orderUpdateBuffer = [];
+const MAX_BUFFER_SIZE = 100;
+
+// ⭐ SSE Endpoint
 app.get('/api/orders/stream', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
     
-    // Set headers for SSE with better timeout handling
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const clientId = ++clientIdCounter;
+    
+    // Set headers for SSE
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
         'Access-Control-Allow-Origin': '*',
-        'X-Accel-Buffering': 'no'  // Disable nginx buffering
+        'X-Accel-Buffering': 'no'
     });
     
     // Send initial connection message
-    const clientId = ++clientIdCounter;
-    res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Connected to order stream', clientId: clientId })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'connected', clientId: clientId })}\n\n`);
     
-    const client = { id: clientId, res: res, restaurantId: req.restaurantId, lastPing: Date.now() };
+    // Send any recent orders (last 5) to catch up
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    const recentOrders = restaurant.orders.slice(-5);
+    if (recentOrders.length > 0) {
+        recentOrders.forEach(order => {
+            res.write(`data: ${JSON.stringify({ type: 'new_order', order: order, catchup: true })}\n\n`);
+        });
+    }
+    
+    const client = { 
+        id: clientId, 
+        res: res, 
+        restaurantId: restaurantId, 
+        lastPing: Date.now(),
+        connected: true
+    };
     adminClients.add(client);
     
-    console.log(`✅ Admin client ${clientId} connected`);
+    console.log(`✅ Admin client ${clientId} connected (Total: ${adminClients.size})`);
     
-    // Send ping every 10 seconds to keep connection alive
+    // Ping every 10 seconds
     const pingInterval = setInterval(() => {
         try {
-            client.lastPing = Date.now();
-            res.write(`: ping ${Date.now()}\n\n`);
+            if (client.connected) {
+                client.lastPing = Date.now();
+                res.write(`: ping\n\n`);
+            }
         } catch (e) {
             clearInterval(pingInterval);
             adminClients.delete(client);
@@ -312,19 +337,60 @@ app.get('/api/orders/stream', (req, res) => {
         }
     }, 10000);
     
-    // Handle client disconnect
+    // Handle disconnect
     req.on('close', () => {
+        client.connected = false;
         clearInterval(pingInterval);
         adminClients.delete(client);
-        console.log(`❌ Admin client ${clientId} disconnected`);
+        console.log(`❌ Admin client ${clientId} disconnected (Total: ${adminClients.size})`);
     });
     
-    // Handle timeout
+    // Handle timeout (2 minutes)
     req.setTimeout(120000, () => {
+        client.connected = false;
         clearInterval(pingInterval);
         adminClients.delete(client);
         res.end();
         console.log(`⏰ Admin client ${clientId} timed out`);
+    });
+});
+
+// ⭐ Long-polling fallback endpoint
+app.get('/api/orders/poll', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    const lastOrderId = parseInt(req.query.lastId) || 0;
+    const timeout = parseInt(req.query.timeout) || 30000;
+    
+    // Check if there are new orders
+    const newOrders = restaurant.orders.filter(o => o.id > lastOrderId);
+    
+    if (newOrders.length > 0) {
+        return res.json({ orders: newOrders, lastId: restaurant.orders.length });
+    }
+    
+    // Wait for new orders (long polling)
+    const startTime = Date.now();
+    const checkInterval = setInterval(() => {
+        const currentOrders = getOrCreateRestaurant(restaurantId);
+        const freshOrders = currentOrders.orders.filter(o => o.id > lastOrderId);
+        
+        if (freshOrders.length > 0) {
+            clearInterval(checkInterval);
+            res.json({ orders: freshOrders, lastId: currentOrders.orders.length });
+        } else if (Date.now() - startTime > timeout) {
+            clearInterval(checkInterval);
+            res.json({ orders: [], lastId: lastOrderId });
+        }
+    }, 1000);
+    
+    // Clean up on client disconnect
+    req.on('close', () => {
+        clearInterval(checkInterval);
     });
 });
 
@@ -335,25 +401,27 @@ function broadcastNewOrder(order, restaurantId) {
         timestamp: new Date().toISOString()
     });
     
-    let sentCount = 0;
     const data = `data: ${message}\n\n`;
+    let sentCount = 0;
     
     adminClients.forEach(client => {
-        if (client.restaurantId === restaurantId || !client.restaurantId) {
+        if (client.connected && (client.restaurantId === restaurantId || !client.restaurantId)) {
             try {
                 client.res.write(data);
                 sentCount++;
             } catch (e) {
+                client.connected = false;
                 adminClients.delete(client);
-                console.log(`❌ Failed to send to client ${client.id}, removed`);
             }
         }
     });
     
-    if (sentCount > 0) {
-        console.log(`📡 Broadcasted new order #${order.id} to ${sentCount} admin clients`);
-    } else {
-        console.log(`⚠️ No admin clients connected for order #${order.id}`);
+    console.log(`📡 Broadcasted order #${order.id} to ${sentCount} admin clients (Total: ${adminClients.size})`);
+    
+    // Store in buffer for new connections
+    orderUpdateBuffer.push({ order, restaurantId, timestamp: Date.now() });
+    if (orderUpdateBuffer.length > MAX_BUFFER_SIZE) {
+        orderUpdateBuffer.shift();
     }
 }
 
@@ -367,10 +435,11 @@ function broadcastOrderUpdate(order, restaurantId) {
     const data = `data: ${message}\n\n`;
     
     adminClients.forEach(client => {
-        if (client.restaurantId === restaurantId || !client.restaurantId) {
+        if (client.connected && (client.restaurantId === restaurantId || !client.restaurantId)) {
             try {
                 client.res.write(data);
             } catch (e) {
+                client.connected = false;
                 adminClients.delete(client);
             }
         }
@@ -690,7 +759,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ORDER ROUTES WITH REAL-TIME BROADCAST
+// ⭐ ORDER ROUTES WITH BROADCAST ⭐
 // ============================================
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
@@ -967,13 +1036,12 @@ app.get('/api/users', (req, res) => {
 });
 
 // ============================================
-// ⭐ SSE CONNECTION CHECK ENDPOINT ⭐
+// ⭐ SSE STATUS ENDPOINT ⭐
 // ============================================
 app.get('/api/sse-status', (req, res) => {
-    const connectedClients = adminClients.size;
     res.json({
-        connected: connectedClients > 0,
-        clients: connectedClients,
+        connected: adminClients.size > 0,
+        clients: adminClients.size,
         timestamp: new Date().toISOString()
     });
 });
