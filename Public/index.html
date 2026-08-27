@@ -1137,7 +1137,7 @@
         </div>
     </div>
 
-    <!-- ⭐ LOCATION POPUP - FIXED FOR ANDROID ⭐ -->
+    <!-- ⭐ LOCATION POPUP - FIXED ⭐ -->
     <div class="popup-overlay" id="locationPopup">
         <div class="popup-content">
             <button class="popup-close" onclick="closeLocationPopup()">✕</button>
@@ -1794,8 +1794,11 @@
         }
 
         // ============================================================
-        // ⭐ LOCATION FUNCTIONS - FIXED FOR ANDROID WEBVIEW ⭐
+        // ⭐ LOCATION FUNCTIONS - FIXED FOR OPENSTREETMAP ⭐
         // ============================================================
+        // Location cache to reduce API calls
+        const locationCache = {};
+
         function showLocationPopup(orderData) {
             pendingOrderData = orderData;
             document.getElementById('locationPopup').classList.add('show');
@@ -1812,7 +1815,6 @@
             const status = document.getElementById('locationStatus');
             const map = document.getElementById('locationMap');
             
-            // Check if geolocation is available
             if (!navigator.geolocation) {
                 status.innerHTML = '❌ Geolocation is not supported. Please enter address manually.';
                 showToast('⚠️ Please enter your address manually');
@@ -1822,100 +1824,74 @@
             status.innerHTML = '⏳ Getting your location...<br><small>Please wait...</small>';
             showToast('📍 Getting your location...');
             
-            // ⭐ CRITICAL: For Android WebView - try direct approach first
-            tryLocationWithOptions(status, map);
-        }
-
-        function tryLocationWithOptions(status, map) {
             const options = {
                 enableHighAccuracy: true,
                 timeout: 30000,
                 maximumAge: 0
             };
             
-            // Try with high accuracy first
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    handleLocationSuccess(position, status, map);
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    orderLocation.lat = lat;
+                    orderLocation.lng = lng;
+                    
+                    status.innerHTML = `✅ Location found!<br><small>(${lat.toFixed(6)}, ${lng.toFixed(6)})</small>`;
+                    showToast('✅ Location found!');
+                    
+                    map.style.display = 'block';
+                    
+                    // ⭐ Use Google Maps embed (no API key needed)
+                    document.getElementById('locationIframe').src = 
+                        `https://www.google.com/maps/embed/v1/view?center=${lat},${lng}&zoom=15&maptype=roadmap`;
+                    
+                    // ⭐ Use server proxy for address (prevents OpenStreetMap blocking)
+                    const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+                    if (locationCache[cacheKey]) {
+                        orderLocation.address = locationCache[cacheKey];
+                        status.innerHTML = `📍 ${orderLocation.address.substring(0, 80)}...`;
+                        setTimeout(() => submitOrderWithLocation(), 1000);
+                        return;
+                    }
+                    
+                    fetch(`/api/location/reverse?lat=${lat}&lng=${lng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                orderLocation.address = data.display_name;
+                                locationCache[cacheKey] = data.display_name;
+                                status.innerHTML = `📍 ${data.display_name.substring(0, 80)}...`;
+                            }
+                        })
+                        .catch(() => {
+                            status.innerHTML = `✅ Location found!<br><small>(${lat.toFixed(6)}, ${lng.toFixed(6)})</small>`;
+                        })
+                        .finally(() => {
+                            setTimeout(() => submitOrderWithLocation(), 1000);
+                        });
                 },
                 function(error) {
                     console.error('Location error:', error);
-                    // If high accuracy fails, try with low accuracy
-                    if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
-                        status.innerHTML = '⏳ Retrying with standard accuracy...';
-                        showToast('⏳ Retrying location...');
-                        const lowAccuracyOptions = {
-                            enableHighAccuracy: false,
-                            timeout: 15000,
-                            maximumAge: 60000
-                        };
-                        navigator.geolocation.getCurrentPosition(
-                            function(position) {
-                                handleLocationSuccess(position, status, map);
-                            },
-                            function(secondError) {
-                                handleLocationError(secondError, status);
-                            },
-                            lowAccuracyOptions
-                        );
-                    } else {
-                        handleLocationError(error, status);
+                    let errorMsg = '❌ Error getting location.';
+                    switch(error.code) {
+                        case 1:
+                            errorMsg = '❌ Location permission denied. Please enable GPS.';
+                            break;
+                        case 2:
+                            errorMsg = '❌ Location unavailable. Please check GPS.';
+                            break;
+                        case 3:
+                            errorMsg = '❌ Location request timed out. Please try again.';
+                            break;
+                        default:
+                            errorMsg = '❌ Error: ' + error.message;
                     }
+                    status.innerHTML = errorMsg + '<br><small>Please enter address manually.</small>';
+                    showToast('⚠️ ' + errorMsg);
                 },
                 options
             );
-        }
-
-        function handleLocationSuccess(position, status, map) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            orderLocation.lat = lat;
-            orderLocation.lng = lng;
-            
-            status.innerHTML = `✅ Location found!<br><small>(${lat.toFixed(6)}, ${lng.toFixed(6)})</small>`;
-            showToast('✅ Location found!');
-            
-            map.style.display = 'block';
-            document.getElementById('locationIframe').src = 
-                `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
-            
-            // Try to get address
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.display_name) {
-                        orderLocation.address = data.display_name;
-                        status.innerHTML = `📍 ${data.display_name.substring(0, 80)}...`;
-                    }
-                })
-                .catch(() => {});
-            
-            // Auto-submit after getting location
-            setTimeout(() => {
-                submitOrderWithLocation();
-            }, 1000);
-        }
-
-        function handleLocationError(error, status) {
-            console.error('Location error:', error);
-            let errorMsg = '❌ Error getting location.';
-            
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMsg = '❌ Location permission denied.<br><small>Please enable location in your app settings.</small>';
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    errorMsg = '❌ Location unavailable.<br><small>Please check your GPS connection.</small>';
-                    break;
-                case error.TIMEOUT:
-                    errorMsg = '❌ Location request timed out.<br><small>Please try again or enter address manually.</small>';
-                    break;
-                default:
-                    errorMsg = '❌ Error: ' + error.message + '<br><small>Please enter address manually.</small>';
-            }
-            
-            status.innerHTML = errorMsg;
-            showToast('⚠️ Please enter address manually');
         }
 
         function skipLocation() {
@@ -1928,172 +1904,57 @@
             submitOrderWithLocation();
         }
 
-        // ============================================================
-        // ⭐ ANDROID WEBVIEW LOCATION FIX - ADDED MANUAL TRIGGER ⭐
-        // ============================================================
-        // This function can be called via a button click to manually trigger location
-        function requestAndroidLocation() {
-            // For Android WebView - this helps trigger the permission dialog
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(pos) {
-                        // Just to trigger permission
-                        console.log('Location permission granted');
-                    },
-                    function(err) {
-                        console.log('Location error:', err);
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            }
-        }
-
-        // For Location Tab
-        let currentLat = null;
-        let currentLng = null;
-        let currentAddress = '';
-
-        function renderLocationSection() {
-            if (!isLoggedIn) {
-                menuArea.innerHTML = `
-                    <div style="text-align:center; padding:60px 20px;">
-                        <div style="font-size:4em; margin-bottom:15px;">🔐</div>
-                        <h3 style="color:#2d3436;">Login Required</h3>
-                        <p style="color:#b2bec3; margin-bottom:20px;">Please login to share your location</p>
-                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
-                            Sign in with Google
-                        </a>
-                        <br>
-                        <button onclick="showPanel('menu')" style="margin-top:15px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Back to Menu</button>
-                    </div>
-                `;
-                return;
-            }
-            let html = `
-                <div style="padding:10px 5px;">
-                    <div class="section-title">📍 Share Your Location</div>
-                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-                        <p style="color:#636e72; margin-bottom:15px;">Share your location for faster delivery!</p>
-                        <div style="text-align:center; margin:15px 0;">
-                            <div id="locationStatus2" style="padding:15px; background:#f8f9fa; border-radius:10px; color:#636e72;">
-                                ⏳ Click "Get Location" to share
-                            </div>
-                            <div id="locationMap2" style="width:100%; height:300px; border-radius:10px; margin-top:10px; background:#f1f2f6; display:none; overflow:hidden;">
-                                <iframe id="locationIframe2" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
-                            </div>
-                            <button class="order-submit-btn" onclick="getCurrentLocation()" style="margin-top:15px; background:#3498db;">
-                                📍 Get My Location
-                            </button>
-                            <button class="order-submit-btn" onclick="shareLocation()" style="margin-top:10px;" id="shareLocationBtn" disabled>
-                                📤 Share Location with Restaurant
-                            </button>
-                        </div>
-                        <div style="margin-top:15px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
-                            <p style="font-size:0.8em; color:#b2bec3;">Your location helps us deliver faster and more accurately.</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            menuArea.innerHTML = html;
-        }
-
-        function getCurrentLocation() {
-            const status = document.getElementById('locationStatus2');
-            const map = document.getElementById('locationMap2');
-            const shareBtn = document.getElementById('shareLocationBtn');
+        function submitOrderWithLocation() {
+            if (!pendingOrderData) return;
+            const { name, phone, items, total, layers, orderType, paymentMethod, fullAddress } = pendingOrderData;
             
-            if (!navigator.geolocation) {
-                status.innerHTML = '❌ Geolocation is not supported by your browser';
-                showToast('❌ Geolocation not supported');
-                return;
-            }
-            
-            status.innerHTML = '⏳ Getting your location...';
-            showToast('📍 Getting your location...');
-            
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 30000,
-                maximumAge: 0
+            const orderData = {
+                items: items,
+                total: total,
+                name: name,
+                phone: phone,
+                address: fullAddress || 'In-store pickup',
+                layers: layers || [],
+                orderType: orderType || 'dinein',
+                paymentMethod: paymentMethod || 'cash',
+                lat: orderLocation.lat || null,
+                lng: orderLocation.lng || null,
+                table: pendingOrderData.table || null,
+                orderNumber: orderCounter++
             };
-            
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    currentLat = position.coords.latitude;
-                    currentLng = position.coords.longitude;
-                    
-                    status.innerHTML = `✅ Location found! (${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})`;
-                    showToast('✅ Location found!');
-                    
-                    map.style.display = 'block';
-                    document.getElementById('locationIframe2').src = 
-                        `https://www.openstreetmap.org/export/embed.html?bbox=${currentLng-0.01}%2C${currentLat-0.01}%2C${currentLng+0.01}%2C${currentLat+0.01}&layer=mapnik&marker=${currentLat}%2C${currentLng}`;
-                    
-                    shareBtn.disabled = false;
-                    shareBtn.style.opacity = '1';
-                    
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLng}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data && data.display_name) {
-                                currentAddress = data.display_name;
-                                status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
-                            }
-                        })
-                        .catch(() => {});
-                },
-                function(error) {
-                    console.error('Location error:', error);
-                    let errorMsg = '❌ Error getting location.';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMsg = '❌ Location permission denied. Please enable GPS.';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMsg = '❌ Location unavailable. Check GPS.';
-                            break;
-                        case error.TIMEOUT:
-                            errorMsg = '❌ Request timed out. Try again.';
-                            break;
-                        default:
-                            errorMsg = '❌ Error: ' + error.message;
-                    }
-                    status.innerHTML = errorMsg;
-                    showToast('⚠️ ' + errorMsg);
-                },
-                options
-            );
-        }
 
-        function shareLocation() {
-            if (!currentLat || !currentLng) {
-                showToast('⚠️ Please get your location first');
-                return;
-            }
-            if (!isLoggedIn) {
-                openLoginRequired();
-                return;
-            }
-            fetch('/api/location', {
+            fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lat: currentLat,
-                    lng: currentLng,
-                    address: currentAddress,
-                    restaurantId: RESTAURANT_ID
-                })
+                body: JSON.stringify(orderData)
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    showToast('✅ Location shared successfully!');
-                    document.getElementById('locationStatus2').innerHTML = '✅ Location shared with restaurant!';
+                if (data.message || data.order) {
+                    closeLocationPopup();
+                    closeOrderPopup();
+                    showToast('✅ Order placed successfully!');
+                    
+                    const orderObj = data.order || { 
+                        ...orderData, 
+                        id: data.order?.id || orderCounter - 1, 
+                        status: 'pending', 
+                        date: new Date().toLocaleString() 
+                    };
+                    
+                    showReceipt(orderObj);
+                    cart = [];
+                    updateCartBadge();
+                    loadOrders();
+                    showPanel('orders');
                 } else {
-                    showToast('❌ ' + (data.error || 'Failed to share location'));
+                    showToast('❌ ' + (data.error || 'Order failed'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(() => {
+                showToast('❌ Network error');
+            });
+            pendingOrderData = null;
         }
 
         // ============================================================
@@ -2160,61 +2021,8 @@
             }
         }
 
-        function submitOrderWithLocation() {
-            if (!pendingOrderData) return;
-            const { name, phone, items, total, layers, orderType, paymentMethod, fullAddress } = pendingOrderData;
-            
-            const orderData = {
-                items: items,
-                total: total,
-                name: name,
-                phone: phone,
-                address: fullAddress || 'In-store pickup',
-                layers: layers || [],
-                orderType: orderType || 'dinein',
-                paymentMethod: paymentMethod || 'cash',
-                lat: orderLocation.lat || null,
-                lng: orderLocation.lng || null,
-                table: pendingOrderData.table || null,
-                orderNumber: orderCounter++
-            };
-
-            fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.message || data.order) {
-                    closeLocationPopup();
-                    closeOrderPopup();
-                    showToast('✅ Order placed successfully!');
-                    
-                    const orderObj = data.order || { 
-                        ...orderData, 
-                        id: data.order?.id || orderCounter - 1, 
-                        status: 'pending', 
-                        date: new Date().toLocaleString() 
-                    };
-                    
-                    showReceipt(orderObj);
-                    cart = [];
-                    updateCartBadge();
-                    loadOrders();
-                    showPanel('orders');
-                } else {
-                    showToast('❌ ' + (data.error || 'Order failed'));
-                }
-            })
-            .catch(() => {
-                showToast('❌ Network error');
-            });
-            pendingOrderData = null;
-        }
-
         // ============================================================
-        // RECEIPT - ORIGINAL STYLE WITH LOGO
+        // RECEIPT
         // ============================================================
         function showReceipt(order) {
             const now = new Date();
@@ -2504,7 +2312,7 @@
         }
 
         // ============================================================
-        // ACCOUNT, FEEDBACK, SUPPORT, SETTINGS
+        // ACCOUNT, FEEDBACK, SUPPORT, LOCATION, SETTINGS
         // ============================================================
         function renderAccount() {
             loadAuthStatus();
@@ -2707,6 +2515,167 @@
                     showPanel('support');
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // ============================================================
+        // ⭐ LOCATION SECTION - FIXED ⭐
+        // ============================================================
+        let currentLat = null;
+        let currentLng = null;
+        let currentAddress = '';
+
+        function renderLocationSection() {
+            if (!isLoggedIn) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="font-size:4em; margin-bottom:15px;">🔐</div>
+                        <h3 style="color:#2d3436;">Login Required</h3>
+                        <p style="color:#b2bec3; margin-bottom:20px;">Please login to share your location</p>
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                            Sign in with Google
+                        </a>
+                        <br>
+                        <button onclick="showPanel('menu')" style="margin-top:15px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Back to Menu</button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">📍 Share Your Location</div>
+                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <p style="color:#636e72; margin-bottom:15px;">Share your location for faster delivery!</p>
+                        <div style="text-align:center; margin:15px 0;">
+                            <div id="locationStatus2" style="padding:15px; background:#f8f9fa; border-radius:10px; color:#636e72;">
+                                ⏳ Click "Get Location" to share
+                            </div>
+                            <div id="locationMap2" style="width:100%; height:300px; border-radius:10px; margin-top:10px; background:#f1f2f6; display:none; overflow:hidden;">
+                                <iframe id="locationIframe2" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                            </div>
+                            <button class="order-submit-btn" onclick="getCurrentLocation()" style="margin-top:15px; background:#3498db;">
+                                📍 Get My Location
+                            </button>
+                            <button class="order-submit-btn" onclick="shareLocation()" style="margin-top:10px;" id="shareLocationBtn" disabled>
+                                📤 Share Location with Restaurant
+                            </button>
+                        </div>
+                        <div style="margin-top:15px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
+                            <p style="font-size:0.8em; color:#b2bec3;">Your location helps us deliver faster and more accurately.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+        }
+
+        function getCurrentLocation() {
+            const status = document.getElementById('locationStatus2');
+            const map = document.getElementById('locationMap2');
+            const shareBtn = document.getElementById('shareLocationBtn');
+            
+            if (!navigator.geolocation) {
+                status.innerHTML = '❌ Geolocation is not supported by your browser';
+                showToast('❌ Geolocation not supported');
+                return;
+            }
+            
+            status.innerHTML = '⏳ Getting your location...';
+            showToast('📍 Getting your location...');
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+                    
+                    status.innerHTML = `✅ Location found! (${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})`;
+                    showToast('✅ Location found!');
+                    
+                    map.style.display = 'block';
+                    
+                    // ⭐ Use Google Maps embed
+                    document.getElementById('locationIframe2').src = 
+                        `https://www.google.com/maps/embed/v1/view?center=${currentLat},${currentLng}&zoom=15&maptype=roadmap`;
+                    
+                    shareBtn.disabled = false;
+                    shareBtn.style.opacity = '1';
+                    
+                    // ⭐ Use server proxy for address with cache
+                    const cacheKey = `${currentLat.toFixed(4)},${currentLng.toFixed(4)}`;
+                    if (locationCache[cacheKey]) {
+                        currentAddress = locationCache[cacheKey];
+                        status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
+                        return;
+                    }
+                    
+                    fetch(`/api/location/reverse?lat=${currentLat}&lng=${currentLng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                currentAddress = data.display_name;
+                                locationCache[cacheKey] = data.display_name;
+                                status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
+                            }
+                        })
+                        .catch(() => {});
+                },
+                function(error) {
+                    console.error('Location error:', error);
+                    let errorMsg = '❌ Error getting location.';
+                    switch(error.code) {
+                        case 1:
+                            errorMsg = '❌ Location permission denied. Please enable GPS.';
+                            break;
+                        case 2:
+                            errorMsg = '❌ Location unavailable. Check GPS.';
+                            break;
+                        case 3:
+                            errorMsg = '❌ Request timed out. Try again.';
+                            break;
+                        default:
+                            errorMsg = '❌ Error: ' + error.message;
+                    }
+                    status.innerHTML = errorMsg;
+                    showToast('⚠️ ' + errorMsg);
+                },
+                options
+            );
+        }
+
+        function shareLocation() {
+            if (!currentLat || !currentLng) {
+                showToast('⚠️ Please get your location first');
+                return;
+            }
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            fetch('/api/location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat: currentLat,
+                    lng: currentLng,
+                    address: currentAddress,
+                    restaurantId: RESTAURANT_ID
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Location shared successfully!');
+                    document.getElementById('locationStatus2').innerHTML = '✅ Location shared with restaurant!';
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to share location'));
                 }
             })
             .catch(() => showToast('❌ Network error'));

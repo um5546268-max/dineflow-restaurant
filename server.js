@@ -26,11 +26,10 @@ const RESTAURANT_CONFIG = {
 // ============================================
 
 // ============================================
-// ⭐ DATA PERSISTENCE - SAVE/RESTORE RESTAURANTS ⭐
+// ⭐ DATA PERSISTENCE ⭐
 // ============================================
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// Initialize data structure
 let data = {
     users: [],
     restaurants: [],
@@ -58,38 +57,28 @@ let data = {
     }
 };
 
-// Load data from file
 function loadData() {
     try {
         if (fs.existsSync(DATA_FILE)) {
             const fileContent = fs.readFileSync(DATA_FILE, 'utf8');
             const loadedData = JSON.parse(fileContent);
-            // Merge loaded data with default structure
             data = { ...data, ...loadedData };
             console.log('✅ Data loaded from file');
             console.log(`📊 Restaurants: ${data.restaurants.length}`);
-            console.log(`👤 Users: ${data.users.length}`);
-            console.log(`📦 Orders: ${data.restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
             return true;
-        } else {
-            console.log('📝 No data file found, using default data');
-            return false;
         }
+        return false;
     } catch (error) {
         console.error('❌ Error loading data:', error);
         return false;
     }
 }
 
-// Save data to file
 function saveData() {
     try {
-        // Create a backup first
         if (fs.existsSync(DATA_FILE)) {
-            const backupFile = DATA_FILE + '.backup';
-            fs.copyFileSync(DATA_FILE, backupFile);
+            fs.copyFileSync(DATA_FILE, DATA_FILE + '.backup');
         }
-        
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
         console.log('💾 Data saved to file');
         return true;
@@ -99,10 +88,7 @@ function saveData() {
     }
 }
 
-// Auto-save every 30 seconds
-setInterval(() => {
-    saveData();
-}, 30000);
+setInterval(() => saveData(), 30000);
 
 // ============================================
 // ⭐ MIDDLEWARE ⭐
@@ -149,9 +135,6 @@ let customerLocations = data.customerLocations;
 let orderCounter = data.orderCounter || 1;
 let receiptSettings = data.receiptSettings;
 
-// ============================================
-// ⭐ SAVE DATA AFTER MODIFICATIONS ⭐
-// ============================================
 function syncAndSave() {
     data.users = users;
     data.restaurants = restaurants;
@@ -236,20 +219,7 @@ app.get('/api/whatsapp-number', (req, res) => {
 // ============================================
 app.get('/api/receipt-settings', (req, res) => {
     try {
-        const settings = {
-            logoIcon: receiptSettings.logoIcon || '👨‍🍳',
-            logoUrl: receiptSettings.logoUrl || '',
-            tagline: receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD',
-            established: receiptSettings.established || RESTAURANT_CONFIG.est,
-            address: receiptSettings.address || RESTAURANT_CONFIG.address,
-            phone: receiptSettings.phone || RESTAURANT_CONFIG.phone,
-            qrCodeUrl: receiptSettings.qrCodeUrl || '',
-            discountAmount: receiptSettings.discountAmount || RESTAURANT_CONFIG.discountAmount,
-            discountThreshold: receiptSettings.discountThreshold || RESTAURANT_CONFIG.discountThreshold,
-            thankYouMessage: receiptSettings.thankYouMessage || 'Thank You for Your Order!',
-            footerMessage: receiptSettings.footerMessage || 'Have a Great Day!'
-        };
-        res.json(settings);
+        res.json(receiptSettings);
     } catch (error) {
         console.error('Error getting receipt settings:', error);
         res.status(500).json({ error: 'Failed to get settings' });
@@ -275,18 +245,44 @@ app.post('/api/receipt-settings', (req, res) => {
             receiptSettings.logoIcon = '👨‍🍳';
         }
         syncAndSave();
-        console.log('✅ Receipt settings saved successfully');
-        res.json({ 
-            success: true, 
-            settings: receiptSettings,
-            message: 'Settings saved successfully'
-        });
+        res.json({ success: true, settings: receiptSettings });
     } catch (error) {
         console.error('Error saving receipt settings:', error);
-        res.status(500).json({ 
-            error: 'Failed to save settings', 
-            details: error.message 
-        });
+        res.status(500).json({ error: 'Failed to save settings' });
+    }
+});
+
+// ============================================
+// ⭐ LOCATION PROXY API ⭐
+// ============================================
+app.get('/api/location/reverse', async (req, res) => {
+    try {
+        const { lat, lng } = req.query;
+        
+        if (!lat || !lng) {
+            return res.status(400).json({ error: 'Missing lat/lng' });
+        }
+        
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+                headers: {
+                    'User-Agent': 'TheHeavenSlice-App/2.0 (contact@yourdomain.com)',
+                    'Accept': 'application/json',
+                    'Accept-Language': 'en'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('OpenStreetMap API error');
+        }
+        
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        res.status(500).json({ error: 'Failed to get address' });
     }
 });
 
@@ -316,7 +312,6 @@ app.post('/api/restaurant/create', (req, res) => {
         
         console.log('📝 Creating restaurant with:', { name, ownerName, ownerEmail });
         
-        // Validate input
         if (!name || !ownerName || !ownerEmail) {
             return res.status(400).json({ 
                 success: false, 
@@ -324,7 +319,6 @@ app.post('/api/restaurant/create', (req, res) => {
             });
         }
         
-        // Check if restaurant already exists with this email
         const existing = restaurants.find(r => r.ownerEmail === ownerEmail);
         if (existing) {
             return res.status(400).json({ 
@@ -333,10 +327,8 @@ app.post('/api/restaurant/create', (req, res) => {
             });
         }
         
-        // Generate restaurant ID
         const restaurantId = 'restaurant-' + (restaurants.length + 1);
         
-        // Create new restaurant
         const newRestaurant = {
             id: restaurants.length + 1,
             restaurantId: restaurantId,
@@ -354,9 +346,6 @@ app.post('/api/restaurant/create', (req, res) => {
         restaurants.push(newRestaurant);
         syncAndSave();
         
-        console.log(`🏪 New restaurant created: ${name} (${restaurantId})`);
-        console.log(`📊 Total restaurants: ${restaurants.length}`);
-        
         res.json({ 
             success: true, 
             restaurant: newRestaurant, 
@@ -373,7 +362,7 @@ app.post('/api/restaurant/create', (req, res) => {
 });
 
 // ============================================
-// ⭐ GET ALL RESTAURANTS ⭐
+// RESTAURANT MANAGEMENT API ⭐
 // ============================================
 app.get('/api/restaurants/all', (req, res) => {
     if (!req.user) {
@@ -382,21 +371,33 @@ app.get('/api/restaurants/all', (req, res) => {
     res.json(restaurants);
 });
 
-// ============================================
-// ⭐ GET RESTAURANT BY ID ⭐
-// ============================================
+app.get('/api/restaurants/summary', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    const summary = restaurants.map(r => ({
+        id: r.id,
+        restaurantId: r.restaurantId,
+        name: r.name,
+        ownerName: r.ownerName,
+        ownerEmail: r.ownerEmail,
+        createdAt: r.createdAt,
+        status: r.status,
+        orderCount: r.orders.length,
+        menuCount: r.menu.length,
+        dealsCount: r.deals.length
+    }));
+    res.json(summary);
+});
+
 app.get('/api/restaurants/:id', (req, res) => {
-    const restaurantId = req.params.id;
-    const restaurant = restaurants.find(r => r.restaurantId === restaurantId || r.id === parseInt(restaurantId));
+    const restaurant = restaurants.find(r => r.restaurantId === req.params.id || r.id === parseInt(req.params.id));
     if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant not found' });
     }
     res.json(restaurant);
 });
 
-// ============================================
-// ⭐ DELETE RESTAURANT ⭐
-// ============================================
 app.delete('/api/restaurants/:id', (req, res) => {
     if (!req.user || req.user.role !== 'admin') {
         return res.status(401).json({ error: 'Not authorized' });
@@ -407,12 +408,9 @@ app.delete('/api/restaurants/:id', (req, res) => {
     }
     const removed = restaurants.splice(index, 1);
     syncAndSave();
-    res.json({ success: true, message: 'Restaurant deleted', restaurant: removed[0] });
+    res.json({ success: true, message: 'Restaurant deleted' });
 });
 
-// ============================================
-// ⭐ UPDATE RESTAURANT ⭐
-// ============================================
 app.put('/api/restaurants/:id', (req, res) => {
     if (!req.user || req.user.role !== 'admin') {
         return res.status(401).json({ error: 'Not authorized' });
@@ -671,7 +669,6 @@ app.post('/api/orders', (req, res) => {
         syncAndSave();
     }
     
-    console.log(`📦 New order #${newOrder.id} from ${newOrder.userName} (${orderType})`);
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
@@ -910,7 +907,7 @@ passport.use(new GoogleStrategy({
         user = {
             id: users.length + 1,
             googleId: profile.id,
-            displayName: profile.displayName || profile.name?.givenName || 'User',
+            displayName: profile.displayName || 'User',
             email: profile.emails && profile.emails[0] ? profile.emails[0].value : '',
             photo: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
             role: users.length === 0 ? 'admin' : 'customer'
@@ -969,24 +966,20 @@ app.get('/login-failed', (req, res) => {
         <html>
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Login Failed</title>
             <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
+                body { font-family: Arial; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
                 h1 { color: #e74c3c; }
-                .container { max-width: 500px; margin: 0 auto; }
                 .btn { display: inline-block; padding: 12px 30px; background: #4285f4; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
                 .btn:hover { background: #3367d6; }
             </style>
         </head>
         <body>
-            <div class="container">
-                <h1>🔐 Login Failed</h1>
-                <p>There was an error logging in. Please try again.</p>
-                <a href="/auth/google" class="btn">Try Again</a>
-                <br><br>
-                <a href="/" style="color: #b2bec3;">Go Home</a>
-            </div>
+            <h1>🔐 Login Failed</h1>
+            <p>There was an error logging in. Please try again.</p>
+            <a href="/auth/google" class="btn">Try Again</a>
+            <br><br>
+            <a href="/" style="color: #b2bec3;">Go Home</a>
         </body>
         </html>
     `);
@@ -1027,23 +1020,19 @@ app.get('/pixelpanel', (req, res) => {
             <html>
             <head>
                 <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>404 - Page Not Found</title>
                 <style>
-                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
+                    body { font-family: Arial; text-align: center; padding: 50px; background: #0a0a0f; color: #e0e0e0; }
                     h1 { color: #e74c3c; font-size: 4em; }
-                    .container { max-width: 500px; margin: 0 auto; }
                     .btn { display: inline-block; padding: 12px 30px; background: #e74c3c; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
                     .btn:hover { background: #c0392b; }
                 </style>
             </head>
             <body>
-                <div class="container">
-                    <h1>404</h1>
-                    <h2>Page Not Found</h2>
-                    <p>The page you are looking for does not exist or has been moved.</p>
-                    <a href="/" class="btn">Go Home</a>
-                </div>
+                <h1>404</h1>
+                <h2>Page Not Found</h2>
+                <p>The page you are looking for does not exist.</p>
+                <a href="/" class="btn">Go Home</a>
             </body>
             </html>
         `);
@@ -1059,37 +1048,13 @@ app.get('/api/test', (req, res) => {
         status: 'ok', 
         message: 'Server is running',
         user: req.user ? req.user.displayName : 'Not logged in',
-        restaurants: restaurants.length,
-        dataFile: fs.existsSync(DATA_FILE) ? 'exists' : 'not found'
+        restaurants: restaurants.length
     });
-});
-
-// ============================================
-// ⭐ GET ALL RESTAURANTS SUMMARY ⭐
-// ============================================
-app.get('/api/restaurants/summary', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    const summary = restaurants.map(r => ({
-        id: r.id,
-        restaurantId: r.restaurantId,
-        name: r.name,
-        ownerName: r.ownerName,
-        ownerEmail: r.ownerEmail,
-        createdAt: r.createdAt,
-        status: r.status,
-        orderCount: r.orders.length,
-        menuCount: r.menu.length,
-        dealsCount: r.deals.length
-    }));
-    res.json(summary);
 });
 
 // ============================================
 // START SERVER
 // ============================================
-// Load data before starting
 loadData();
 createDefaultRestaurant();
 
@@ -1104,17 +1069,14 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('========================================');
     console.log(`📱 WhatsApp: ${RESTAURANT_CONFIG.whatsapp}`);
     console.log(`📞 Phone: ${RESTAURANT_CONFIG.phone}`);
-    console.log('========================================');
-    console.log(`🏪 Restaurants: ${restaurants.length}`);
+    console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
-    console.log(`💾 Data File: ${DATA_FILE}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
 });
 
-// Handle graceful shutdown
 process.on('SIGINT', () => {
     console.log('🛑 Saving data before shutdown...');
     saveData();
