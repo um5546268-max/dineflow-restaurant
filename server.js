@@ -23,7 +23,6 @@ const RESTAURANT_CONFIG = {
     discountAmount: 330,
     discountThreshold: 2000
 };
-// ============================================
 
 // ============================================
 // ⭐ DATA PERSISTENCE ⭐
@@ -64,7 +63,6 @@ function loadData() {
             const loadedData = JSON.parse(fileContent);
             data = { ...data, ...loadedData };
             console.log('✅ Data loaded from file');
-            console.log(`📊 Restaurants: ${data.restaurants.length}`);
             return true;
         }
         return false;
@@ -96,13 +94,13 @@ setInterval(() => saveData(), 30000);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// CORS - Allow all origins for Render
 app.use(cors({ 
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['https://dineflow.onrender.com', 'https://dineflow-admin.onrender.com']
-        : '*', 
+    origin: true, // Allows any origin
     credentials: true 
 }));
 
+// Serve static files from Public directory
 app.use(express.static(path.join(__dirname, 'Public')));
 
 // ============================================
@@ -214,9 +212,6 @@ app.get('/api/whatsapp-number', (req, res) => {
     res.json({ number: RESTAURANT_CONFIG.whatsapp });
 });
 
-// ============================================
-// ⭐ RECEIPT SETTINGS API ⭐
-// ============================================
 app.get('/api/receipt-settings', (req, res) => {
     try {
         res.json(receiptSettings);
@@ -228,7 +223,7 @@ app.get('/api/receipt-settings', (req, res) => {
 
 app.post('/api/receipt-settings', (req, res) => {
     if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in. Please login first.' });
+        return res.status(401).json({ error: 'Not logged in' });
     }
     try {
         const allowedFields = [
@@ -253,7 +248,7 @@ app.post('/api/receipt-settings', (req, res) => {
 });
 
 // ============================================
-// ⭐ LOCATION PROXY API ⭐
+// ⭐ LOCATION API - OPENSTREETMAP ONLY ⭐
 // ============================================
 app.get('/api/location/reverse', async (req, res) => {
     try {
@@ -263,16 +258,15 @@ app.get('/api/location/reverse', async (req, res) => {
             return res.status(400).json({ error: 'Missing lat/lng' });
         }
         
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-            {
-                headers: {
-                    'User-Agent': 'TheHeavenSlice-App/2.0 (contact@yourdomain.com)',
-                    'Accept': 'application/json',
-                    'Accept-Language': 'en'
-                }
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'TheHeavenSlice-App/2.0',
+                'Accept': 'application/json',
+                'Accept-Language': 'en'
             }
-        );
+        });
         
         if (!response.ok) {
             throw new Error('OpenStreetMap API error');
@@ -284,6 +278,18 @@ app.get('/api/location/reverse', async (req, res) => {
         console.error('Reverse geocoding error:', error);
         res.status(500).json({ error: 'Failed to get address' });
     }
+});
+
+app.get('/api/map/embed', (req, res) => {
+    const { lat, lng } = req.query;
+    
+    if (!lat || !lng) {
+        return res.status(400).json({ error: 'Missing lat/lng' });
+    }
+    
+    const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
+    
+    res.json({ url: mapUrl });
 });
 
 // ============================================
@@ -309,8 +315,6 @@ app.use((req, res, next) => {
 app.post('/api/restaurant/create', (req, res) => {
     try {
         const { name, ownerName, ownerEmail } = req.body;
-        
-        console.log('📝 Creating restaurant with:', { name, ownerName, ownerEmail });
         
         if (!name || !ownerName || !ownerEmail) {
             return res.status(400).json({ 
@@ -898,7 +902,7 @@ app.get('/api/users', (req, res) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5000/callback',
+    callbackURL: process.env.GOOGLE_REDIRECT_URI || '/callback',
     passReqToCallback: true
   },
   function(req, accessToken, refreshToken, profile, done) {
@@ -996,7 +1000,6 @@ app.get('/logout', (req, res) => {
 // ============================================
 // SERVE HTML PAGES
 // ============================================
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
@@ -1067,8 +1070,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
     console.log(`⬛ PixelPanel: http://localhost:${PORT}/pixelpanel`);
     console.log('========================================');
-    console.log(`📱 WhatsApp: ${RESTAURANT_CONFIG.whatsapp}`);
-    console.log(`📞 Phone: ${RESTAURANT_CONFIG.phone}`);
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>The Heaven Slice - Staff Panel</title>
+    <title>Staff Panel - The Heaven Slice</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -16,7 +16,6 @@
             overflow: hidden;
         }
 
-        /* Header */
         .staff-header {
             background: #2d3436;
             color: white;
@@ -33,9 +32,7 @@
             align-items: center;
             gap: 10px;
         }
-        .staff-header h2 span {
-            color: #e74c3c;
-        }
+        .staff-header h2 span { color: #e74c3c; }
         .staff-header .header-actions {
             display: flex;
             gap: 10px;
@@ -50,9 +47,7 @@
             font-size: 0.85em;
             transition: all 0.3s;
         }
-        .staff-header .header-actions a:hover {
-            background: rgba(255,255,255,0.1);
-        }
+        .staff-header .header-actions a:hover { background: rgba(255,255,255,0.1); }
         .staff-header .header-actions .logout-btn {
             background: #e74c3c;
         }
@@ -66,14 +61,12 @@
             background: #1e8449;
         }
 
-        /* Main Layout */
         .staff-body {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
 
-        /* Left Sidebar - Categories */
         .staff-sidebar {
             width: 90px;
             background: white;
@@ -113,7 +106,6 @@
         }
         .staff-category-item.active .cat-name { color: #e74c3c; }
 
-        /* Menu Area */
         .staff-menu-area {
             flex: 1;
             padding: 12px 16px;
@@ -212,7 +204,6 @@
             margin-top: 4px;
         }
 
-        /* Bottom Bar - Cart Summary */
         .staff-bottom-bar {
             background: white;
             padding: 10px 20px;
@@ -284,7 +275,6 @@
             transform: none;
         }
 
-        /* Popups */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -327,7 +317,6 @@
         .popup-title { font-size: 1.3em; font-weight: 700; color: #2d3436; margin-bottom: 4px; }
         .popup-subtitle { color: #636e72; margin-bottom: 15px; font-size: 0.85em; }
 
-        /* Order Form */
         .staff-order-form input, .staff-order-form select, .staff-order-form textarea {
             width: 100%;
             padding: 10px 14px;
@@ -386,7 +375,6 @@
             transform: scale(1.02);
         }
 
-        /* Cart Items List */
         .cart-items-list {
             max-height: 300px;
             overflow-y: auto;
@@ -459,7 +447,6 @@
             text-align: right;
         }
 
-        /* Layer Selection */
         .staff-layer-options {
             display: flex;
             flex-wrap: wrap;
@@ -487,7 +474,6 @@
             font-weight: 600;
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 80px;
@@ -517,6 +503,20 @@
         }
         .staff-empty-state h3 {
             color: #2d3436;
+        }
+
+        .status-pending { background: #fdf2f2; color: #e74c3c; }
+        .status-confirmed { background: #e8f4fd; color: #3498db; }
+        .status-preparing { background: #fef9e7; color: #f39c12; }
+        .status-ready { background: #e8f8f0; color: #27ae60; }
+        .status-delivered { background: #e8f8f0; color: #27ae60; }
+        .status-cancelled { background: #fdf2f2; color: #e74c3c; }
+        .order-status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
         }
 
         @media (max-width: 600px) {
@@ -553,22 +553,20 @@
         <h2>👨‍🍳 The <span>Heaven Slice</span> <span style="font-size:0.6em; color:#b2bec3; font-weight:400;">Staff Panel</span></h2>
         <div class="header-actions">
             <a href="/" class="view-site-btn">📱 View Site</a>
+            <a href="/admin?restaurant=restaurant-1" class="view-site-btn" style="background:#3498db;">👑 Admin</a>
             <a href="/logout" class="logout-btn">🚪 Logout</a>
         </div>
     </header>
 
     <div class="staff-body">
-        <!-- Categories Sidebar -->
         <aside class="staff-sidebar" id="staffSidebar"></aside>
-
-        <!-- Menu Area -->
         <main class="staff-menu-area" id="staffMenuArea"></main>
     </div>
 
-    <!-- Bottom Bar - Cart Summary -->
+    <!-- Bottom Bar -->
     <div class="staff-bottom-bar">
         <div class="cart-summary">
-            <span class="cart-icon">
+            <span class="cart-icon" onclick="openStaffCartPopup()" style="cursor:pointer;">
                 🛒
                 <span class="cart-count" id="staffCartCount">0</span>
             </span>
@@ -609,7 +607,6 @@
                 <input type="text" id="staffOrderName" placeholder="Customer Name" required />
                 <input type="tel" id="staffOrderPhone" placeholder="Phone Number" required />
                 
-                <!-- Order Types -->
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
                     <button type="button" class="staff-order-type-btn active" id="staffDineinBtn" onclick="staffSelectOrderType('dinein')">🍽️ Dine-In</button>
                     <button type="button" class="staff-order-type-btn" id="staffCarServiceBtn" onclick="staffSelectOrderType('carService')">🚗 Car</button>
@@ -669,8 +666,8 @@
         let selectedStaffLayers = {};
         let staffOrderType = 'dinein';
         let currencySymbol = 'Rs';
+        let restaurantName = 'The Heaven Slice';
 
-        // Categories
         const categories = [
             { id: 'all', name: 'All', icon: '🍽️' },
             { id: 'burgers', name: 'Burgers', icon: '🍔' },
@@ -697,7 +694,6 @@
         // LOAD DATA
         // ============================================================
         function loadStaffData() {
-            // Check if user is logged in
             fetch('/api/user/profile')
                 .then(r => r.json())
                 .then(data => {
@@ -706,7 +702,6 @@
                     }
                 });
 
-            // Load menu
             fetch('/api/menu?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
@@ -724,13 +719,20 @@
                     `;
                 });
 
-            // Load restaurant config for currency
             fetch('/api/restaurant-config')
                 .then(r => r.json())
                 .then(data => {
                     if (data && data.currency) {
                         currencySymbol = data.currency;
                     }
+                })
+                .catch(() => {});
+
+            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    restaurantName = data.name || 'The Heaven Slice';
+                    document.querySelector('.staff-header h2').innerHTML = `👨‍🍳 The <span>${restaurantName.replace('The ', '')}</span> <span style="font-size:0.6em; color:#b2bec3; font-weight:400;">Staff Panel</span>`;
                 })
                 .catch(() => {});
         }
@@ -813,14 +815,11 @@
             const item = menuItems.find(i => i.id === itemId);
             if (!item) return;
 
-            // Check if item has layers
             if (item.layers && item.layers.length > 0) {
-                // Show layer selection popup
                 showLayerSelection(item);
                 return;
             }
 
-            // Add directly if no layers
             const existing = staffCart.find(c => c.id === itemId);
             if (existing) {
                 existing.qty = (existing.qty || 1) + 1;
@@ -835,7 +834,6 @@
             const container = document.getElementById('staffLayerContainer');
             if (!container) return;
 
-            // Store the item we're adding layers for
             window.staffLayerItem = item;
 
             let html = `
@@ -855,7 +853,6 @@
 
             container.innerHTML = html;
 
-            // Open a small popup or show inline
             const popup = document.createElement('div');
             popup.className = 'popup-overlay show';
             popup.id = 'staffLayerPopup';
@@ -889,7 +886,6 @@
                 staffCart.push({ ...item, qty: 1, selectedLayers: layers });
             }
 
-            // Remove popup
             const popup = document.getElementById('staffLayerPopup');
             if (popup) popup.remove();
 
@@ -1031,15 +1027,12 @@
                 return;
             }
 
-            // Reset form
             document.getElementById('staffOrderForm').reset();
             document.getElementById('staffOrderTotal').textContent = `Total: ${currencySymbol} ${getStaffCartTotal().toFixed(2)}`;
             document.getElementById('staffOrderItems').value = JSON.stringify(staffCart);
             document.getElementById('staffOrderTotal').value = getStaffCartTotal();
 
-            // Default to Dine-In
             staffSelectOrderType('dinein');
-
             document.getElementById('staffCheckoutPopup').classList.add('show');
         }
 
@@ -1151,7 +1144,6 @@
                 fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
             }
 
-            // Collect layers from items
             const allLayers = [];
             items.forEach(item => {
                 if (item.selectedLayers && item.selectedLayers.length > 0) {
@@ -1168,8 +1160,7 @@
                 layers: allLayers,
                 orderType: orderType,
                 paymentMethod: paymentMethod,
-                table: table || null,
-                orderNumber: Math.floor(Math.random() * 1000)
+                table: table || null
             };
 
             fetch('/api/orders', {
@@ -1184,12 +1175,15 @@
                     showToast('✅ Order placed successfully!');
                     staffCart = [];
                     updateStaffCartUI();
-                    showToast('🧾 Receipt sent to kitchen!');
                     
-                    // Show receipt
-                    if (data.order) {
-                        showStaffReceipt(data.order);
-                    }
+                    const orderObj = data.order || { 
+                        ...orderData, 
+                        id: data.order?.id || Math.floor(Math.random() * 1000), 
+                        status: 'pending', 
+                        date: new Date().toLocaleString() 
+                    };
+                    
+                    showStaffReceipt(orderObj);
                 } else {
                     showToast('❌ ' + (data.error || 'Order failed'));
                 }
@@ -1200,7 +1194,7 @@
         }
 
         // ============================================================
-        // STAFF RECEIPT (Simple view)
+        // STAFF RECEIPT
         // ============================================================
         function showStaffReceipt(order) {
             const now = new Date();
@@ -1227,17 +1221,15 @@
         }
 
         // ============================================================
-        // TOAST NOTIFICATION
+        // TOAST
         // ============================================================
         function showToast(message) {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
-
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerHTML = message;
             document.body.appendChild(toast);
-
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s';
@@ -1248,19 +1240,8 @@
         // ============================================================
         // INIT
         // ============================================================
-        let restaurantName = 'The Heaven Slice';
-
         document.addEventListener('DOMContentLoaded', function() {
             loadStaffData();
-
-            // Load restaurant name
-            fetch('/api/restaurant-name?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => {
-                    restaurantName = data.name || 'The Heaven Slice';
-                    document.querySelector('.staff-header h2').innerHTML = `👨‍🍳 The <span>${restaurantName.replace('The ', '')}</span> <span style="font-size:0.6em; color:#b2bec3; font-weight:400;">Staff Panel</span>`;
-                })
-                .catch(() => {});
         });
     </script>
 </body>
