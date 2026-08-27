@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>The Heaven Slice - Admin Panel</title>
     <style>
+        /* All existing styles remain the same - keeping full CSS */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1991,30 +1992,189 @@
         }
 
         // ============================================================
-        // ORDER DELETE FUNCTION (Admin)
+        // ORDER DELETE FUNCTION (Admin) - FIXED
         // ============================================================
         function deleteOrderPermanently(orderId) {
             if (!confirm('⚠️ Are you sure you want to permanently delete this order? This cannot be undone!')) return;
             
             fetch('/api/orders/' + orderId + '?restaurant=' + RESTAURANT_ID, {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showToast('✅ Order #' + orderId + ' deleted permanently!');
-                    loadOrders();
+                    // Remove from local array
+                    orders = orders.filter(o => o.id !== orderId);
+                    lastOrderCount = orders.length;
                     renderAdminDashboard();
+                    renderAdminOrders();
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to delete order'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(err => {
+                console.error('Delete error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         // ============================================================
-        // LOAD DATA
+        // ⭐ SAVE RECEIPT SETTINGS - FIXED ⭐
+        // ============================================================
+        function saveReceiptSettings() {
+            const payload = {
+                logoIcon: document.getElementById('receiptLogoIcon').value || '👨‍🍳',
+                logoUrl: document.getElementById('receiptLogoUrl').value || '',
+                tagline: document.getElementById('receiptTagline').value || 'PIZZA • BURGER • FAST FOOD',
+                established: document.getElementById('receiptEstablished').value || '2022',
+                address: document.getElementById('receiptAddress').value || restaurantConfig.address,
+                phone: document.getElementById('receiptPhone').value || restaurantConfig.phone,
+                qrCodeUrl: document.getElementById('receiptQrUrl').value || '',
+                discountAmount: parseFloat(document.getElementById('receiptDiscountAmount').value) || 0,
+                discountThreshold: parseFloat(document.getElementById('receiptDiscountThreshold').value) || 0,
+                thankYouMessage: document.getElementById('receiptThankYou').value || 'Thank You for Your Order!',
+                footerMessage: document.getElementById('receiptFooterNote').value || 'Have a Great Day!'
+            };
+
+            const saveBtn = document.querySelector('.settings-card .admin-submit-btn');
+            if (!saveBtn) {
+                // Find the first admin-submit-btn in settings
+                const btns = document.querySelectorAll('.settings-card .admin-submit-btn');
+                if (btns.length > 0) saveBtn = btns[0];
+            }
+            
+            if (saveBtn) {
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = '⏳ Saving...';
+                saveBtn.disabled = true;
+            }
+
+            console.log('Saving receipt settings:', payload);
+
+            fetch('/api/receipt-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error: ' + response.status);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    receiptSettings = Object.assign(receiptSettings, data.settings || payload);
+                    restaurantConfig.discountAmount = payload.discountAmount;
+                    restaurantConfig.discountThreshold = payload.discountThreshold;
+                    restaurantConfig.address = payload.address;
+                    restaurantConfig.phone = payload.phone;
+                    restaurantConfig.est = payload.established;
+                    
+                    showToast('✅ Receipt settings saved successfully!');
+                    
+                    if (payload.logoUrl) {
+                        const img = document.getElementById('receiptLogoImagePreview');
+                        if (img) {
+                            img.src = payload.logoUrl;
+                            img.style.display = 'inline-block';
+                        }
+                    }
+                } else {
+                    showToast('❌ ' + (data.error || 'Save failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Save error:', err);
+                showToast('❌ Error: ' + err.message);
+            })
+            .finally(() => {
+                if (saveBtn) {
+                    saveBtn.textContent = '💾 Save Receipt Settings';
+                    saveBtn.disabled = false;
+                }
+            });
+        }
+
+        // ============================================================
+        // ⭐ LOAD FEEDBACK - FIXED ⭐
+        // ============================================================
+        function loadFeedback() {
+            fetch('/api/feedback/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    feedbacks = data || [];
+                    document.getElementById('totalFeedbacks').textContent = feedbacks.length;
+                    
+                    if (feedbacks.length > 0) {
+                        const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
+                        const avg = (total / feedbacks.length).toFixed(1);
+                        document.getElementById('avgRating').textContent = avg;
+                    } else {
+                        document.getElementById('avgRating').textContent = '0.0';
+                    }
+                    
+                    renderFeedback();
+                })
+                .catch(err => {
+                    console.error('Error loading feedback:', err);
+                    document.getElementById('feedbackList').innerHTML = '<p style="color:#b2bec3; padding:15px;">Error loading feedback</p>';
+                });
+        }
+
+        // ============================================================
+        // ⭐ LOAD SUPPORT - FIXED ⭐
+        // ============================================================
+        function loadSupport() {
+            fetch('/api/support/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    supportTickets = data || [];
+                    renderSupport();
+                })
+                .catch(err => {
+                    console.error('Error loading support tickets:', err);
+                    document.getElementById('supportList').innerHTML = '<p style="color:#b2bec3; padding:15px;">Error loading tickets</p>';
+                });
+        }
+
+        // ============================================================
+        // ⭐ LOAD ORDERS - FIXED ⭐
+        // ============================================================
+        function loadOrders() {
+            fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    orders = data || [];
+                    lastOrderCount = orders.length;
+                    if (orders.length > 0) {
+                        lastOrderId = Math.max(...orders.map(o => o.id));
+                    }
+                    renderAdminDashboard();
+                    renderAdminOrders();
+                })
+                .catch(err => {
+                    console.error('Error loading orders:', err);
+                });
+        }
+
+        // ============================================================
+        // ⭐ LOAD ALL DATA - FIXED ⭐
         // ============================================================
         function loadAdminData() {
             fetch('/api/user/profile')
@@ -2023,7 +2183,8 @@
                     if (!data.user) {
                         window.location.href = '/auth/google';
                     }
-                });
+                })
+                .catch(() => {});
 
             fetch('/api/restaurant-config')
                 .then(r => r.json())
@@ -2031,11 +2192,15 @@
                     restaurantConfig = data;
                     currencySymbol = data.currency || 'Rs';
                     whatsappNumber = data.whatsapp || '923001234567';
-                    document.querySelector('.admin-header h2').textContent = `👑 ${data.name} - Admin`;
-                    document.getElementById('whatsappNumberDisplay').textContent = whatsappNumber;
+                    const header = document.querySelector('.admin-header h2');
+                    if (header) header.textContent = `👑 ${data.name} - Admin`;
+                    const display = document.getElementById('whatsappNumberDisplay');
+                    if (display) display.textContent = whatsappNumber;
 
-                    document.getElementById('receiptDiscountAmount').value = data.discountAmount || 0;
-                    document.getElementById('receiptDiscountThreshold').value = data.discountThreshold || 0;
+                    const discountAmount = document.getElementById('receiptDiscountAmount');
+                    const discountThreshold = document.getElementById('receiptDiscountThreshold');
+                    if (discountAmount) discountAmount.value = data.discountAmount || 0;
+                    if (discountThreshold) discountThreshold.value = data.discountThreshold || 0;
                 })
                 .catch(() => {});
 
@@ -2043,7 +2208,8 @@
                 .then(r => r.json())
                 .then(data => {
                     whatsappNumber = data.number || '923001234567';
-                    document.getElementById('whatsappNumberDisplay').textContent = whatsappNumber;
+                    const display = document.getElementById('whatsappNumberDisplay');
+                    if (display) display.textContent = whatsappNumber;
                 })
                 .catch(() => {});
 
@@ -2074,36 +2240,30 @@
 
             fetch('/api/menu?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
-                .then(data => { menuItems = data; renderAdminMenu(); });
+                .then(data => { menuItems = data; renderAdminMenu(); })
+                .catch(() => {});
 
             fetch('/api/deals?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
-                .then(data => { deals = data; renderAdminDeals(); });
+                .then(data => { deals = data; renderAdminDeals(); })
+                .catch(() => {});
 
-            fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => {
-                    orders = data;
-                    lastOrderCount = orders.length;
-                    if (orders.length > 0) {
-                        lastOrderId = Math.max(...orders.map(o => o.id));
-                    }
-                    renderAdminDashboard();
-                    renderAdminOrders();
-                });
+            loadOrders();
 
             fetch('/api/users')
                 .then(r => r.json())
                 .then(data => {
-                    users = data.users || [];
+                    const users = data.users || [];
                     document.getElementById('adminTotalUsers').textContent = users.length;
-                });
+                })
+                .catch(() => {});
 
             fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     document.getElementById('adminRestaurantName').value = data.name || 'The Heaven Slice';
-                });
+                })
+                .catch(() => {});
 
             fetch('/api/layers')
                 .then(r => r.json())
@@ -2111,22 +2271,186 @@
                     availableLayers = data || [];
                     renderAdminLayers();
                     renderAddLayers();
-                });
+                })
+                .catch(() => {});
 
-            fetch('/api/feedback/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => { feedbacks = data; renderAdminFeedback(); });
-
-            fetch('/api/support/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => { supportTickets = data; renderAdminSupport(); });
+            loadFeedback();
+            loadSupport();
 
             fetch('/api/locations/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
-                .then(data => { customerLocations = data; allLocations = data; renderAdminDelivery(); });
+                .then(data => { customerLocations = data; allLocations = data; renderAdminDelivery(); })
+                .catch(() => {});
 
             loadRestaurantStatus();
             loadCancellationSettings();
+        }
+
+        // ============================================================
+        // RENDER FEEDBACK - FIXED
+        // ============================================================
+        function renderFeedback() {
+            const container = document.getElementById('feedbackList');
+            if (!container) return;
+            
+            if (!feedbacks || feedbacks.length === 0) {
+                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No feedback yet</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Customer</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            feedbacks.slice().reverse().forEach(f => {
+                const stars = '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
+                html += `
+                    <tr>
+                        <td>${f.userName || 'Anonymous'}</td>
+                        <td>${stars}</td>
+                        <td>${f.comment || '-'}</td>
+                        <td style="font-size:0.75em;">${f.date || 'Today'}</td>
+                        <td>
+                            <button class="admin-action-btn btn-delete" onclick="deleteFeedback(${f.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</table>`;
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // RENDER SUPPORT - FIXED
+        // ============================================================
+        function renderSupport() {
+            const container = document.getElementById('supportList');
+            if (!container) return;
+            
+            if (!supportTickets || supportTickets.length === 0) {
+                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No support tickets</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>#</th>
+                    <th>Customer</th>
+                    <th>Subject</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            supportTickets.slice().reverse().forEach(t => {
+                const priorityColors = {
+                    low: '🟢',
+                    normal: '🟡',
+                    high: '🔴'
+                };
+                html += `
+                    <tr>
+                        <td>#${t.id}</td>
+                        <td>${t.userName || 'Anonymous'}</td>
+                        <td>${t.subject}</td>
+                        <td>${priorityColors[t.priority] || '🟡'} ${t.priority || 'normal'}</td>
+                        <td>
+                            <select onchange="updateTicketStatus(${t.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
+                                <option value="open" ${t.status === 'open' ? 'selected' : ''}>Open</option>
+                                <option value="in-progress" ${t.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>Closed</option>
+                            </select>
+                        </td>
+                        <td style="font-size:0.75em;">${t.date || 'Today'}</td>
+                        <td>
+                            <button class="admin-action-btn btn-edit" onclick="viewTicket(${t.id})">👁️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</table>`;
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // UPDATE TICKET STATUS - FIXED
+        // ============================================================
+        function updateTicketStatus(id, status) {
+            fetch('/api/support/' + id + '/status?restaurant=' + RESTAURANT_ID, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Ticket status updated!');
+                    loadSupport();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Update ticket error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        // ============================================================
+        // VIEW TICKET - FIXED
+        // ============================================================
+        function viewTicket(id) {
+            const ticket = supportTickets.find(t => t.id === id);
+            if (!ticket) return;
+            alert(`📋 Ticket #${ticket.id}\n\nCustomer: ${ticket.userName || 'Anonymous'}\nEmail: ${ticket.userEmail || 'N/A'}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}\n\nPriority: ${ticket.priority || 'normal'}\nStatus: ${ticket.status || 'open'}`);
+        }
+
+        // ============================================================
+        // DELETE FEEDBACK - FIXED
+        // ============================================================
+        function deleteFeedback(id) {
+            if (!confirm('Delete this feedback?')) return;
+            fetch('/api/feedback/' + id + '?restaurant=' + RESTAURANT_ID, { 
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Feedback deleted!');
+                    loadFeedback();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Delete feedback error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         // ============================================================
@@ -2600,18 +2924,29 @@
             fetch('/api/orders/' + id + '/status?restaurant=' + RESTAURANT_ID, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ status })
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showToast('✅ Order status updated!');
-                    loadAdminData();
+                    loadOrders();
                 } else {
                     showToast('❌ ' + (data.error || 'Update failed'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(err => {
+                console.error('Update status error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         // ============================================================
@@ -2732,21 +3067,37 @@
             fetch('/api/menu/' + id + '?restaurant=' + RESTAURANT_ID, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ name, price, category, icon })
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     return fetch('/api/menu/' + id + '/layers?restaurant=' + RESTAURANT_ID, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ layers })
                     });
                 } else {
                     throw new Error(data.error || 'Update failed');
                 }
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showToast('✅ Menu item updated!');
@@ -2755,14 +3106,34 @@
                     showToast('❌ ' + (data.error || 'Layer update failed'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(err => {
+                console.error('Save menu error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         function deleteMenuItem(id) {
             if (!confirm('Delete this item?')) return;
-            fetch('/api/menu/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
-                .then(r => r.json())
-                .then(() => { showToast('✅ Item deleted!'); loadAdminData(); });
+            fetch('/api/menu/' + id + '?restaurant=' + RESTAURANT_ID, { 
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(() => { 
+                showToast('✅ Item deleted!'); 
+                loadAdminData(); 
+            })
+            .catch(err => {
+                console.error('Delete menu error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         function renderAddLayers() {
@@ -2770,6 +3141,7 @@
                 .then(r => r.json())
                 .then(layers => {
                     const container = document.getElementById('menuAddLayersList');
+                    if (!container) return;
                     if (!layers || layers.length === 0) {
                         container.innerHTML = '<span style="color:#b2bec3; font-size:0.85em;">No layers available. Add layers in Layers section.</span>';
                         return;
@@ -2816,9 +3188,17 @@
             fetch('/api/menu?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ name, price, category, icons: icons, layers: layers })
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(() => {
                 showToast('✅ Item added!');
                 document.getElementById('adminItemName').value = '';
@@ -2829,6 +3209,10 @@
                 renderAddLayers();
                 toggleAdminForm('menuForm');
                 loadAdminData();
+            })
+            .catch(err => {
+                console.error('Add item error:', err);
+                showToast('❌ Error: ' + err.message);
             });
         }
 
@@ -2859,9 +3243,26 @@
 
         function deleteDeal(id) {
             if (!confirm('Delete this deal?')) return;
-            fetch('/api/deals/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
-                .then(r => r.json())
-                .then(() => { showToast('✅ Deal deleted!'); loadAdminData(); });
+            fetch('/api/deals/' + id + '?restaurant=' + RESTAURANT_ID, { 
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(() => { 
+                showToast('✅ Deal deleted!'); 
+                loadAdminData(); 
+            })
+            .catch(err => {
+                console.error('Delete deal error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         function adminAddDeal() {
@@ -2877,9 +3278,17 @@
             fetch('/api/deals?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ name, desc, price, original, icons: icons })
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(() => {
                 showToast('✅ Deal added!');
                 document.getElementById('adminDealName').value = '';
@@ -2890,152 +3299,11 @@
                 updateIconDisplay('deal');
                 toggleAdminForm('dealForm');
                 loadAdminData();
+            })
+            .catch(err => {
+                console.error('Add deal error:', err);
+                showToast('❌ Error: ' + err.message);
             });
-        }
-
-        // ============================================================
-        // ADMIN FEEDBACK
-        // ============================================================
-        function renderAdminFeedback() {
-            fetch('/api/feedback/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => {
-                    const feedbacks = data || [];
-                    document.getElementById('totalFeedbacks').textContent = feedbacks.length;
-
-                    if (feedbacks.length > 0) {
-                        const total = feedbacks.reduce((sum, f) => sum + f.rating, 0);
-                        const avg = (total / feedbacks.length).toFixed(1);
-                        document.getElementById('avgRating').textContent = avg;
-                    } else {
-                        document.getElementById('avgRating').textContent = '0.0';
-                    }
-
-                    if (feedbacks.length === 0) {
-                        document.getElementById('feedbackList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No feedback yet</p>';
-                        return;
-                    }
-
-                    let html = `<table>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Rating</th>
-                            <th>Comment</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    `;
-
-                    feedbacks.slice().reverse().forEach(f => {
-                        const stars = '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
-                        html += `
-                            <tr>
-                                <td>${f.userName}</td>
-                                <td>${stars}</td>
-                                <td>${f.comment || '-'}</td>
-                                <td style="font-size:0.75em;">${f.date}</td>
-                                <td>
-                                    <button class="admin-action-btn btn-delete" onclick="deleteFeedback(${f.id})">🗑️</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    html += `</table>`;
-                    document.getElementById('feedbackList').innerHTML = html;
-                })
-                .catch(() => {});
-        }
-
-        function deleteFeedback(id) {
-            if (!confirm('Delete this feedback?')) return;
-            fetch('/api/feedback/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
-                .then(r => r.json())
-                .then(() => {
-                    showToast('✅ Feedback deleted!');
-                    renderAdminFeedback();
-                });
-        }
-
-        // ============================================================
-        // ADMIN SUPPORT
-        // ============================================================
-        function renderAdminSupport() {
-            fetch('/api/support/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => {
-                    const tickets = data || [];
-                    if (tickets.length === 0) {
-                        document.getElementById('supportList').innerHTML = '<p style="color:#b2bec3; padding:15px;">No support tickets</p>';
-                        return;
-                    }
-
-                    let html = `<table>
-                        <tr>
-                            <th>#</th>
-                            <th>Customer</th>
-                            <th>Subject</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    `;
-
-                    tickets.slice().reverse().forEach(t => {
-                        const priorityColors = {
-                            low: '🟢',
-                            normal: '🟡',
-                            high: '🔴'
-                        };
-                        html += `
-                            <tr>
-                                <td>#${t.id}</td>
-                                <td>${t.userName}</td>
-                                <td>${t.subject}</td>
-                                <td>${priorityColors[t.priority] || '🟡'} ${t.priority}</td>
-                                <td>
-                                    <select onchange="updateTicketStatus(${t.id}, this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #dfe6e9; font-size:0.75em;">
-                                        <option value="open" ${t.status === 'open' ? 'selected' : ''}>Open</option>
-                                        <option value="in-progress" ${t.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
-                                        <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                                        <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>Closed</option>
-                                    </select>
-                                </td>
-                                <td style="font-size:0.75em;">${t.date}</td>
-                                <td>
-                                    <button class="admin-action-btn btn-edit" onclick="viewTicket(${t.id})">👁️</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    html += `</table>`;
-                    document.getElementById('supportList').innerHTML = html;
-                })
-                .catch(() => {});
-        }
-
-        function updateTicketStatus(id, status) {
-            fetch('/api/support/' + id + '/status?restaurant=' + RESTAURANT_ID, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('✅ Ticket status updated!');
-                    renderAdminSupport();
-                } else {
-                    showToast('❌ ' + (data.error || 'Update failed'));
-                }
-            })
-            .catch(() => showToast('❌ Network error'));
-        }
-
-        function viewTicket(id) {
-            const ticket = supportTickets.find(t => t.id === id);
-            if (!ticket) return;
-            alert(`📋 Ticket #${ticket.id}\n\nCustomer: ${ticket.userName}\nEmail: ${ticket.userEmail}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}`);
         }
 
         // ============================================================
@@ -3086,9 +3354,17 @@
             fetch('/api/layers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ layer })
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showToast('✅ Layer added successfully!');
@@ -3099,7 +3375,10 @@
                     showToast('❌ ' + (data.error || 'Failed to add layer'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(err => {
+                console.error('Add layer error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         function deleteLayer(encodedLayer) {
@@ -3107,9 +3386,17 @@
             if (!confirm(`Delete layer "${layer}"?`)) return;
 
             fetch('/api/layers/' + encodedLayer, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include'
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showToast('✅ Layer deleted!');
@@ -3119,7 +3406,10 @@
                     showToast('❌ ' + (data.error || 'Delete failed'));
                 }
             })
-            .catch(() => showToast('❌ Network error'));
+            .catch(err => {
+                console.error('Delete layer error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         // ============================================================
@@ -3239,13 +3529,26 @@
 
         function deleteLocation(id) {
             if (!confirm('Remove this location from tracking?')) return;
-            fetch('/api/location/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
-                .then(r => r.json())
-                .then(() => {
-                    showToast('✅ Location removed!');
-                    renderAdminDelivery();
-                })
-                .catch(() => showToast('❌ Network error'));
+            fetch('/api/location/' + id + '?restaurant=' + RESTAURANT_ID, { 
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(() => {
+                showToast('✅ Location removed!');
+                renderAdminDelivery();
+            })
+            .catch(err => {
+                console.error('Delete location error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
         }
 
         // ============================================================
@@ -3257,12 +3560,24 @@
             fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ name })
             })
-            .then(r => r.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(() => {
                 showToast('✅ Restaurant name updated!');
                 loadAdminData();
+            })
+            .catch(err => {
+                console.error('Update name error:', err);
+                showToast('❌ Error: ' + err.message);
             });
         }
 
@@ -3271,6 +3586,7 @@
         // ============================================================
         function toggleAdminForm(formId) {
             const form = document.getElementById(formId);
+            if (!form) return;
             form.classList.toggle('show');
             if (form.classList.contains('show')) {
                 const target = formId === 'menuForm' ? 'menu' : 'deal';
@@ -3316,6 +3632,7 @@
 
         function updateIconDisplay(target) {
             const container = document.getElementById(target + 'SelectedIcons');
+            if (!container) return;
             const icons = selectedIcons[target];
 
             container.innerHTML = '';
@@ -3347,8 +3664,11 @@
         // ADMIN NAVIGATION
         // ============================================================
         function showAdminSection(section) {
+            currentSection = section;
             document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
-            document.querySelector(`.admin-nav-item[data-admin="${section}"]`).classList.add('active');
+            const navItem = document.querySelector(`.admin-nav-item[data-admin="${section}"]`);
+            if (navItem) navItem.classList.add('active');
+            
             document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
             const sectionMap = {
                 dashboard: 'adminDashboard',
@@ -3361,13 +3681,15 @@
                 delivery: 'adminDelivery',
                 settings: 'adminSettings'
             };
-            document.getElementById(sectionMap[section]).classList.add('active');
+            const target = document.getElementById(sectionMap[section]);
+            if (target) target.classList.add('active');
+            
             if (section === 'dashboard') renderAdminDashboard();
             if (section === 'orders') renderAdminOrders();
             if (section === 'menu') renderAdminMenu();
             if (section === 'deals') renderAdminDeals();
-            if (section === 'feedback') renderAdminFeedback();
-            if (section === 'support') renderAdminSupport();
+            if (section === 'feedback') renderFeedback();
+            if (section === 'support') renderSupport();
             if (section === 'layers') renderAdminLayers();
             if (section === 'delivery') renderAdminDelivery();
         }
@@ -3377,6 +3699,7 @@
         // ============================================================
         function toggleDarkMode() {
             const toggle = document.getElementById('darkModeToggle');
+            if (!toggle) return;
             toggle.classList.toggle('active');
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('adminDarkMode', document.body.classList.contains('dark-mode'));
@@ -3402,7 +3725,11 @@
             toast.className = 'toast';
             toast.innerHTML = message;
             document.body.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
+            setTimeout(() => { 
+                toast.style.opacity = '0'; 
+                toast.style.transition = 'opacity 0.3s'; 
+                setTimeout(() => toast.remove(), 300); 
+            }, 3500);
         }
 
         // ============================================================
@@ -3413,15 +3740,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('adminDarkMode') === 'true') {
                 document.body.classList.add('dark-mode');
-                document.getElementById('darkModeToggle').classList.add('active');
+                const toggle = document.getElementById('darkModeToggle');
+                if (toggle) toggle.classList.add('active');
             }
             if (localStorage.getItem('adminFontSize')) {
                 document.body.style.fontSize = localStorage.getItem('adminFontSize');
-                document.getElementById('fontSizeSelect').value = localStorage.getItem('adminFontSize');
+                const select = document.getElementById('fontSizeSelect');
+                if (select) select.value = localStorage.getItem('adminFontSize');
             }
             if (localStorage.getItem('adminFontFamily')) {
                 document.body.style.fontFamily = localStorage.getItem('adminFontFamily');
-                document.getElementById('fontFamilySelect').value = localStorage.getItem('adminFontFamily');
+                const select = document.getElementById('fontFamilySelect');
+                if (select) select.value = localStorage.getItem('adminFontFamily');
             }
 
             loadAdminData();
@@ -3438,11 +3768,14 @@
             updateIconDisplay('deal');
             renderAddLayers();
 
-            document.getElementById('iconPickerPopup').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeIconPicker();
-                }
-            });
+            const pickerPopup = document.getElementById('iconPickerPopup');
+            if (pickerPopup) {
+                pickerPopup.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeIconPicker();
+                    }
+                });
+            }
         });
     </script>
 </body>
