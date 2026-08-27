@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 // ============================================
 // ⭐ RESTAURANT CONFIGURATION ⭐
 // ============================================
-const RESTAURANT_CONFIG = {
+let RESTAURANT_CONFIG = {
     name: 'The Heaven Slice',
     est: '2022',
     address: 'Gojra Road Near Ali Marriage Hall',
@@ -53,7 +53,8 @@ let data = {
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
         thankYouMessage: 'Thank You for Your Order!',
         footerMessage: 'Have a Great Day!'
-    }
+    },
+    restaurantConfig: RESTAURANT_CONFIG
 };
 
 function loadData() {
@@ -62,7 +63,16 @@ function loadData() {
             const fileContent = fs.readFileSync(DATA_FILE, 'utf8');
             const loadedData = JSON.parse(fileContent);
             data = { ...data, ...loadedData };
+            
+            if (data.restaurantConfig) {
+                RESTAURANT_CONFIG = data.restaurantConfig;
+            }
+            if (data.receiptSettings) {
+                data.receiptSettings = { ...data.receiptSettings };
+            }
+            
             console.log('✅ Data loaded from file');
+            console.log(`📊 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
             return true;
         }
         return false;
@@ -77,6 +87,15 @@ function saveData() {
         if (fs.existsSync(DATA_FILE)) {
             fs.copyFileSync(DATA_FILE, DATA_FILE + '.backup');
         }
+        data.restaurantConfig = RESTAURANT_CONFIG;
+        data.receiptSettings = {
+            ...data.receiptSettings,
+            discountAmount: RESTAURANT_CONFIG.discountAmount,
+            discountThreshold: RESTAURANT_CONFIG.discountThreshold,
+            address: RESTAURANT_CONFIG.address,
+            phone: RESTAURANT_CONFIG.phone,
+            established: RESTAURANT_CONFIG.est
+        };
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
         console.log('💾 Data saved to file');
         return true;
@@ -159,6 +178,7 @@ function syncAndSave() {
     data.customerLocations = customerLocations;
     data.orderCounter = orderCounter;
     data.receiptSettings = receiptSettings;
+    data.restaurantConfig = RESTAURANT_CONFIG;
     saveData();
 }
 
@@ -255,39 +275,56 @@ function createDefaultRestaurant() {
 // ⭐ SERVER-SENT EVENTS FOR REAL-TIME ORDERS ⭐
 // ============================================
 const adminClients = new Set();
+let clientIdCounter = 0;
 
 app.get('/api/orders/stream', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
     
+    // Set headers for SSE with better timeout handling
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'X-Accel-Buffering': 'no'  // Disable nginx buffering
     });
     
-    res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Connected to order stream' })}\n\n`);
+    // Send initial connection message
+    const clientId = ++clientIdCounter;
+    res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Connected to order stream', clientId: clientId })}\n\n`);
     
-    const clientId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    const client = { id: clientId, res: res, restaurantId: req.restaurantId };
+    const client = { id: clientId, res: res, restaurantId: req.restaurantId, lastPing: Date.now() };
     adminClients.add(client);
     
-    console.log(`✅ Admin client connected: ${clientId}`);
+    console.log(`✅ Admin client ${clientId} connected`);
     
+    // Send ping every 10 seconds to keep connection alive
     const pingInterval = setInterval(() => {
         try {
-            res.write(`: ping\n\n`);
+            client.lastPing = Date.now();
+            res.write(`: ping ${Date.now()}\n\n`);
         } catch (e) {
             clearInterval(pingInterval);
+            adminClients.delete(client);
+            console.log(`❌ Admin client ${clientId} disconnected (ping failed)`);
         }
-    }, 30000);
+    }, 10000);
     
+    // Handle client disconnect
     req.on('close', () => {
         clearInterval(pingInterval);
         adminClients.delete(client);
-        console.log(`❌ Admin client disconnected: ${clientId}`);
+        console.log(`❌ Admin client ${clientId} disconnected`);
+    });
+    
+    // Handle timeout
+    req.setTimeout(120000, () => {
+        clearInterval(pingInterval);
+        adminClients.delete(client);
+        res.end();
+        console.log(`⏰ Admin client ${clientId} timed out`);
     });
 });
 
@@ -299,19 +336,24 @@ function broadcastNewOrder(order, restaurantId) {
     });
     
     let sentCount = 0;
+    const data = `data: ${message}\n\n`;
+    
     adminClients.forEach(client => {
         if (client.restaurantId === restaurantId || !client.restaurantId) {
             try {
-                client.res.write(`data: ${message}\n\n`);
+                client.res.write(data);
                 sentCount++;
             } catch (e) {
                 adminClients.delete(client);
+                console.log(`❌ Failed to send to client ${client.id}, removed`);
             }
         }
     });
     
     if (sentCount > 0) {
         console.log(`📡 Broadcasted new order #${order.id} to ${sentCount} admin clients`);
+    } else {
+        console.log(`⚠️ No admin clients connected for order #${order.id}`);
     }
 }
 
@@ -322,10 +364,12 @@ function broadcastOrderUpdate(order, restaurantId) {
         timestamp: new Date().toISOString()
     });
     
+    const data = `data: ${message}\n\n`;
+    
     adminClients.forEach(client => {
         if (client.restaurantId === restaurantId || !client.restaurantId) {
             try {
-                client.res.write(`data: ${message}\n\n`);
+                client.res.write(data);
             } catch (e) {
                 adminClients.delete(client);
             }
@@ -354,6 +398,45 @@ app.get('/api/restaurant-config', (req, res) => {
     res.json(RESTAURANT_CONFIG);
 });
 
+app.post('/api/restaurant-config-update', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const { discountAmount, discountThreshold, currency, address, phone, est, whatsapp } = req.body;
+        
+        if (discountAmount !== undefined && !isNaN(discountAmount)) {
+            RESTAURANT_CONFIG.discountAmount = Number(discountAmount);
+        }
+        if (discountThreshold !== undefined && !isNaN(discountThreshold)) {
+            RESTAURANT_CONFIG.discountThreshold = Number(discountThreshold);
+        }
+        if (currency) RESTAURANT_CONFIG.currency = currency;
+        if (address) RESTAURANT_CONFIG.address = address;
+        if (phone) RESTAURANT_CONFIG.phone = phone;
+        if (est) RESTAURANT_CONFIG.est = est;
+        if (whatsapp) RESTAURANT_CONFIG.whatsapp = whatsapp;
+        
+        if (discountAmount !== undefined) receiptSettings.discountAmount = Number(discountAmount);
+        if (discountThreshold !== undefined) receiptSettings.discountThreshold = Number(discountThreshold);
+        if (address) receiptSettings.address = address;
+        if (phone) receiptSettings.phone = phone;
+        if (est) receiptSettings.established = est;
+        
+        syncAndSave();
+        
+        res.json({ 
+            success: true, 
+            message: 'Restaurant config updated successfully',
+            config: RESTAURANT_CONFIG
+        });
+    } catch (error) {
+        console.error('Error updating restaurant config:', error);
+        res.status(500).json({ error: 'Failed to update config' });
+    }
+});
+
 app.get('/api/whatsapp-number', (req, res) => {
     res.json({ number: RESTAURANT_CONFIG.whatsapp });
 });
@@ -379,13 +462,28 @@ app.post('/api/receipt-settings', (req, res) => {
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined && req.body[field] !== null) {
                 receiptSettings[field] = req.body[field];
+                if (field === 'discountAmount') {
+                    RESTAURANT_CONFIG.discountAmount = Number(req.body[field]);
+                }
+                if (field === 'discountThreshold') {
+                    RESTAURANT_CONFIG.discountThreshold = Number(req.body[field]);
+                }
+                if (field === 'address') {
+                    RESTAURANT_CONFIG.address = req.body[field];
+                }
+                if (field === 'phone') {
+                    RESTAURANT_CONFIG.phone = req.body[field];
+                }
+                if (field === 'established') {
+                    RESTAURANT_CONFIG.est = req.body[field];
+                }
             }
         });
         if (!receiptSettings.logoIcon) {
             receiptSettings.logoIcon = '👨‍🍳';
         }
         syncAndSave();
-        res.json({ success: true, settings: receiptSettings });
+        res.json({ success: true, settings: receiptSettings, config: RESTAURANT_CONFIG });
     } catch (error) {
         console.error('Error saving receipt settings:', error);
         res.status(500).json({ error: 'Failed to save settings' });
@@ -486,6 +584,7 @@ app.post('/api/restaurant-name', (req, res) => {
     if (name) {
         restaurant.restaurantName = name;
         restaurant.name = name;
+        RESTAURANT_CONFIG.name = name;
         syncAndSave();
         res.json({ success: true, name: restaurant.restaurantName });
     } else {
@@ -538,6 +637,22 @@ app.put('/api/menu/:id', (req, res) => {
     if (layers !== undefined) item.layers = layers;
     syncAndSave();
     res.json({ success: true, item });
+});
+
+app.put('/api/menu/:id/layers', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    const item = restaurant.menu.find(i => i.id === parseInt(req.params.id));
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    const { layers } = req.body;
+    if (layers && Array.isArray(layers)) {
+        item.layers = layers;
+        syncAndSave();
+        res.json({ success: true, item });
+    } else {
+        res.status(400).json({ error: 'Invalid layers format' });
+    }
 });
 
 // ============================================
@@ -839,7 +954,8 @@ app.delete('/api/layers/:layer', (req, res) => {
 });
 
 // ============================================
-// USER ROUTES// ============================================
+// USER ROUTES
+// ============================================
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
@@ -848,6 +964,18 @@ app.get('/api/user/profile', (req, res) => {
 app.get('/api/users', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ total: users.length, users: users });
+});
+
+// ============================================
+// ⭐ SSE CONNECTION CHECK ENDPOINT ⭐
+// ============================================
+app.get('/api/sse-status', (req, res) => {
+    const connectedClients = adminClients.size;
+    res.json({
+        connected: connectedClients > 0,
+        clients: connectedClients,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // ============================================
@@ -992,7 +1120,10 @@ app.get('/api/test', (req, res) => {
         message: 'Server is running',
         user: req.user ? req.user.displayName : 'Not logged in',
         restaurantId: req.restaurantId,
-        restaurants: restaurants.length
+        restaurants: restaurants.length,
+        discountAmount: RESTAURANT_CONFIG.discountAmount,
+        discountThreshold: RESTAURANT_CONFIG.discountThreshold,
+        sseClients: adminClients.size
     });
 });
 
@@ -1011,6 +1142,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`👑 Admin: http://localhost:${PORT}/admin`);
     console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
     console.log('========================================');
+    console.log(`💰 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);

@@ -66,12 +66,15 @@
             align-items: center;
             flex-shrink: 0;
             transition: background 0.3s;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .admin-header h2 { font-size: 1.2em; }
         .admin-header .admin-header-actions {
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .admin-header .admin-header-actions a {
             color: white;
@@ -96,7 +99,6 @@
             background: #c0392b;
         }
 
-        /* Real-time connection status */
         .connection-status {
             font-size: 0.7em;
             padding: 4px 12px;
@@ -195,9 +197,6 @@
             font-size: 2em;
         }
 
-        /* ============================================
-           ORDER RECEIPT CARD - SAME AS CUSTOMER RECEIPT
-           ============================================ */
         .order-receipt-card {
             background: white;
             border-radius: 12px;
@@ -208,7 +207,6 @@
             border: 1px solid #e0e0e0;
             transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
-        /* New order flash effect */
         .order-receipt-card.new-order-flash {
             animation: flashOrder 1.5s ease 3;
             border-color: #27ae60;
@@ -673,7 +671,6 @@
             transform: scale(1.1);
         }
 
-        /* Settings */
         .settings-card {
             background: white;
             padding: 15px;
@@ -815,7 +812,6 @@
         .receipt-popup .btn-close-receipt { background: #b2bec3; color: white; }
         .receipt-popup .btn-close-receipt:hover { background: #636e72; }
 
-        /* Receipt print style */
         #receiptPrint {
             font-family: 'Courier New', monospace;
             background: #fff;
@@ -1451,8 +1447,48 @@
 
     <script>
         // ============================================================
-        // RESTAURANT CONFIG
+        // RESTAURANT ID
         // ============================================================
+        function getRestaurantId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('restaurant');
+            if (!id) id = localStorage.getItem('dineflow_restaurant');
+            if (!id) id = sessionStorage.getItem('dineflow_restaurant');
+            if (!id) id = 'restaurant-1';
+            localStorage.setItem('dineflow_restaurant', id);
+            sessionStorage.setItem('dineflow_restaurant', id);
+            if (!urlParams.get('restaurant')) {
+                try {
+                    const newUrl = window.location.pathname + '?restaurant=' + id + window.location.hash;
+                    window.history.replaceState({}, '', newUrl);
+                } catch(e) {}
+            }
+            return id;
+        }
+
+        const RESTAURANT_ID = getRestaurantId();
+        console.log('✅ Admin Restaurant ID:', RESTAURANT_ID);
+
+        function apiUrl(endpoint) {
+            const separator = endpoint.includes('?') ? '&' : '?';
+            return endpoint + separator + 'restaurant=' + RESTAURANT_ID;
+        }
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let currentSection = 'dashboard';
+        let menuItems = [];
+        let deals = [];
+        let orders = [];
+        let feedbacks = [];
+        let supportTickets = [];
+        let customerLocations = [];
+        let availableLayers = [];
+        let lastOrderCount = 0;
+        let currencySymbol = 'Rs';
+        let whatsappNumber = '923001234567';
+        let allLocations = [];
         let restaurantConfig = {
             name: 'The Heaven Slice',
             est: '2022',
@@ -1464,30 +1500,9 @@
             discountThreshold: 2000
         };
 
-        // ============================================================
-        // DATA
-        // ============================================================
-        let menuItems = [];
-        let deals = [];
-        let orders = [];
-        let users = [];
-        let feedbacks = [];
-        let supportTickets = [];
-        let customerLocations = [];
-        let availableLayers = [];
-        let lastOrderCount = 0;
-        let currencySymbol = 'Rs';
-        let whatsappNumber = '923001234567';
-        let allLocations = [];
-
-        // Icon picker state
-        let currentPickerTarget = 'menu';
         let selectedIcons = { menu: [], deal: [] };
         let selectedAddLayers = [];
 
-        // ============================================================
-        // RECEIPT SETTINGS
-        // ============================================================
         let receiptSettings = {
             logoIcon: '👨‍🍳',
             logoUrl: '',
@@ -1502,28 +1517,25 @@
             footerMessage: 'Have a Great Day!'
         };
 
-        // ============================================================
-        // EMOJI DATA
-        // ============================================================
         const emojiList = [
             '🍕', '🍔', '🍟', '🌭', '🥪', '🍝', '🥗', '🌮', '🌯', '🥙',
             '🥘', '🍲', '🥩', '🍖', '🍗', '🥓', '🧀', '🍳', '🥚', '🍞',
             '🥐', '🥖', '🥨', '🥯', '🧇', '🍩', '🍪', '🎂', '🍰', '🧁',
             '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🥛', '☕', '🧃', '🥤',
-            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🥮',
-            '🍡', '🍧', '🍨', '🍦', '🥧', '🍰', '🎂', '🍮', '🍭', '🍬',
-            '🍫', '🍿', '🍩', '🍪', '🧇', '🥐', '🥖', '🥨', '🥯', '🧀',
-            '🥗', '🥙', '🌮', '🌯', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱',
-            '🥟', '🍤', '🍙', '🍚', '🍘', '🥠', '🍢', '🍡', '🍧', '🍨',
-            '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿'
+            '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🥮'
         ];
 
         // ============================================================
-        // ⭐ REAL-TIME ORDER STREAM (SSE) ⭐
+        // ⭐ REAL-TIME ORDER STREAM (SSE) - WITH RECONNECTION ⭐
         // ============================================================
         let eventSource = null;
         let isSSEConnected = false;
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 50;
+        let reconnectDelay = 1000;
         let notificationSoundEnabled = true;
+        let lastPingTime = Date.now();
+        let pingCheckInterval = null;
 
         function connectToOrderStream() {
             if (eventSource) {
@@ -1531,17 +1543,24 @@
                 eventSource = null;
             }
 
-            console.log('🔄 Connecting to real-time order stream...');
+            console.log('🔄 Connecting to real-time order stream... (Attempt ' + (reconnectAttempts + 1) + ')');
 
             try {
-                eventSource = new EventSource('/api/orders/stream?restaurant=restaurant-1');
+                const url = '/api/orders/stream?restaurant=' + RESTAURANT_ID + '&t=' + Date.now();
+                eventSource = new EventSource(url);
 
                 eventSource.onopen = function(e) {
                     isSSEConnected = true;
+                    reconnectAttempts = 0;
+                    reconnectDelay = 1000;
                     console.log('✅ Real-time order stream connected!');
                     updateConnectionStatus(true);
                     document.getElementById('statRealTime').textContent = '🟢 Live';
                     document.getElementById('statRealTime').style.color = '#27ae60';
+                    lastPingTime = Date.now();
+                    
+                    if (pingCheckInterval) clearInterval(pingCheckInterval);
+                    pingCheckInterval = setInterval(checkPing, 15000);
                 };
 
                 eventSource.onmessage = function(e) {
@@ -1557,22 +1576,15 @@
                         if (data.type === 'new_order') {
                             console.log('🆕 New order #' + data.order.id + ' received in real-time!');
                             
-                            // Show toast notification
                             showToast('🆕 New Order #' + data.order.id + ' received!');
-                            
-                            // Play sound
                             playNotificationSound();
 
-                            // Add new order to orders array
                             orders.push(data.order);
                             lastOrderCount = orders.length;
 
-                            // Update all views
                             renderAdminDashboard();
                             renderAdminOrders();
                             renderAdminDelivery();
-
-                            // Flash the new order in orders view
                             flashNewOrder(data.order.id);
                         }
 
@@ -1580,7 +1592,6 @@
                             console.log('🔄 Order #' + data.order.id + ' status updated to: ' + data.order.status);
                             showToast('🔄 Order #' + data.order.id + ' is now ' + data.order.status);
                             
-                            // Update the order in the array
                             const index = orders.findIndex(o => o.id === data.order.id);
                             if (index !== -1) {
                                 orders[index] = data.order;
@@ -1601,18 +1612,37 @@
                     updateConnectionStatus(false);
                     document.getElementById('statRealTime').textContent = '🔴 Disconnected';
                     document.getElementById('statRealTime').style.color = '#e74c3c';
+                    
+                    if (pingCheckInterval) {
+                        clearInterval(pingCheckInterval);
+                        pingCheckInterval = null;
+                    }
 
-                    // Try to reconnect after 5 seconds
+                    reconnectAttempts++;
+                    const delay = Math.min(reconnectDelay * Math.pow(1.5, reconnectAttempts - 1), 30000);
+                    console.log('🔄 Reconnecting in ' + (delay/1000) + ' seconds...');
+                    
                     setTimeout(() => {
                         if (!isSSEConnected) {
-                            console.log('🔄 Attempting to reconnect...');
                             connectToOrderStream();
                         }
-                    }, 5000);
+                    }, delay);
                 };
             } catch(e) {
                 console.error('❌ Failed to create EventSource:', e);
                 setTimeout(() => connectToOrderStream(), 5000);
+            }
+        }
+
+        function checkPing() {
+            if (Date.now() - lastPingTime > 20000) {
+                console.log('⚠️ No ping received for 20 seconds, reconnecting...');
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                isSSEConnected = false;
+                connectToOrderStream();
             }
         }
 
@@ -1624,7 +1654,7 @@
                     statusEl.textContent = '🟢 Live';
                 } else {
                     statusEl.className = 'connection-status disconnected';
-                    statusEl.textContent = '🔴 Reconnecting...';
+                    statusEl.textContent = '🔴 Reconnecting... (' + (reconnectAttempts + 1) + ')';
                 }
             }
         }
@@ -1633,22 +1663,18 @@
             if (!notificationSoundEnabled) return;
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
                 
-                // Second beep for attention
+                const osc1 = audioContext.createOscillator();
+                const gain1 = audioContext.createGain();
+                osc1.connect(gain1);
+                gain1.connect(audioContext.destination);
+                osc1.frequency.value = 800;
+                osc1.type = 'sine';
+                gain1.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                osc1.start(audioContext.currentTime);
+                osc1.stop(audioContext.currentTime + 0.2);
+                
                 setTimeout(() => {
                     const osc2 = audioContext.createOscillator();
                     const gain2 = audioContext.createGain();
@@ -1656,25 +1682,22 @@
                     gain2.connect(audioContext.destination);
                     osc2.frequency.value = 1000;
                     osc2.type = 'sine';
-                    gain2.gain.setValueAtTime(0.2, audioContext.currentTime);
-                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
                     osc2.start(audioContext.currentTime);
-                    osc2.stop(audioContext.currentTime + 0.2);
-                }, 200);
+                    osc2.stop(audioContext.currentTime + 0.3);
+                }, 250);
             } catch(e) {
                 console.log('🔔 New order notification');
             }
         }
 
         function flashNewOrder(orderId) {
-            // Find the order card and add flash animation
             const cards = document.querySelectorAll('.order-receipt-card');
             cards.forEach(card => {
                 if (card.textContent.includes('ORDER #' + orderId)) {
                     card.classList.add('new-order-flash');
-                    // Scroll to the order
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Remove flash after animation
                     setTimeout(() => {
                         card.classList.remove('new-order-flash');
                     }, 4500);
@@ -1682,15 +1705,40 @@
             });
         }
 
-        // Clean up on page unload
+        function startFallbackPolling() {
+            setInterval(() => {
+                if (!isSSEConnected) {
+                    fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.length > lastOrderCount) {
+                                const newOrders = data.slice(lastOrderCount);
+                                newOrders.forEach(order => {
+                                    showToast('🆕 New Order #' + order.id + ' (fallback)');
+                                    orders.push(order);
+                                    lastOrderCount = orders.length;
+                                    renderAdminDashboard();
+                                    renderAdminOrders();
+                                    renderAdminDelivery();
+                                });
+                            }
+                        })
+                        .catch(() => {});
+                }
+            }, 5000);
+        }
+
         window.addEventListener('beforeunload', function() {
             if (eventSource) {
                 eventSource.close();
                 eventSource = null;
             }
+            if (pingCheckInterval) {
+                clearInterval(pingCheckInterval);
+                pingCheckInterval = null;
+            }
         });
 
-        // Reconnect if page becomes visible again
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden && !isSSEConnected) {
                 console.log('📱 Page became visible, reconnecting...');
@@ -1718,6 +1766,10 @@
                     whatsappNumber = data.whatsapp || '923001234567';
                     document.querySelector('.admin-header h2').textContent = `👑 ${data.name} - Admin`;
                     document.getElementById('whatsappNumberDisplay').textContent = whatsappNumber;
+                    
+                    // Update discount display
+                    document.getElementById('receiptDiscountAmount').value = data.discountAmount || 0;
+                    document.getElementById('receiptDiscountThreshold').value = data.discountThreshold || 0;
                 })
                 .catch(() => {});
 
@@ -1754,29 +1806,55 @@
                 })
                 .catch(() => {});
 
-            fetch('/api/menu?t=' + Date.now()).then(r => r.json()).then(data => { menuItems = data; renderAdminMenu(); });
-            fetch('/api/deals?t=' + Date.now()).then(r => r.json()).then(data => { deals = data; renderAdminDeals(); });
-            fetch('/api/orders/all').then(r => r.json()).then(data => {
-                orders = data;
-                lastOrderCount = orders.length;
-                renderAdminDashboard();
-                renderAdminOrders();
-            });
-            fetch('/api/users').then(r => r.json()).then(data => {
-                users = data.users || [];
-                document.getElementById('adminTotalUsers').textContent = users.length;
-            });
-            fetch('/api/restaurant-name').then(r => r.json()).then(data => {
-                document.getElementById('adminRestaurantName').value = data.name || 'The Heaven Slice';
-            });
-            fetch('/api/layers').then(r => r.json()).then(data => {
-                availableLayers = data || [];
-                renderAdminLayers();
-                renderAddLayers();
-            });
-            fetch('/api/feedback/all').then(r => r.json()).then(data => { feedbacks = data; renderAdminFeedback(); });
-            fetch('/api/support/all').then(r => r.json()).then(data => { supportTickets = data; renderAdminSupport(); });
-            fetch('/api/locations/all').then(r => r.json()).then(data => { customerLocations = data; allLocations = data; renderAdminDelivery(); });
+            fetch('/api/menu?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => { menuItems = data; renderAdminMenu(); });
+
+            fetch('/api/deals?t=' + Date.now() + '&restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => { deals = data; renderAdminDeals(); });
+
+            fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    orders = data;
+                    lastOrderCount = orders.length;
+                    renderAdminDashboard();
+                    renderAdminOrders();
+                });
+
+            fetch('/api/users')
+                .then(r => r.json())
+                .then(data => {
+                    users = data.users || [];
+                    document.getElementById('adminTotalUsers').textContent = users.length;
+                });
+
+            fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('adminRestaurantName').value = data.name || 'The Heaven Slice';
+                });
+
+            fetch('/api/layers')
+                .then(r => r.json())
+                .then(data => {
+                    availableLayers = data || [];
+                    renderAdminLayers();
+                    renderAddLayers();
+                });
+
+            fetch('/api/feedback/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => { feedbacks = data; renderAdminFeedback(); });
+
+            fetch('/api/support/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => { supportTickets = data; renderAdminSupport(); });
+
+            fetch('/api/locations/all?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => { customerLocations = data; allLocations = data; renderAdminDelivery(); });
         }
 
         // ============================================================
@@ -1929,13 +2007,47 @@
             .then(data => {
                 if (data.success) {
                     receiptSettings = Object.assign(receiptSettings, data.settings);
-                    showToast('✅ Receipt settings saved successfully!');
-                    if (data.settings.logoUrl) {
-                        document.getElementById('receiptLogoImagePreview').src = data.settings.logoUrl;
+                    
+                    return fetch('/api/restaurant-config-update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            discountAmount: payload.discountAmount,
+                            discountThreshold: payload.discountThreshold,
+                            currency: restaurantConfig.currency || 'Rs',
+                            address: payload.address,
+                            phone: payload.phone,
+                            est: payload.established,
+                            whatsapp: restaurantConfig.whatsapp || '923001234567'
+                        })
+                    });
+                } else {
+                    throw new Error(data.error || 'Save failed');
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update restaurant config');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    restaurantConfig.discountAmount = payload.discountAmount;
+                    restaurantConfig.discountThreshold = payload.discountThreshold;
+                    restaurantConfig.address = payload.address;
+                    restaurantConfig.phone = payload.phone;
+                    restaurantConfig.est = payload.established;
+                    
+                    showToast('✅ Settings saved and synced with customer panel!');
+                    
+                    if (payload.logoUrl) {
+                        document.getElementById('receiptLogoImagePreview').src = payload.logoUrl;
                         document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
                     }
                 } else {
-                    showToast('❌ ' + (data.error || 'Save failed'));
+                    showToast('❌ ' + (data.error || 'Config update failed'));
                 }
             })
             .catch(err => {
@@ -1974,7 +2086,6 @@
             const orderNum = String(order.orderNumber || order.id).padStart(3, '0');
             const tableInfo = order.table ? `Table: ${order.table}` : '';
             const orderTypeLabel = order.orderType === 'takeaway' ? 'Takeaway' : order.orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
-            const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
 
             let logoHtml = '';
             if (receiptSettings && receiptSettings.logoUrl) {
@@ -2006,10 +2117,9 @@
                 const price = item.price || 0;
                 const amount = qty * price;
                 const name = item.name || 'Item';
-                const variant = item.variant ? `- ${item.variant}` : '';
                 itemRows += `
                     <div class="receipt-row">
-                        <span class="item-name">${name} ${variant}</span>
+                        <span class="item-name">${name}</span>
                         <span class="item-qty">${qty}</span>
                         <span class="item-price">${currencySymbol} ${price.toFixed(2)}</span>
                         <span class="item-amount">${currencySymbol} ${amount.toFixed(2)}</span>
@@ -2113,7 +2223,7 @@
         function printReceipt() { window.print(); }
 
         // ============================================================
-        // RENDER ADMIN ORDERS (Receipt Style)
+        // RENDER ADMIN ORDERS
         // ============================================================
         function renderAdminOrders() {
             const container = document.getElementById('adminAllOrders');
@@ -2316,7 +2426,7 @@
         }
 
         function updateOrderStatus(id, status) {
-            fetch(`/api/orders/${id}/status`, {
+            fetch('/api/orders/' + id + '/status?restaurant=' + RESTAURANT_ID, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
@@ -2448,7 +2558,7 @@
                 return;
             }
 
-            fetch(`/api/menu/${id}`, {
+            fetch('/api/menu/' + id + '?restaurant=' + RESTAURANT_ID, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, price, category, icon })
@@ -2456,7 +2566,7 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    return fetch(`/api/menu/${id}/layers`, {
+                    return fetch('/api/menu/' + id + '/layers?restaurant=' + RESTAURANT_ID, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ layers })
@@ -2479,7 +2589,7 @@
 
         function deleteMenuItem(id) {
             if (!confirm('Delete this item?')) return;
-            fetch(`/api/menu/${id}`, { method: 'DELETE' })
+            fetch('/api/menu/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
                 .then(r => r.json())
                 .then(() => { showToast('✅ Item deleted!'); loadAdminData(); });
         }
@@ -2532,7 +2642,7 @@
             if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
             if (icons.length === 0) { showToast('⚠️ Please add at least one icon'); return; }
 
-            fetch('/api/menu', {
+            fetch('/api/menu?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, price, category, icons: icons, layers: layers })
@@ -2578,7 +2688,7 @@
 
         function deleteDeal(id) {
             if (!confirm('Delete this deal?')) return;
-            fetch(`/api/deals/${id}`, { method: 'DELETE' })
+            fetch('/api/deals/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
                 .then(r => r.json())
                 .then(() => { showToast('✅ Deal deleted!'); loadAdminData(); });
         }
@@ -2593,7 +2703,7 @@
             if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
             if (icons.length === 0) { showToast('⚠️ Please add at least one icon'); return; }
 
-            fetch('/api/deals', {
+            fetch('/api/deals?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, desc, price, original, icons: icons })
@@ -2616,7 +2726,7 @@
         // ADMIN FEEDBACK
         // ============================================================
         function renderAdminFeedback() {
-            fetch('/api/feedback/all')
+            fetch('/api/feedback/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     const feedbacks = data || [];
@@ -2667,7 +2777,7 @@
 
         function deleteFeedback(id) {
             if (!confirm('Delete this feedback?')) return;
-            fetch(`/api/feedback/${id}`, { method: 'DELETE' })
+            fetch('/api/feedback/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
                 .then(r => r.json())
                 .then(() => {
                     showToast('✅ Feedback deleted!');
@@ -2679,7 +2789,7 @@
         // ADMIN SUPPORT
         // ============================================================
         function renderAdminSupport() {
-            fetch('/api/support/all')
+            fetch('/api/support/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     const tickets = data || [];
@@ -2734,7 +2844,7 @@
         }
 
         function updateTicketStatus(id, status) {
-            fetch(`/api/support/${id}/status`, {
+            fetch('/api/support/' + id + '/status?restaurant=' + RESTAURANT_ID, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
@@ -2825,7 +2935,7 @@
             const layer = decodeURIComponent(encodedLayer);
             if (!confirm(`Delete layer "${layer}"?`)) return;
             
-            fetch(`/api/layers/${encodedLayer}`, {
+            fetch('/api/layers/' + encodedLayer, {
                 method: 'DELETE'
             })
             .then(r => r.json())
@@ -2845,7 +2955,7 @@
         // ADMIN DELIVERY
         // ============================================================
         function renderAdminDelivery() {
-            fetch('/api/locations/all')
+            fetch('/api/locations/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
                     allLocations = data || [];
@@ -2958,7 +3068,7 @@
 
         function deleteLocation(id) {
             if (!confirm('Remove this location from tracking?')) return;
-            fetch(`/api/location/${id}`, { method: 'DELETE' })
+            fetch('/api/location/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE' })
                 .then(r => r.json())
                 .then(() => {
                     showToast('✅ Location removed!');
@@ -2973,7 +3083,7 @@
         function adminUpdateRestaurantName() {
             const name = document.getElementById('adminRestaurantName').value;
             if (!name) { showToast('⚠️ Enter a name'); return; }
-            fetch('/api/restaurant-name', {
+            fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name })
@@ -3121,12 +3231,14 @@
             toast.className = 'toast';
             toast.innerHTML = message;
             document.body.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 2500);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
         }
 
         // ============================================================
         // INIT
         // ============================================================
+        let users = [];
+
         document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('adminDarkMode') === 'true') {
                 document.body.classList.add('dark-mode');
@@ -3143,9 +3255,9 @@
 
             loadAdminData();
             
-            // ⭐ Connect to real-time order stream
             setTimeout(function() {
                 connectToOrderStream();
+                startFallbackPolling();
             }, 2000);
             
             updateIconDisplay('menu');

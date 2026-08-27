@@ -193,7 +193,7 @@
             min-height: 180px;
             border: 1px solid rgba(0,0,0,0.03);
         }
-        /* FIXED: Removed transform for no movement */
+        /* FIXED: No movement on hover */
         .menu-item-card:hover { 
             box-shadow: 0 12px 35px rgba(0,0,0,0.12);
             border-color: #e74c3c;
@@ -210,6 +210,7 @@
             filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
             transition: all 0.3s ease;
         }
+        /* FIXED: No icon movement */
         .menu-item-card:hover .item-icons { 
             filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
         }
@@ -1190,47 +1191,30 @@
 
     <script>
         // ============================================================
-        // ⭐ RESTAURANT ID - FIX: WORKS ON ANY NETWORK ⭐
+        // ⭐ RESTAURANT ID - WORKS ON ANY NETWORK ⭐
         // ============================================================
         function getRestaurantId() {
-            // 1. Check URL params first
             const urlParams = new URLSearchParams(window.location.search);
             let id = urlParams.get('restaurant');
+            if (!id) id = localStorage.getItem('dineflow_restaurant');
+            if (!id) id = sessionStorage.getItem('dineflow_restaurant');
+            if (!id) id = 'restaurant-1';
             
-            // 2. Check localStorage
-            if (!id) {
-                id = localStorage.getItem('dineflow_restaurant');
-            }
-            
-            // 3. Check sessionStorage
-            if (!id) {
-                id = sessionStorage.getItem('dineflow_restaurant');
-            }
-            
-            // 4. Default
-            if (!id) {
-                id = 'restaurant-1';
-            }
-            
-            // 5. Save for future
             localStorage.setItem('dineflow_restaurant', id);
             sessionStorage.setItem('dineflow_restaurant', id);
             
-            // 6. Update URL if missing
             if (!urlParams.get('restaurant')) {
                 try {
                     const newUrl = window.location.pathname + '?restaurant=' + id + window.location.hash;
                     window.history.replaceState({}, '', newUrl);
                 } catch(e) {}
             }
-            
             return id;
         }
 
         const RESTAURANT_ID = getRestaurantId();
-        console.log('✅ Restaurant ID:', RESTAURANT_ID);
+        console.log('✅ Customer Restaurant ID:', RESTAURANT_ID);
 
-        // Helper function to add restaurant to API calls
         function apiUrl(endpoint) {
             const separator = endpoint.includes('?') ? '&' : '?';
             return endpoint + separator + 'restaurant=' + RESTAURANT_ID;
@@ -1251,11 +1235,28 @@
         };
 
         function loadRestaurantConfig() {
-            fetch(apiUrl('/api/restaurant-config'))
+            fetch('/api/restaurant-config')
                 .then(r => r.json())
                 .then(data => {
                     restaurantConfig = data;
+                    currencySymbol = data.currency || 'Rs';
                     updateRestaurantNameDisplay();
+                    
+                    if (data.discountAmount !== undefined) {
+                        receiptSettings.discountAmount = data.discountAmount;
+                    }
+                    if (data.discountThreshold !== undefined) {
+                        receiptSettings.discountThreshold = data.discountThreshold;
+                    }
+                    if (data.address) {
+                        receiptSettings.address = data.address;
+                    }
+                    if (data.phone) {
+                        receiptSettings.phone = data.phone;
+                    }
+                    if (data.est) {
+                        receiptSettings.established = data.est;
+                    }
                 })
                 .catch(() => {});
         }
@@ -1400,7 +1401,6 @@
                 })
                 .catch(() => {});
 
-            // Check if restaurant exists
             fetch(apiUrl('/api/check-restaurant'))
                 .then(r => r.json())
                 .then(data => {
@@ -1950,6 +1950,9 @@
             submitOrderWithLocation();
         }
 
+        // ============================================================
+        // ⭐ SUBMIT ORDER WITH RETRY ⭐
+        // ============================================================
         function submitOrderWithLocation() {
             if (!pendingOrderData) return;
             const { name, phone, items, total, layers, orderType, paymentMethod, fullAddress } = pendingOrderData;
@@ -1967,41 +1970,108 @@
                 lng: orderLocation.lng || null,
                 table: pendingOrderData.table || null,
                 orderNumber: orderCounter++,
-                restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                restaurantId: RESTAURANT_ID
             };
 
-            fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.message || data.order) {
-                    closeLocationPopup();
-                    closeOrderPopup();
-                    showToast('✅ Order placed successfully!');
-                    
-                    const orderObj = data.order || { 
-                        ...orderData, 
-                        id: data.order?.id || orderCounter - 1, 
-                        status: 'pending', 
-                        date: new Date().toLocaleString() 
-                    };
-                    
-                    showReceipt(orderObj);
-                    cart = [];
-                    updateCartBadge();
-                    loadOrders();
-                    showPanel('orders');
-                } else {
-                    showToast('❌ ' + (data.error || 'Order failed'));
-                }
-            })
-            .catch(() => {
-                showToast('❌ Network error');
-            });
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            function trySubmit() {
+                attempts++;
+                fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.message || data.order) {
+                        closeLocationPopup();
+                        closeOrderPopup();
+                        showToast('✅ Order placed successfully!');
+                        
+                        const orderObj = data.order || { 
+                            ...orderData, 
+                            id: data.order?.id || orderCounter - 1, 
+                            status: 'pending', 
+                            date: new Date().toLocaleString() 
+                        };
+                        
+                        showReceipt(orderObj);
+                        cart = [];
+                        updateCartBadge();
+                        loadOrders();
+                        showPanel('orders');
+                        
+                        // Try real-time confirmation
+                        tryListenForOrderConfirmation(orderObj.id);
+                    } else {
+                        if (attempts < maxAttempts) {
+                            showToast('⏳ Retrying... (' + attempts + '/' + maxAttempts + ')');
+                            setTimeout(trySubmit, 2000);
+                        } else {
+                            showToast('❌ ' + (data.error || 'Order failed after retries'));
+                        }
+                    }
+                })
+                .catch(() => {
+                    if (attempts < maxAttempts) {
+                        showToast('⏳ Retrying... (' + attempts + '/' + maxAttempts + ')');
+                        setTimeout(trySubmit, 2000);
+                    } else {
+                        showToast('❌ Network error after retries');
+                    }
+                });
+            }
+            
+            trySubmit();
             pendingOrderData = null;
+        }
+
+        // ============================================================
+        // ⭐ REAL-TIME ORDER CONFIRMATION ⭐
+        // ============================================================
+        function tryListenForOrderConfirmation(orderId) {
+            try {
+                const customerSSE = new EventSource('/api/orders/stream?restaurant=' + RESTAURANT_ID);
+                
+                customerSSE.onmessage = function(e) {
+                    try {
+                        const data = JSON.parse(e.data);
+                        if (data.type === 'order_update' && data.order.id === orderId) {
+                            if (data.order.status === 'confirmed' || data.order.status === 'preparing') {
+                                showToast('✅ Your order #' + orderId + ' is being prepared!');
+                                customerSSE.close();
+                            }
+                        }
+                    } catch(err) {}
+                };
+                
+                setTimeout(() => { 
+                    customerSSE.close(); 
+                }, 120000);
+            } catch(e) {
+                console.log('SSE not supported, using polling');
+                checkOrderStatusPolling(orderId);
+            }
+        }
+
+        function checkOrderStatusPolling(orderId) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                fetch(apiUrl('/api/orders/myorders'))
+                    .then(r => r.json())
+                    .then(orders => {
+                        const order = orders.find(o => o.id === orderId);
+                        if (order && (order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready')) {
+                            showToast('✅ Your order #' + orderId + ' is now ' + order.status + '!');
+                            clearInterval(interval);
+                        }
+                        if (attempts >= 60) clearInterval(interval);
+                    })
+                    .catch(() => {});
+            }, 5000);
         }
 
         // ============================================================
@@ -2056,7 +2126,7 @@
                 thirdpartyName, thirdpartyOrderId, 
                 fullAddress: fullAddress,
                 orderType: orderType,
-                restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                restaurantId: RESTAURANT_ID
             };
             closeOrderPopup();
 
@@ -2458,7 +2528,7 @@
                 body: JSON.stringify({ 
                     rating: customerSelectedRating, 
                     comment: comment, 
-                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                    restaurantId: RESTAURANT_ID 
                 })
             })
             .then(r => r.json())
@@ -2558,7 +2628,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     subject, message, priority, 
-                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                    restaurantId: RESTAURANT_ID 
                 })
             })
             .then(r => r.json())
@@ -2719,7 +2789,7 @@
                     lat: currentLat,
                     lng: currentLng,
                     address: currentAddress,
-                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                    restaurantId: RESTAURANT_ID
                 })
             })
             .then(r => r.json())
@@ -2890,7 +2960,7 @@
                 body: JSON.stringify({ 
                     rating: selectedRating, 
                     comment: comment, 
-                    restaurantId: RESTAURANT_ID // FIX: Added restaurant ID
+                    restaurantId: RESTAURANT_ID 
                 })
             })
             .then(r => r.json())
@@ -2930,7 +3000,7 @@
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s';
                 setTimeout(() => toast.remove(), 300);
-            }, 2500);
+            }, 3000);
         }
 
         // ============================================================
