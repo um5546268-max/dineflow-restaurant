@@ -120,30 +120,21 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ============================================
-// ⭐ RESTAURANT ID MIDDLEWARE (FIXED) ⭐
+// ⭐ RESTAURANT ID MIDDLEWARE ⭐
 // ============================================
 app.use((req, res, next) => {
-    // 1. Check URL query params first
     let restaurantId = req.query.restaurant;
-    
-    // 2. Check session
     if (!restaurantId && req.session && req.session.restaurantId) {
         restaurantId = req.session.restaurantId;
     }
-    
-    // 3. Default
     if (!restaurantId) {
         restaurantId = 'restaurant-1';
     }
-    
-    // Save to session
     if (req.session) {
         req.session.restaurantId = restaurantId;
     }
-    
     req.restaurantId = restaurantId;
     res.locals.restaurantId = restaurantId;
-    
     next();
 });
 
@@ -207,21 +198,16 @@ function getDefaultDeals() {
 }
 
 // ============================================
-// ⭐ CREATE OR GET RESTAURANT (FIXED) ⭐
+// ⭐ CREATE OR GET RESTAURANT ⭐
 // ============================================
 function getOrCreateRestaurant(restaurantId) {
-    // Find restaurant by ID
     let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
-    
-    // If not found, try to find by numeric ID
     if (!restaurant) {
         const numId = parseInt(restaurantId.replace('restaurant-', ''));
         if (!isNaN(numId)) {
             restaurant = restaurants.find(r => r.id === numId);
         }
     }
-    
-    // If still not found, create it
     if (!restaurant) {
         const numId = restaurants.length + 1;
         restaurant = {
@@ -241,7 +227,6 @@ function getOrCreateRestaurant(restaurantId) {
         syncAndSave();
         console.log(`🏪 Created new restaurant: ${restaurantId}`);
     }
-    
     return restaurant;
 }
 
@@ -267,10 +252,91 @@ function createDefaultRestaurant() {
 }
 
 // ============================================
+// ⭐ SERVER-SENT EVENTS FOR REAL-TIME ORDERS ⭐
+// ============================================
+const adminClients = new Set();
+
+app.get('/api/orders/stream', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+    });
+    
+    res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Connected to order stream' })}\n\n`);
+    
+    const clientId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const client = { id: clientId, res: res, restaurantId: req.restaurantId };
+    adminClients.add(client);
+    
+    console.log(`✅ Admin client connected: ${clientId}`);
+    
+    const pingInterval = setInterval(() => {
+        try {
+            res.write(`: ping\n\n`);
+        } catch (e) {
+            clearInterval(pingInterval);
+        }
+    }, 30000);
+    
+    req.on('close', () => {
+        clearInterval(pingInterval);
+        adminClients.delete(client);
+        console.log(`❌ Admin client disconnected: ${clientId}`);
+    });
+});
+
+function broadcastNewOrder(order, restaurantId) {
+    const message = JSON.stringify({
+        type: 'new_order',
+        order: order,
+        timestamp: new Date().toISOString()
+    });
+    
+    let sentCount = 0;
+    adminClients.forEach(client => {
+        if (client.restaurantId === restaurantId || !client.restaurantId) {
+            try {
+                client.res.write(`data: ${message}\n\n`);
+                sentCount++;
+            } catch (e) {
+                adminClients.delete(client);
+            }
+        }
+    });
+    
+    if (sentCount > 0) {
+        console.log(`📡 Broadcasted new order #${order.id} to ${sentCount} admin clients`);
+    }
+}
+
+function broadcastOrderUpdate(order, restaurantId) {
+    const message = JSON.stringify({
+        type: 'order_update',
+        order: order,
+        timestamp: new Date().toISOString()
+    });
+    
+    adminClients.forEach(client => {
+        if (client.restaurantId === restaurantId || !client.restaurantId) {
+            try {
+                client.res.write(`data: ${message}\n\n`);
+            } catch (e) {
+                adminClients.delete(client);
+            }
+        }
+    });
+}
+
+// ============================================
 // ⭐ API ROUTES ⭐
 // ============================================
 
-// Check restaurant exists (FIXED)
 app.get('/api/check-restaurant', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
@@ -284,7 +350,6 @@ app.get('/api/check-restaurant', (req, res) => {
     });
 });
 
-// Restaurant config
 app.get('/api/restaurant-config', (req, res) => {
     res.json(RESTAURANT_CONFIG);
 });
@@ -327,7 +392,6 @@ app.post('/api/receipt-settings', (req, res) => {
     }
 });
 
-// Location API
 app.get('/api/location/reverse', async (req, res) => {
     try {
         const { lat, lng } = req.query;
@@ -361,7 +425,7 @@ app.get('/api/map/embed', (req, res) => {
 });
 
 // ============================================
-// RESTAURANT MANAGEMENT API ⭐
+// RESTAURANT MANAGEMENT API
 // ============================================
 app.get('/api/restaurants/all', (req, res) => {
     if (!req.user) return res.json([]);
@@ -394,7 +458,7 @@ app.get('/api/restaurants/:id', (req, res) => {
 });
 
 // ============================================
-// MENU ROUTES (FIXED)
+// MENU ROUTES
 // ============================================
 app.get('/api/menu', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -511,7 +575,7 @@ app.delete('/api/deals/:id', (req, res) => {
 });
 
 // ============================================
-// ORDER ROUTES
+// ORDER ROUTES WITH REAL-TIME BROADCAST
 // ============================================
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
@@ -547,6 +611,9 @@ app.post('/api/orders', (req, res) => {
     
     restaurant.orders.push(newOrder);
     syncAndSave();
+    
+    // ⭐ BROADCAST TO ALL ADMIN CLIENTS ⭐
+    broadcastNewOrder(newOrder, restaurantId);
     
     if (orderType === 'delivery' && lat && lng) {
         customerLocations.push({
@@ -597,6 +664,10 @@ app.put('/api/orders/:id/status', (req, res) => {
     }
     order.status = status;
     syncAndSave();
+    
+    // ⭐ BROADCAST STATUS UPDATE ⭐
+    broadcastOrderUpdate(order, restaurantId);
+    
     res.json({ success: true, order });
 });
 
@@ -768,8 +839,7 @@ app.delete('/api/layers/:layer', (req, res) => {
 });
 
 // ============================================
-// USER ROUTES
-// ============================================
+// USER ROUTES// ============================================
 app.get('/api/user/profile', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     res.json({ user: req.user });
@@ -781,7 +851,7 @@ app.get('/api/users', (req, res) => {
 });
 
 // ============================================
-// GOOGLE OAUTH (FIXED)
+// GOOGLE OAUTH
 // ============================================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -829,7 +899,6 @@ app.get('/callback',
     }),
     function(req, res) {
         try {
-            // Get restaurant ID from query or session
             const restaurantId = req.query.restaurant || 
                                req.session.restaurantId || 
                                'restaurant-1';
@@ -932,8 +1001,6 @@ app.get('/api/test', (req, res) => {
 // ============================================
 loadData();
 createDefaultRestaurant();
-
-// Ensure restaurant-2 exists
 getOrCreateRestaurant('restaurant-2');
 
 app.listen(PORT, '0.0.0.0', () => {
