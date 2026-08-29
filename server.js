@@ -992,7 +992,6 @@ app.post('/api/orders', (req, res) => {
         locationShared: orderType === 'delivery' && !!(lat && lng),
         table: table || null,
         orderNumber: orderCounter++,
-        // ⭐ Store customer's device time
         deviceTime: deviceTime || new Date().toLocaleString(),
         deviceTimestamp: deviceTimestamp || new Date().toISOString(),
         cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString()
