@@ -568,6 +568,7 @@
             background: white;
             padding: 10px;
             margin: 10px auto;
+            display: block;
         }
         .qr-scanner-container .qr-status {
             margin-top: 10px;
@@ -580,8 +581,79 @@
             background: rgba(39, 174, 96, 0.3);
             color: #27ae60;
         }
+        .qr-scanner-container .qr-status.error {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
 
-        /* Backup & Recovery */
+        .whatsapp-mini {
+            background: #25D366;
+            color: white;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .whatsapp-mini .wa-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .whatsapp-mini .wa-header h4 { font-size: 0.9em; }
+        .whatsapp-mini .wa-messages {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 8px 0;
+        }
+        .whatsapp-mini .wa-messages::-webkit-scrollbar { width: 3px; }
+        .whatsapp-mini .wa-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+        .whatsapp-mini .wa-message {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin: 4px 0;
+            font-size: 0.8em;
+        }
+        .whatsapp-mini .wa-message .wa-sender { font-weight: 600; }
+        .whatsapp-mini .wa-input {
+            display: flex;
+            gap: 6px;
+        }
+        .whatsapp-mini .wa-input input {
+            flex: 1;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85em;
+            outline: none;
+        }
+        .whatsapp-mini .wa-input button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 20px;
+            background: white;
+            color: #25D366;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .whatsapp-mini .wa-input button:hover { background: #f0f0f0; }
+
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8em;
+        }
+        .sound-toggle button {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .sound-toggle button:hover { background: rgba(255,255,255,0.1); }
+
         .backup-item {
             display: flex;
             justify-content: space-between;
@@ -631,72 +703,6 @@
             font-weight: 600;
         }
 
-        /* WhatsApp Mini */
-        .whatsapp-mini {
-            background: #25D366;
-            color: white;
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-        .whatsapp-mini .wa-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .whatsapp-mini .wa-header h4 { font-size: 0.9em; }
-        .whatsapp-mini .wa-messages {
-            max-height: 300px;
-            overflow-y: auto;
-            margin: 8px 0;
-        }
-        .whatsapp-mini .wa-message {
-            background: rgba(255,255,255,0.15);
-            padding: 6px 10px;
-            border-radius: 8px;
-            margin: 4px 0;
-            font-size: 0.8em;
-        }
-        .whatsapp-mini .wa-message .wa-sender { font-weight: 600; }
-        .whatsapp-mini .wa-input {
-            display: flex;
-            gap: 6px;
-        }
-        .whatsapp-mini .wa-input input {
-            flex: 1;
-            padding: 6px 10px;
-            border: none;
-            border-radius: 20px;
-            font-size: 0.85em;
-        }
-        .whatsapp-mini .wa-input button {
-            padding: 6px 16px;
-            border: none;
-            border-radius: 20px;
-            background: white;
-            color: #25D366;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        /* Sound toggle */
-        .sound-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8em;
-        }
-        .sound-toggle button {
-            background: none;
-            border: none;
-            font-size: 1.2em;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        .sound-toggle button:hover { background: rgba(255,255,255,0.1); }
-
         @media (max-width: 600px) {
             .admin-sidebar { width: 140px; }
             .admin-sidebar .admin-nav-item { font-size: 0.7em; padding: 8px 12px; }
@@ -705,6 +711,7 @@
             .admin-header h2 { font-size: 0.9em; }
             .admin-header .admin-header-actions a { font-size: 0.65em; padding: 3px 8px; }
             .orders-grid { grid-template-columns: 1fr; }
+            .qr-scanner-container #qrCanvas { max-width: 200px; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -1036,17 +1043,15 @@
             <div class="admin-section" id="adminWhatsApp">
                 <h3 style="margin-bottom:12px;">💬 WhatsApp Web Integration</h3>
                 
-                <!-- QR Scanner for WhatsApp Web -->
                 <div class="qr-scanner-container" style="margin-bottom:12px;">
                     <h4 style="color:white; margin-bottom:8px;">📱 Link WhatsApp Device</h4>
                     <p style="font-size:0.8em; opacity:0.7; margin-bottom:8px;">Open WhatsApp on your phone → Linked Devices → Link a Device → Scan this QR code</p>
                     <div id="qrCanvasContainer">
                         <canvas id="qrCanvas" width="300" height="300"></canvas>
                     </div>
-                    <div class="qr-status" id="qrStatus">⏳ Generating QR code... Scan with WhatsApp</div>
+                    <div class="qr-status" id="qrStatus">⏳ Loading QR code...</div>
                     <div style="display:flex; gap:8px; margin-top:10px; justify-content:center; flex-wrap:wrap;">
                         <button onclick="generateWhatsAppQR()" style="padding:6px 20px; background:#25D366; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600;">🔄 Refresh QR</button>
-                        <button onclick="simulateWhatsAppLink()" style="padding:6px 20px; background:#3498db; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600;">📱 Simulate Link</button>
                         <button onclick="disconnectWhatsApp()" style="padding:6px 20px; background:#e74c3c; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600;">🔌 Disconnect</button>
                     </div>
                 </div>
@@ -1059,11 +1064,11 @@
                     <div class="wa-messages" id="waMessages">
                         <div class="wa-message">
                             <span class="wa-sender">System:</span>
-                            <span>Link your WhatsApp device using the QR code above to send messages.</span>
+                            <span>Scan the QR code above with your WhatsApp to link your device.</span>
                         </div>
                     </div>
                     <div class="wa-input">
-                        <input type="text" id="waInput" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendWAMessage()" />
+                        <input type="text" id="waInput" placeholder="Enter phone number and message..." onkeypress="if(event.key==='Enter') sendWAMessage()" />
                         <button onclick="sendWAMessage()">Send</button>
                     </div>
                 </div>
@@ -1091,15 +1096,6 @@
                         </div>
                         <div class="toggle-switch active" id="sidebarToggle" onclick="toggleSidebarSetting()">
                             <div class="toggle-dot"></div>
-                        </div>
-                    </div>
-                    <div class="settings-option">
-                        <div>
-                            <div class="option-label">Show/Hide Options</div>
-                            <div class="option-desc">Toggle individual sidebar items</div>
-                        </div>
-                        <div id="sidebarItemsToggle">
-                            <button class="admin-add-btn" onclick="toggleSidebarItemVisibility()" style="font-size:0.7em; padding:3px 12px;">Toggle All</button>
                         </div>
                     </div>
                 </div>
@@ -1429,6 +1425,198 @@
         ];
 
         // ============================================================
+        // WHATSAPP WEB QR CODE (REAL)
+        // ============================================================
+        function generateWhatsAppQR() {
+            const canvas = document.getElementById('qrCanvas');
+            const ctx = canvas.getContext('2d');
+            const status = document.getElementById('qrStatus');
+            
+            status.textContent = '⏳ Loading QR code...';
+            status.className = 'qr-status';
+            
+            fetch('/api/whatsapp/qr?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.qrImage) {
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.clearRect(0, 0, 300, 300);
+                            ctx.drawImage(img, 0, 0, 300, 300);
+                            
+                            // Add WhatsApp logo overlay
+                            ctx.fillStyle = 'rgba(37, 211, 102, 0.15)';
+                            ctx.beginPath();
+                            ctx.arc(150, 150, 30, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillStyle = '#25D366';
+                            ctx.font = '24px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('📱', 150, 150);
+                            
+                            status.textContent = '✅ QR Code ready! Scan with WhatsApp on your phone';
+                            status.className = 'qr-status';
+                            
+                            checkWhatsAppStatus();
+                        };
+                        img.src = data.qrImage;
+                    } else if (data.ready) {
+                        status.textContent = '✅ WhatsApp is already connected!';
+                        status.className = 'qr-status connected';
+                        document.getElementById('waLinkedStatus').textContent = 'Linked ✅';
+                        waLinked = true;
+                    } else {
+                        status.textContent = '⏳ Waiting for QR code... Please wait';
+                        status.className = 'qr-status';
+                        setTimeout(generateWhatsAppQR, 3000);
+                    }
+                })
+                .catch(err => {
+                    console.error('QR fetch error:', err);
+                    status.textContent = '❌ Error loading QR. Please refresh.';
+                    status.className = 'qr-status error';
+                });
+        }
+
+        function checkWhatsAppStatus() {
+            fetch('/api/whatsapp/status?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.connected) {
+                        document.getElementById('waLinkedStatus').textContent = 'Linked ✅';
+                        waLinked = true;
+                        document.getElementById('qrStatus').textContent = '✅ WhatsApp connected!';
+                        document.getElementById('qrStatus').className = 'qr-status connected';
+                    } else {
+                        document.getElementById('waLinkedStatus').textContent = 'Not linked';
+                        waLinked = false;
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function disconnectWhatsApp() {
+            if (!confirm('Disconnect WhatsApp device?')) return;
+            fetch('/api/whatsapp/disconnect?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('🔌 WhatsApp disconnected', 'warning');
+                    document.getElementById('waLinkedStatus').textContent = 'Not linked';
+                    waLinked = false;
+                    generateWhatsAppQR();
+                }
+            })
+            .catch(() => showToast('❌ Failed to disconnect', 'error'));
+        }
+
+        // ============================================================
+        // WHATSAPP MESSAGES
+        // ============================================================
+        function sendWAMessage() {
+            const input = document.getElementById('waInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            // Parse phone number from input (format: "923001234567 message")
+            const parts = msg.split(' ');
+            let number = parts[0];
+            let message = parts.slice(1).join(' ');
+            
+            // If first part looks like a phone number
+            if (number.match(/^[0-9]{10,15}$/)) {
+                // Use it as phone number
+            } else {
+                // Ask for phone number
+                number = prompt('Enter customer phone number (with country code):', '923001234567');
+                if (!number) return;
+                message = msg;
+            }
+            
+            if (!waLinked) {
+                showToast('⚠️ Please link WhatsApp device first (Scan QR)', 'warning');
+                return;
+            }
+            
+            fetch('/api/whatsapp/send?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ number: number, message: message })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    waMessages.push({ sender: 'Admin', text: message + ' (to ' + number + ')', time: new Date().toLocaleTimeString(), outgoing: true });
+                    renderWAMessages();
+                    input.value = '';
+                    showToast('💬 Message sent!', 'success');
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to send'), 'error');
+                }
+            })
+            .catch(() => showToast('❌ Network error', 'error'));
+        }
+
+        function sendQuickMessage(text) {
+            if (!waLinked) {
+                showToast('⚠️ Please link WhatsApp device first (Scan QR)', 'warning');
+                return;
+            }
+            const number = prompt('Enter customer phone number:', '923001234567');
+            if (!number) return;
+            
+            fetch('/api/whatsapp/send?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ number: number, message: text })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    waMessages.push({ sender: 'Admin', text: text + ' (to ' + number + ')', time: new Date().toLocaleTimeString(), outgoing: true });
+                    renderWAMessages();
+                    showToast('💬 Quick message sent!', 'success');
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to send'), 'error');
+                }
+            })
+            .catch(() => showToast('❌ Network error', 'error'));
+        }
+
+        function renderWAMessages() {
+            const container = document.getElementById('waMessages');
+            if (!container) return;
+            if (waMessages.length === 0) {
+                container.innerHTML = `<div class="wa-message"><span class="wa-sender">System:</span><span>Scan the QR code above with your WhatsApp to link your device.</span></div>`;
+                return;
+            }
+            let html = '';
+            waMessages.slice(-20).forEach(msg => {
+                const color = msg.outgoing ? '#25D366' : '#3498db';
+                html += `
+                    <div class="wa-message" style="border-left: 3px solid ${color};">
+                        <span class="wa-sender">${msg.sender}:</span>
+                        <span>${msg.text}</span>
+                        <span style="font-size:0.7em; opacity:0.6; float:right;">${msg.time}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function openWhatsApp() {
+            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            window.open('https://wa.me/' + number, '_blank');
+        }
+
+        // ============================================================
         // SOUND NOTIFICATION
         // ============================================================
         let audioContext = null;
@@ -1440,7 +1628,6 @@
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
                 
-                // Play a pleasant chime
                 const osc = audioContext.createOscillator();
                 const gain = audioContext.createGain();
                 osc.connect(gain);
@@ -1465,9 +1652,6 @@
                     osc2.start(audioContext.currentTime);
                     osc2.stop(audioContext.currentTime + 0.4);
                 }, 250);
-                
-                // Also show visual notification
-                showToast('🔔 New Order!', 'success');
                 
             } catch(e) {
                 console.log('🔔 New order notification');
@@ -1513,158 +1697,6 @@
             }
             sidebarVisible = visible;
             localStorage.setItem('adminSidebarVisible', visible);
-        }
-
-        // ============================================================
-        // WHATSAPP WEB QR CODE
-        // ============================================================
-        function generateWhatsAppQR() {
-            const canvas = document.getElementById('qrCanvas');
-            const ctx = canvas.getContext('2d');
-            const status = document.getElementById('qrStatus');
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, 300, 300);
-            
-            // Generate a random QR-like pattern (simulated)
-            // In production, this would be a real QR code from WhatsApp API
-            const size = 300;
-            const cellSize = 10;
-            const gridSize = Math.floor(size / cellSize);
-            
-            // Fill background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, size, size);
-            
-            // Draw grid pattern (simulated QR)
-            for (let x = 0; x < gridSize; x++) {
-                for (let y = 0; y < gridSize; y++) {
-                    // Create a pattern that looks like a QR code
-                    const isData = (x * y * 7 + x * 13 + y * 11) % 5 === 0 || 
-                                   (x + y) % 7 === 0 ||
-                                   (x * 3 + y * 2) % 4 === 0;
-                    
-                    // Position markers
-                    const inCorner = (x < 7 && y < 7) || 
-                                     (x > gridSize - 8 && y < 7) || 
-                                     (x < 7 && y > gridSize - 8);
-                    
-                    const isMarker = inCorner && (x % 2 === 0 || y % 2 === 0 || (x > 2 && x < 5 && y > 2 && y < 5));
-                    
-                    if (isMarker || isData) {
-                        ctx.fillStyle = (inCorner && !isMarker) ? 'white' : 'black';
-                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                    }
-                }
-            }
-            
-            // Add WhatsApp logo in center
-            ctx.fillStyle = '#25D366';
-            ctx.beginPath();
-            ctx.arc(150, 150, 30, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'white';
-            ctx.font = '30px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('📱', 150, 150);
-            
-            // Add border
-            ctx.strokeStyle = '#25D366';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(2, 2, size - 4, size - 4);
-            
-            status.textContent = '✅ QR Code ready! Scan with WhatsApp on your phone';
-            status.className = 'qr-status';
-            waLinked = false;
-            document.getElementById('waLinkedStatus').textContent = 'Not linked';
-            
-            showToast('📱 QR Code generated! Scan with WhatsApp');
-        }
-
-        function simulateWhatsAppLink() {
-            const status = document.getElementById('qrStatus');
-            status.textContent = '✅ WhatsApp device linked successfully!';
-            status.className = 'qr-status connected';
-            waLinked = true;
-            document.getElementById('waLinkedStatus').textContent = 'Linked ✅';
-            showToast('✅ WhatsApp device linked!');
-            
-            // Add welcome message
-            waMessages.push({ 
-                sender: 'System', 
-                text: '✅ WhatsApp device linked successfully! You can now send messages.', 
-                time: new Date().toLocaleTimeString() 
-            });
-            renderWAMessages();
-        }
-
-        function disconnectWhatsApp() {
-            waLinked = false;
-            document.getElementById('waLinkedStatus').textContent = 'Not linked';
-            document.getElementById('qrStatus').textContent = '⏳ Device disconnected. Scan QR to link again.';
-            document.getElementById('qrStatus').className = 'qr-status';
-            showToast('🔌 WhatsApp disconnected');
-        }
-
-        // ============================================================
-        // WHATSAPP MESSAGES
-        // ============================================================
-        function sendWAMessage() {
-            const input = document.getElementById('waInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-            if (!waLinked) {
-                showToast('⚠️ Please link WhatsApp device first (Scan QR)', 'warning');
-                return;
-            }
-            waMessages.push({ sender: 'Admin', text: msg, time: new Date().toLocaleTimeString(), outgoing: true });
-            renderWAMessages();
-            input.value = '';
-            showToast('💬 Message sent!', 'success');
-            
-            // Simulate reply
-            setTimeout(() => {
-                waMessages.push({ sender: 'Customer', text: '👍 Got it! Thanks!', time: new Date().toLocaleTimeString(), outgoing: false });
-                renderWAMessages();
-            }, 2000);
-        }
-
-        function sendQuickMessage(text) {
-            if (!waLinked) {
-                showToast('⚠️ Please link WhatsApp device first (Scan QR)', 'warning');
-                return;
-            }
-            waMessages.push({ sender: 'Admin', text: text, time: new Date().toLocaleTimeString(), outgoing: true });
-            renderWAMessages();
-            showToast('💬 Quick message sent!', 'success');
-        }
-
-        function renderWAMessages() {
-            const container = document.getElementById('waMessages');
-            if (!container) return;
-            if (waMessages.length === 0) {
-                container.innerHTML = `<div class="wa-message"><span class="wa-sender">System:</span><span>Link your WhatsApp device using the QR code above to send messages.</span></div>`;
-                return;
-            }
-            let html = '';
-            waMessages.slice(-20).forEach(msg => {
-                const color = msg.outgoing ? '#25D366' : '#3498db';
-                html += `
-                    <div class="wa-message" style="border-left: 3px solid ${color};">
-                        <span class="wa-sender">${msg.sender}:</span>
-                        <span>${msg.text}</span>
-                        <span style="font-size:0.7em; opacity:0.6; float:right;">${msg.time}</span>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function openWhatsApp() {
-            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
-            window.open('https://wa.me/' + number, '_blank');
         }
 
         // ============================================================
@@ -2067,7 +2099,6 @@
             renderStatistics();
             setupAutoBackup();
             
-            // Load sound setting
             const savedSound = localStorage.getItem('adminSoundEnabled');
             if (savedSound !== null) {
                 soundEnabled = savedSound === 'true';
@@ -2079,7 +2110,6 @@
                 }
             }
             
-            // Load sidebar setting
             const savedSidebar = localStorage.getItem('adminSidebarVisible');
             if (savedSidebar !== null) {
                 sidebarVisible = savedSidebar === 'true';
@@ -2096,8 +2126,8 @@
                 }
             }
             
-            // Generate QR code
-            generateWhatsAppQR();
+            // Generate WhatsApp QR
+            setTimeout(generateWhatsAppQR, 1000);
         }
 
         // ============================================================
@@ -2123,7 +2153,7 @@
         }
 
         // ============================================================
-        // RENDER ADMIN ORDERS - COMPACT GRID (3 per row)
+        // RENDER ADMIN ORDERS
         // ============================================================
         function renderAdminOrders() {
             const container = document.getElementById('adminAllOrders');
@@ -2190,13 +2220,8 @@
         function sendToKitchen(orderId) {
             const order = orders.find(o => o.id === orderId);
             if (!order) { showToast('❌ Order not found', 'error'); return; }
-            
-            // Print kitchen receipt
             showKitchenReceipt(order);
-            
-            // Update order status to preparing
             updateOrderStatus(orderId, 'preparing');
-            
             showToast('🍳 Order sent to kitchen!', 'success');
         }
 
@@ -2206,7 +2231,6 @@
             const orderTime = order.deviceTime || now.toLocaleString();
             const orderNum = String(order.orderNumber || order.id).padStart(3, '0');
             
-            // Kitchen receipt - different from customer receipt
             const receiptHtml = `
                 <div style="font-family:'Courier New',monospace; background:#f5f5f5; padding:15px; max-width:300px; margin:0 auto; border:2px solid #e74c3c; font-size:12px;">
                     <div style="text-align:center; border-bottom:2px solid #e74c3c; padding-bottom:8px; margin-bottom:8px;">
@@ -2254,7 +2278,6 @@
                 </div>
             `;
 
-            // Open in new window for printing
             const win = window.open('', '_blank', 'width=350,height=500');
             win.document.write(`
                 <html><head><title>Kitchen Order #${order.id}</title>
