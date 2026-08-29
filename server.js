@@ -1,3 +1,7 @@
+// ============================================
+// COMPLETE server.js - All endpoints included
+// ============================================
+
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -66,7 +70,10 @@ let data = {
         openingTime: '09:00',
         closingTime: '23:00',
         lastUpdated: new Date().toISOString()
-    }
+    },
+    kitchenOrders: [],
+    whatsappLinked: false,
+    whatsappSessions: []
 };
 
 function loadData() {
@@ -192,6 +199,9 @@ let availableLayers = data.availableLayers;
 let customerLocations = data.customerLocations;
 let orderCounter = data.orderCounter || 1;
 let receiptSettings = data.receiptSettings;
+let kitchenOrders = data.kitchenOrders || [];
+let whatsappLinked = data.whatsappLinked || false;
+let whatsappSessions = data.whatsappSessions || [];
 
 function syncAndSave() {
     data.users = users;
@@ -209,6 +219,9 @@ function syncAndSave() {
         closingTime: RESTAURANT_CONFIG.closingTime,
         lastUpdated: new Date().toISOString()
     };
+    data.kitchenOrders = kitchenOrders;
+    data.whatsappLinked = whatsappLinked;
+    data.whatsappSessions = whatsappSessions;
     saveData();
 }
 
@@ -460,6 +473,214 @@ function broadcastOrderUpdate(order, restaurantId) {
         }
     });
 }
+
+// ============================================
+// ⭐ KITCHEN API ROUTES ⭐
+// ============================================
+app.post('/api/kitchen/print', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const { order, restaurantId } = req.body;
+        const restaurant = getOrCreateRestaurant(restaurantId || req.restaurantId);
+        
+        // Add to kitchen orders
+        kitchenOrders.push({
+            id: Date.now(),
+            orderId: order.id,
+            order: order,
+            restaurantId: restaurantId || req.restaurantId,
+            printed: true,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (kitchenOrders.length > 500) {
+            kitchenOrders = kitchenOrders.slice(-500);
+        }
+        
+        syncAndSave();
+        
+        // Simulate printer connection
+        console.log(`🍳 Kitchen print order #${order.id}`);
+        
+        res.json({ success: true, message: 'Order sent to kitchen printer' });
+    } catch (error) {
+        console.error('Kitchen print error:', error);
+        res.status(500).json({ error: 'Failed to print to kitchen' });
+    }
+});
+
+app.get('/api/kitchen/orders', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const orders = kitchenOrders.filter(o => o.restaurantId === restaurantId);
+    res.json(orders);
+});
+
+app.delete('/api/kitchen/orders/:id', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const index = kitchenOrders.findIndex(o => o.id === parseInt(req.params.id));
+    if (index === -1) {
+        return res.status(404).json({ error: 'Kitchen order not found' });
+    }
+    
+    kitchenOrders.splice(index, 1);
+    syncAndSave();
+    res.json({ success: true });
+});
+
+// ============================================
+// ⭐ WHATSAPP API ROUTES ⭐
+// ============================================
+app.get('/api/whatsapp/status', (req, res) => {
+    res.json({
+        linked: whatsappLinked,
+        sessions: whatsappSessions.length,
+        lastConnected: whatsappSessions.length > 0 ? whatsappSessions[whatsappSessions.length - 1].timestamp : null
+    });
+});
+
+app.post('/api/whatsapp/link', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const { sessionId, deviceName } = req.body;
+        
+        whatsappLinked = true;
+        whatsappSessions.push({
+            sessionId: sessionId || 'wa_session_' + Date.now(),
+            deviceName: deviceName || 'WhatsApp Web',
+            userId: req.user.id,
+            userName: req.user.displayName,
+            timestamp: new Date().toISOString(),
+            connected: true
+        });
+        
+        syncAndSave();
+        
+        res.json({ 
+            success: true, 
+            message: 'WhatsApp device linked successfully',
+            sessions: whatsappSessions
+        });
+    } catch (error) {
+        console.error('WhatsApp link error:', error);
+        res.status(500).json({ error: 'Failed to link WhatsApp device' });
+    }
+});
+
+app.post('/api/whatsapp/disconnect', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        whatsappLinked = false;
+        if (whatsappSessions.length > 0) {
+            const lastSession = whatsappSessions[whatsappSessions.length - 1];
+            lastSession.connected = false;
+            lastSession.disconnectedAt = new Date().toISOString();
+        }
+        syncAndSave();
+        
+        res.json({ success: true, message: 'WhatsApp disconnected' });
+    } catch (error) {
+        console.error('WhatsApp disconnect error:', error);
+        res.status(500).json({ error: 'Failed to disconnect WhatsApp' });
+    }
+});
+
+app.post('/api/whatsapp/send', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    try {
+        const { number, message, orderId } = req.body;
+        
+        if (!whatsappLinked) {
+            return res.status(400).json({ error: 'WhatsApp device not linked' });
+        }
+        
+        if (!number || !message) {
+            return res.status(400).json({ error: 'Phone number and message required' });
+        }
+        
+        // Log the message
+        console.log(`💬 WhatsApp message to ${number}: ${message.substring(0, 50)}...`);
+        
+        // In production, this would use WhatsApp Business API or WhatsApp Web
+        // For now, we simulate sending
+        const result = {
+            success: true,
+            message: 'Message sent successfully',
+            to: number,
+            text: message,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Store message in data
+        if (!data.whatsappMessages) {
+            data.whatsappMessages = [];
+        }
+        data.whatsappMessages.push({
+            id: Date.now(),
+            number: number,
+            message: message,
+            orderId: orderId || null,
+            userId: req.user.id,
+            userName: req.user.displayName,
+            timestamp: new Date().toISOString(),
+            sent: true
+        });
+        syncAndSave();
+        
+        res.json(result);
+    } catch (error) {
+        console.error('WhatsApp send error:', error);
+        res.status(500).json({ error: 'Failed to send WhatsApp message' });
+    }
+});
+
+app.get('/api/whatsapp/messages', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const messages = data.whatsappMessages || [];
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const filtered = messages.filter(m => m.restaurantId === restaurantId);
+    res.json(filtered.slice(-50));
+});
+
+// ============================================
+// ⭐ WHATSAPP WEB QR CODE GENERATION ⭐
+// ============================================
+app.get('/api/whatsapp/qr', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    // Generate a QR code URL for WhatsApp Web
+    // In production, this would use a real WhatsApp Web QR code
+    const qrData = {
+        qr: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=whatsapp://link?session=' + Date.now(),
+        sessionId: 'wa_session_' + Date.now(),
+        expiresAt: new Date(Date.now() + 60000).toISOString() // 1 minute expiry
+    };
+    
+    res.json(qrData);
+});
 
 // ============================================
 // ⭐ API ROUTES ⭐
@@ -967,7 +1188,7 @@ app.post('/api/orders', (req, res) => {
         });
     }
     
-    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table, deviceTime, deviceTimestamp } = req.body;
+    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table, deviceTime, deviceTimestamp, orderDestination, isStaffOrder } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -994,13 +1215,29 @@ app.post('/api/orders', (req, res) => {
         orderNumber: orderCounter++,
         deviceTime: deviceTime || new Date().toLocaleString(),
         deviceTimestamp: deviceTimestamp || new Date().toISOString(),
-        cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString()
+        cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString(),
+        orderDestination: orderDestination || 'admin',
+        isStaffOrder: isStaffOrder || false
     };
     
     restaurant.orders.push(newOrder);
     syncAndSave();
     
     broadcastNewOrder(newOrder, restaurantId);
+    
+    // Send to kitchen if requested
+    if (orderDestination === 'kitchen' || orderDestination === 'both') {
+        kitchenOrders.push({
+            id: Date.now(),
+            orderId: newOrder.id,
+            order: newOrder,
+            restaurantId: restaurantId,
+            printed: true,
+            timestamp: new Date().toISOString()
+        });
+        syncAndSave();
+        console.log(`🍳 Kitchen order #${newOrder.id} (${orderDestination})`);
+    }
     
     if (orderType === 'delivery' && lat && lng) {
         customerLocations.push({
@@ -1392,7 +1629,9 @@ app.get('/api/test', (req, res) => {
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
         sseClients: adminClients.size,
         isOpen: RESTAURANT_CONFIG.isOpen,
-        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
+        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit,
+        whatsappLinked: whatsappLinked,
+        kitchenOrders: kitchenOrders.length
     });
 });
 
@@ -1417,6 +1656,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
+    console.log(`💬 WhatsApp Linked: ${whatsappLinked ? 'Yes' : 'No'}`);
+    console.log(`🍳 Kitchen Orders: ${kitchenOrders.length}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');

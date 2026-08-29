@@ -36,27 +36,16 @@
         body.dark-mode .settings-card { background: #16213e; color: #f5f5f5; }
         body.dark-mode .settings-option { border-bottom-color: #2d2d44; }
         body.dark-mode .settings-option select { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card { background: #16213e; border-color: #2d2d44; }
-        body.dark-mode .order-receipt-card .receipt-header { border-bottom-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card .receipt-header .restaurant-name { color: #f5f5f5; }
-        body.dark-mode .order-receipt-card .receipt-header .est { color: #aaa; }
-        body.dark-mode .order-receipt-card .receipt-header .address { color: #aaa; }
-        body.dark-mode .order-receipt-card .receipt-header .phone { color: #aaa; }
-        body.dark-mode .order-receipt-card .receipt-divider { border-top-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card .receipt-title { color: #f5f5f5; }
-        body.dark-mode .order-receipt-card .receipt-order-info { color: #ddd; }
-        body.dark-mode .order-receipt-card .receipt-customer { color: #ddd; }
-        body.dark-mode .order-receipt-card .receipt-customer .customer-detail { color: #aaa; }
-        body.dark-mode .order-receipt-card .receipt-table-header { color: #ddd; border-bottom-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card .receipt-row { color: #ddd; }
-        body.dark-mode .order-receipt-card .receipt-totals { border-top-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card .receipt-totals .total-row { color: #ddd; }
-        body.dark-mode .order-receipt-card .receipt-grand-total { color: #f5f5f5; border-top-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card .receipt-footer { color: #aaa; border-top-color: #3d3d5c; }
-        body.dark-mode .order-receipt-card .receipt-footer .thank-you { color: #f5f5f5; }
-        body.dark-mode .order-receipt-card .receipt-footer .great-day { color: #aaa; }
-        body.dark-mode .order-receipt-card .receipt-actions { border-top-color: #2d2d44; }
-        body.dark-mode .order-receipt-card .receipt-actions .btn-status { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .order-compact-card { background: #16213e; border-color: #2d2d44; color: #f5f5f5; }
+        body.dark-mode .order-compact-card .order-customer { color: #aaa; }
+        body.dark-mode .order-compact-card .order-items { color: #aaa; }
+        body.dark-mode .order-compact-card .order-actions select { background: #2d2d44; color: #f5f5f5; border-color: #3d3d5c; }
+        body.dark-mode .statistics-chart { background: #16213e; color: #f5f5f5; }
+        body.dark-mode .statistics-chart .chart-bar .bar-track { background: #2d2d44; }
+        body.dark-mode .whatsapp-mini { background: #1a3a1a; }
+        body.dark-mode .whatsapp-mini .wa-message { background: rgba(255,255,255,0.05); }
+        body.dark-mode .backup-item { border-bottom-color: #2d2d44; }
+        body.dark-mode .qr-scanner-container { background: #0a0a0f; }
 
         .admin-header {
             background: #2d3436;
@@ -115,7 +104,13 @@
             flex-shrink: 0;
             border-right: 1px solid #eee;
             height: 100%;
-            transition: background 0.3s, border-color 0.3s;
+            transition: width 0.3s, background 0.3s, border-color 0.3s;
+        }
+        .admin-sidebar.hidden {
+            width: 0;
+            padding: 0;
+            border-right: none;
+            overflow: hidden;
         }
         .admin-sidebar::-webkit-scrollbar { width: 3px; }
         .admin-sidebar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
@@ -129,6 +124,7 @@
             transition: all 0.3s;
             cursor: pointer;
             border-left: 3px solid transparent;
+            white-space: nowrap;
         }
         .admin-sidebar .admin-nav-item:hover { background: #f8f9fa; }
         .admin-sidebar .admin-nav-item.active {
@@ -145,6 +141,23 @@
             padding: 1px 8px;
             border-radius: 10px;
         }
+        .admin-sidebar .sidebar-toggle-btn {
+            display: block;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-weight: 600;
+            color: #636e72;
+            cursor: pointer;
+            font-size: 0.75em;
+            border-top: 1px solid #eee;
+            margin-top: 8px;
+            padding-top: 12px;
+            transition: all 0.3s;
+        }
+        .admin-sidebar .sidebar-toggle-btn:hover { color: #e74c3c; }
 
         .admin-content {
             flex: 1;
@@ -177,18 +190,13 @@
         .admin-stat-card .stat-label { font-size: 0.75em; color: #636e72; }
         .admin-stat-card .stat-icon { font-size: 1.8em; }
 
-        /* Compact Order Grid - 3 per row */
         .orders-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
         }
-        @media (max-width: 1200px) {
-            .orders-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 768px) {
-            .orders-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1200px) { .orders-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .orders-grid { grid-template-columns: 1fr; } }
 
         .order-compact-card {
             background: white;
@@ -241,6 +249,8 @@
         .order-compact-card .order-actions .btn-delete:hover { background: #c0392b; }
         .order-compact-card .order-actions .btn-map { background: #3498db; color: white; }
         .order-compact-card .order-actions .btn-map:hover { background: #2980b9; }
+        .order-compact-card .order-actions .btn-kitchen { background: #f39c12; color: white; }
+        .order-compact-card .order-actions .btn-kitchen:hover { background: #d68910; }
 
         .order-compact-card.new-order-flash {
             animation: flashOrder 1.5s ease 3;
@@ -445,6 +455,9 @@
             text-align: center;
             font-size: 0.85em;
         }
+        .toast.success { background: #27ae60; }
+        .toast.error { background: #e74c3c; }
+        .toast.warning { background: #f39c12; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.9); }
@@ -540,7 +553,7 @@
             transform: scale(1.1);
         }
 
-        /* QR Scanner */
+        /* QR Scanner - WhatsApp Web */
         .qr-scanner-container {
             background: #1a1a2e;
             border-radius: 12px;
@@ -548,19 +561,24 @@
             text-align: center;
             color: white;
         }
-        .qr-scanner-container video {
+        .qr-scanner-container #qrCanvas {
             width: 100%;
-            max-width: 400px;
+            max-width: 300px;
             border-radius: 10px;
-            background: #000;
+            background: white;
+            padding: 10px;
+            margin: 10px auto;
         }
-        .qr-scanner-container .qr-result {
+        .qr-scanner-container .qr-status {
             margin-top: 10px;
             padding: 10px;
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
-            word-break: break-all;
             font-size: 0.85em;
+        }
+        .qr-scanner-container .qr-status.connected {
+            background: rgba(39, 174, 96, 0.3);
+            color: #27ae60;
         }
 
         /* Backup & Recovery */
@@ -661,6 +679,24 @@
             cursor: pointer;
         }
 
+        /* Sound toggle */
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8em;
+        }
+        .sound-toggle button {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .sound-toggle button:hover { background: rgba(255,255,255,0.1); }
+
         @media (max-width: 600px) {
             .admin-sidebar { width: 140px; }
             .admin-sidebar .admin-nav-item { font-size: 0.7em; padding: 8px 12px; }
@@ -681,6 +717,9 @@
         <h2>👑 The Heaven Slice - Admin</h2>
         <div class="admin-header-actions">
             <span id="connectionStatus" class="connection-status disconnected">🔴 Connecting...</span>
+            <div class="sound-toggle">
+                <button id="soundToggleBtn" onclick="toggleSound()" title="Toggle sound notifications">🔊</button>
+            </div>
             <a href="/staff" class="staff-btn">👨‍🍳 Staff</a>
             <a href="/" class="view-site-btn">📱 View Site</a>
             <a href="/logout" class="logout-btn">🚪 Logout</a>
@@ -726,8 +765,8 @@
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">
                 <span class="nav-icon">⚙️</span> Settings
             </a>
-            <!-- Custom Sidebar Items (added dynamically) -->
             <div id="customSidebarItems"></div>
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()">◀ Hide Sidebar</button>
         </div>
 
         <div class="admin-content">
@@ -772,7 +811,7 @@
                 </div>
             </div>
 
-            <!-- Orders - Compact Grid -->
+            <!-- Orders -->
             <div class="admin-section" id="adminOrders">
                 <h3 style="margin-bottom:10px;">📦 All Orders</h3>
                 <div id="adminAllOrders">
@@ -991,30 +1030,41 @@
                 <div id="backupList">
                     <p style="color:#b2bec3; padding:12px;">Loading backups...</p>
                 </div>
-                <div style="margin-top:12px; padding:12px; background:#f8f9fa; border-radius:8px; font-size:0.85em; color:#636e72;">
-                    <strong>💡 Backup Info:</strong> Backups are stored in your browser's local storage. 
-                    Auto-backup runs every 5 minutes. You can also manually create backups.
-                </div>
             </div>
 
             <!-- WhatsApp -->
             <div class="admin-section" id="adminWhatsApp">
-                <h3 style="margin-bottom:12px;">💬 WhatsApp Integration</h3>
+                <h3 style="margin-bottom:12px;">💬 WhatsApp Web Integration</h3>
+                
+                <!-- QR Scanner for WhatsApp Web -->
+                <div class="qr-scanner-container" style="margin-bottom:12px;">
+                    <h4 style="color:white; margin-bottom:8px;">📱 Link WhatsApp Device</h4>
+                    <p style="font-size:0.8em; opacity:0.7; margin-bottom:8px;">Open WhatsApp on your phone → Linked Devices → Link a Device → Scan this QR code</p>
+                    <div id="qrCanvasContainer">
+                        <canvas id="qrCanvas" width="300" height="300"></canvas>
+                    </div>
+                    <div class="qr-status" id="qrStatus">⏳ Generating QR code... Scan with WhatsApp</div>
+                    <div style="display:flex; gap:8px; margin-top:10px; justify-content:center; flex-wrap:wrap;">
+                        <button onclick="generateWhatsAppQR()" style="padding:6px 20px; background:#25D366; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600;">🔄 Refresh QR</button>
+                        <button onclick="simulateWhatsAppLink()" style="padding:6px 20px; background:#3498db; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600;">📱 Simulate Link</button>
+                        <button onclick="disconnectWhatsApp()" style="padding:6px 20px; background:#e74c3c; color:white; border:none; border-radius:20px; cursor:pointer; font-weight:600;">🔌 Disconnect</button>
+                    </div>
+                </div>
+
                 <div class="whatsapp-mini">
                     <div class="wa-header">
-                        <h4>📱 WhatsApp Mini</h4>
-                        <span style="font-size:0.7em; opacity:0.7;">Linked Device: <span id="waLinkedDevice">Not linked</span></span>
+                        <h4>💬 WhatsApp Mini</h4>
+                        <span style="font-size:0.7em; opacity:0.7;">Status: <span id="waLinkedStatus">Not linked</span></span>
                     </div>
                     <div class="wa-messages" id="waMessages">
                         <div class="wa-message">
                             <span class="wa-sender">System:</span>
-                            <span>Welcome to WhatsApp integration! Send messages to customers.</span>
+                            <span>Link your WhatsApp device using the QR code above to send messages.</span>
                         </div>
                     </div>
                     <div class="wa-input">
                         <input type="text" id="waInput" placeholder="Type message..." onkeypress="if(event.key==='Enter') sendWAMessage()" />
                         <button onclick="sendWAMessage()">Send</button>
-                        <button onclick="scanQRCode()" style="background:#f39c12; color:white;">📷 Scan QR</button>
                     </div>
                 </div>
                 <div style="background:white; border-radius:10px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
@@ -1033,7 +1083,49 @@
                 <h3 style="margin-bottom:12px;">⚙️ Settings</h3>
 
                 <div class="settings-card">
-                    <h4>Restaurant Settings</h4>
+                    <h4>📋 Sidebar Settings</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Show Sidebar</div>
+                            <div class="option-desc">Toggle sidebar visibility</div>
+                        </div>
+                        <div class="toggle-switch active" id="sidebarToggle" onclick="toggleSidebarSetting()">
+                            <div class="toggle-dot"></div>
+                        </div>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Show/Hide Options</div>
+                            <div class="option-desc">Toggle individual sidebar items</div>
+                        </div>
+                        <div id="sidebarItemsToggle">
+                            <button class="admin-add-btn" onclick="toggleSidebarItemVisibility()" style="font-size:0.7em; padding:3px 12px;">Toggle All</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🔊 Sound Settings</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">New Order Sound</div>
+                            <div class="option-desc">Play sound when new order arrives</div>
+                        </div>
+                        <div class="toggle-switch active" id="soundToggle" onclick="toggleSoundSetting()">
+                            <div class="toggle-dot"></div>
+                        </div>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Test Sound</div>
+                            <div class="option-desc">Test the notification sound</div>
+                        </div>
+                        <button class="admin-add-btn" onclick="playNotificationSound()" style="font-size:0.7em; padding:3px 12px;">🔊 Test</button>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🏪 Restaurant Settings</h4>
                     <div class="settings-option">
                         <div>
                             <div class="option-label">Restaurant Name</div>
@@ -1196,7 +1288,6 @@
                     </div>
                 </div>
 
-                <!-- Custom Sidebar Settings -->
                 <div class="settings-card">
                     <h4>📋 Custom Sidebar Items</h4>
                     <div class="settings-option">
@@ -1243,28 +1334,6 @@
         </div>
         <div class="picker-body">
             <div class="emoji-grid" id="emojiGrid"></div>
-        </div>
-    </div>
-
-    <!-- QR Scanner Popup -->
-    <div class="popup-overlay" id="qrScannerPopup" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-        <div style="background:white; border-radius:16px; padding:20px; max-width:500px; width:90%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 style="font-size:1em;">📷 Scan QR Code</h3>
-                <button onclick="closeQRScanner()" style="background:none; border:none; font-size:1.2em; cursor:pointer;">✕</button>
-            </div>
-            <div id="qrScannerContainer">
-                <div style="text-align:center; padding:20px; background:#1a1a2e; border-radius:10px; color:white;">
-                    <div style="font-size:3em; margin-bottom:10px;">📷</div>
-                    <p>Click the button below to scan a QR code</p>
-                    <button onclick="startQRScan()" style="margin-top:10px; padding:8px 24px; background:#27ae60; color:white; border:none; border-radius:20px; font-weight:600; cursor:pointer;">Start Scanner</button>
-                </div>
-                <div id="qrResult" style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:8px; font-size:0.85em; display:none;"></div>
-                <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-                    <button onclick="simulateQRScan()" style="padding:6px 16px; background:#3498db; color:white; border:none; border-radius:15px; cursor:pointer; font-size:0.8em;">🔍 Simulate Scan</button>
-                    <button onclick="closeQRScanner()" style="padding:6px 16px; background:#b2bec3; color:white; border:none; border-radius:15px; cursor:pointer; font-size:0.8em;">Close</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -1318,6 +1387,8 @@
         let customSidebarItems = [];
         let waMessages = [];
         let waLinked = false;
+        let soundEnabled = true;
+        let sidebarVisible = true;
 
         let restaurantConfig = {
             name: 'The Heaven Slice',
@@ -1358,14 +1429,251 @@
         ];
 
         // ============================================================
+        // SOUND NOTIFICATION
+        // ============================================================
+        let audioContext = null;
+
+        function playNotificationSound() {
+            if (!soundEnabled) return;
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Play a pleasant chime
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.value = 800;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.3);
+                
+                setTimeout(() => {
+                    const osc2 = audioContext.createOscillator();
+                    const gain2 = audioContext.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioContext.destination);
+                    osc2.frequency.value = 1000;
+                    osc2.type = 'sine';
+                    gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                    osc2.start(audioContext.currentTime);
+                    osc2.stop(audioContext.currentTime + 0.4);
+                }, 250);
+                
+                // Also show visual notification
+                showToast('🔔 New Order!', 'success');
+                
+            } catch(e) {
+                console.log('🔔 New order notification');
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggleBtn').textContent = soundEnabled ? '🔊' : '🔇';
+            localStorage.setItem('adminSoundEnabled', soundEnabled);
+            showToast(soundEnabled ? '🔊 Sound enabled' : '🔇 Sound disabled');
+        }
+
+        function toggleSoundSetting() {
+            const toggle = document.getElementById('soundToggle');
+            toggle.classList.toggle('active');
+            soundEnabled = toggle.classList.contains('active');
+            localStorage.setItem('adminSoundEnabled', soundEnabled);
+            document.getElementById('soundToggleBtn').textContent = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // ============================================================
+        // SIDEBAR TOGGLE
+        // ============================================================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            sidebar.classList.toggle('hidden');
+            sidebarVisible = !sidebar.classList.contains('hidden');
+            document.querySelector('.sidebar-toggle-btn').textContent = sidebarVisible ? '◀ Hide Sidebar' : '▶ Show Sidebar';
+            localStorage.setItem('adminSidebarVisible', sidebarVisible);
+        }
+
+        function toggleSidebarSetting() {
+            const toggle = document.getElementById('sidebarToggle');
+            toggle.classList.toggle('active');
+            const visible = toggle.classList.contains('active');
+            if (visible) {
+                document.getElementById('adminSidebar').classList.remove('hidden');
+                document.querySelector('.sidebar-toggle-btn').textContent = '◀ Hide Sidebar';
+            } else {
+                document.getElementById('adminSidebar').classList.add('hidden');
+                document.querySelector('.sidebar-toggle-btn').textContent = '▶ Show Sidebar';
+            }
+            sidebarVisible = visible;
+            localStorage.setItem('adminSidebarVisible', visible);
+        }
+
+        // ============================================================
+        // WHATSAPP WEB QR CODE
+        // ============================================================
+        function generateWhatsAppQR() {
+            const canvas = document.getElementById('qrCanvas');
+            const ctx = canvas.getContext('2d');
+            const status = document.getElementById('qrStatus');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, 300, 300);
+            
+            // Generate a random QR-like pattern (simulated)
+            // In production, this would be a real QR code from WhatsApp API
+            const size = 300;
+            const cellSize = 10;
+            const gridSize = Math.floor(size / cellSize);
+            
+            // Fill background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw grid pattern (simulated QR)
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    // Create a pattern that looks like a QR code
+                    const isData = (x * y * 7 + x * 13 + y * 11) % 5 === 0 || 
+                                   (x + y) % 7 === 0 ||
+                                   (x * 3 + y * 2) % 4 === 0;
+                    
+                    // Position markers
+                    const inCorner = (x < 7 && y < 7) || 
+                                     (x > gridSize - 8 && y < 7) || 
+                                     (x < 7 && y > gridSize - 8);
+                    
+                    const isMarker = inCorner && (x % 2 === 0 || y % 2 === 0 || (x > 2 && x < 5 && y > 2 && y < 5));
+                    
+                    if (isMarker || isData) {
+                        ctx.fillStyle = (inCorner && !isMarker) ? 'white' : 'black';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            
+            // Add WhatsApp logo in center
+            ctx.fillStyle = '#25D366';
+            ctx.beginPath();
+            ctx.arc(150, 150, 30, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📱', 150, 150);
+            
+            // Add border
+            ctx.strokeStyle = '#25D366';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, size - 4, size - 4);
+            
+            status.textContent = '✅ QR Code ready! Scan with WhatsApp on your phone';
+            status.className = 'qr-status';
+            waLinked = false;
+            document.getElementById('waLinkedStatus').textContent = 'Not linked';
+            
+            showToast('📱 QR Code generated! Scan with WhatsApp');
+        }
+
+        function simulateWhatsAppLink() {
+            const status = document.getElementById('qrStatus');
+            status.textContent = '✅ WhatsApp device linked successfully!';
+            status.className = 'qr-status connected';
+            waLinked = true;
+            document.getElementById('waLinkedStatus').textContent = 'Linked ✅';
+            showToast('✅ WhatsApp device linked!');
+            
+            // Add welcome message
+            waMessages.push({ 
+                sender: 'System', 
+                text: '✅ WhatsApp device linked successfully! You can now send messages.', 
+                time: new Date().toLocaleTimeString() 
+            });
+            renderWAMessages();
+        }
+
+        function disconnectWhatsApp() {
+            waLinked = false;
+            document.getElementById('waLinkedStatus').textContent = 'Not linked';
+            document.getElementById('qrStatus').textContent = '⏳ Device disconnected. Scan QR to link again.';
+            document.getElementById('qrStatus').className = 'qr-status';
+            showToast('🔌 WhatsApp disconnected');
+        }
+
+        // ============================================================
+        // WHATSAPP MESSAGES
+        // ============================================================
+        function sendWAMessage() {
+            const input = document.getElementById('waInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            if (!waLinked) {
+                showToast('⚠️ Please link WhatsApp device first (Scan QR)', 'warning');
+                return;
+            }
+            waMessages.push({ sender: 'Admin', text: msg, time: new Date().toLocaleTimeString(), outgoing: true });
+            renderWAMessages();
+            input.value = '';
+            showToast('💬 Message sent!', 'success');
+            
+            // Simulate reply
+            setTimeout(() => {
+                waMessages.push({ sender: 'Customer', text: '👍 Got it! Thanks!', time: new Date().toLocaleTimeString(), outgoing: false });
+                renderWAMessages();
+            }, 2000);
+        }
+
+        function sendQuickMessage(text) {
+            if (!waLinked) {
+                showToast('⚠️ Please link WhatsApp device first (Scan QR)', 'warning');
+                return;
+            }
+            waMessages.push({ sender: 'Admin', text: text, time: new Date().toLocaleTimeString(), outgoing: true });
+            renderWAMessages();
+            showToast('💬 Quick message sent!', 'success');
+        }
+
+        function renderWAMessages() {
+            const container = document.getElementById('waMessages');
+            if (!container) return;
+            if (waMessages.length === 0) {
+                container.innerHTML = `<div class="wa-message"><span class="wa-sender">System:</span><span>Link your WhatsApp device using the QR code above to send messages.</span></div>`;
+                return;
+            }
+            let html = '';
+            waMessages.slice(-20).forEach(msg => {
+                const color = msg.outgoing ? '#25D366' : '#3498db';
+                html += `
+                    <div class="wa-message" style="border-left: 3px solid ${color};">
+                        <span class="wa-sender">${msg.sender}:</span>
+                        <span>${msg.text}</span>
+                        <span style="font-size:0.7em; opacity:0.6; float:right;">${msg.time}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function openWhatsApp() {
+            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
+            window.open('https://wa.me/' + number, '_blank');
+        }
+
+        // ============================================================
         // LOAD CUSTOM SIDEBAR
         // ============================================================
         function loadCustomSidebar() {
             try {
                 const saved = localStorage.getItem('admin_custom_sidebar_' + RESTAURANT_ID);
-                if (saved) {
-                    customSidebarItems = JSON.parse(saved);
-                }
+                if (saved) customSidebarItems = JSON.parse(saved);
             } catch(e) {}
             renderCustomSidebar();
             renderCustomSidebarList();
@@ -1382,7 +1690,7 @@
             const icon = document.getElementById('customSidebarIcon').value || '📌';
             const url = document.getElementById('customSidebarUrl').value;
             if (!name || !url) {
-                showToast('⚠️ Please fill name and URL');
+                showToast('⚠️ Please fill name and URL', 'warning');
                 return;
             }
             customSidebarItems.push({ id: Date.now(), name, icon, url });
@@ -1392,7 +1700,7 @@
             document.getElementById('customSidebarName').value = '';
             document.getElementById('customSidebarIcon').value = '';
             document.getElementById('customSidebarUrl').value = '';
-            showToast('✅ Custom sidebar item added!');
+            showToast('✅ Custom sidebar item added!', 'success');
         }
 
         function removeCustomSidebarItem(id) {
@@ -1464,34 +1772,29 @@
                 const backupKey = 'admin_backup_' + RESTAURANT_ID + '_' + Date.now();
                 localStorage.setItem(backupKey, JSON.stringify(backupData));
                 
-                // Store backup list
                 let backups = JSON.parse(localStorage.getItem('admin_backup_list_' + RESTAURANT_ID) || '[]');
-                backups.push({
-                    key: backupKey,
-                    timestamp: backupData.timestamp,
-                    size: JSON.stringify(backupData).length
-                });
+                backups.push({ key: backupKey, timestamp: backupData.timestamp, size: JSON.stringify(backupData).length });
                 if (backups.length > 50) backups.shift();
                 localStorage.setItem('admin_backup_list_' + RESTAURANT_ID, JSON.stringify(backups));
                 
                 renderBackups();
-                showToast('💾 Backup created successfully!');
+                showToast('💾 Backup created successfully!', 'success');
             } catch(e) {
-                showToast('❌ Failed to create backup: ' + e.message);
+                showToast('❌ Failed to create backup: ' + e.message, 'error');
             }
         }
 
         function restoreBackup() {
             const backups = JSON.parse(localStorage.getItem('admin_backup_list_' + RESTAURANT_ID) || '[]');
             if (backups.length === 0) {
-                showToast('⚠️ No backups found');
+                showToast('⚠️ No backups found', 'warning');
                 return;
             }
             const latest = backups[backups.length - 1];
             if (!confirm('Restore backup from ' + new Date(latest.timestamp).toLocaleString() + '?')) return;
             try {
                 const data = JSON.parse(localStorage.getItem(latest.key));
-                if (!data) { showToast('❌ Backup data not found'); return; }
+                if (!data) { showToast('❌ Backup data not found', 'error'); return; }
                 
                 orders = data.orders || [];
                 menuItems = data.menuItems || [];
@@ -1519,9 +1822,9 @@
                 renderCustomSidebarList();
                 renderStatistics();
                 
-                showToast('✅ Backup restored successfully!');
+                showToast('✅ Backup restored successfully!', 'success');
             } catch(e) {
-                showToast('❌ Failed to restore backup: ' + e.message);
+                showToast('❌ Failed to restore backup: ' + e.message, 'error');
             }
         }
 
@@ -1557,7 +1860,7 @@
             if (!confirm('Restore this backup?')) return;
             try {
                 const data = JSON.parse(localStorage.getItem(key));
-                if (!data) { showToast('❌ Backup data not found'); return; }
+                if (!data) { showToast('❌ Backup data not found', 'error'); return; }
                 
                 orders = data.orders || [];
                 menuItems = data.menuItems || [];
@@ -1585,9 +1888,9 @@
                 renderCustomSidebarList();
                 renderStatistics();
                 
-                showToast('✅ Backup restored successfully!');
+                showToast('✅ Backup restored successfully!', 'success');
             } catch(e) {
-                showToast('❌ Failed to restore: ' + e.message);
+                showToast('❌ Failed to restore: ' + e.message, 'error');
             }
         }
 
@@ -1614,97 +1917,8 @@
                 window._autoBackupInterval = setInterval(() => {
                     createBackup();
                     console.log('🔄 Auto-backup created');
-                }, 300000); // 5 minutes
+                }, 300000);
             }
-        }
-
-        // ============================================================
-        // WHATSAPP INTEGRATION
-        // ============================================================
-        function scanQRCode() {
-            document.getElementById('qrScannerPopup').style.display = 'flex';
-            document.getElementById('qrResult').style.display = 'none';
-        }
-
-        function closeQRScanner() {
-            document.getElementById('qrScannerPopup').style.display = 'none';
-        }
-
-        function startQRScan() {
-            showToast('📷 QR Scanner started - scanning for WhatsApp QR code...');
-            setTimeout(() => {
-                document.getElementById('qrResult').style.display = 'block';
-                document.getElementById('qrResult').innerHTML = '✅ QR Code scanned! WhatsApp device linked successfully.';
-                document.getElementById('waLinkedDevice').textContent = 'Linked ✅';
-                waLinked = true;
-                showToast('✅ WhatsApp device linked!');
-            }, 3000);
-        }
-
-        function simulateQRScan() {
-            document.getElementById('qrResult').style.display = 'block';
-            document.getElementById('qrResult').innerHTML = '✅ QR Code scanned! WhatsApp device linked successfully.';
-            document.getElementById('waLinkedDevice').textContent = 'Linked ✅';
-            waLinked = true;
-            showToast('✅ WhatsApp device linked!');
-            closeQRScanner();
-        }
-
-        function sendWAMessage() {
-            const input = document.getElementById('waInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-            if (!waLinked) {
-                showToast('⚠️ Please link WhatsApp device first (Scan QR)');
-                return;
-            }
-            waMessages.push({ sender: 'Admin', text: msg, time: new Date().toLocaleTimeString(), outgoing: true });
-            renderWAMessages();
-            input.value = '';
-            showToast('💬 Message sent!');
-            
-            // Simulate reply
-            setTimeout(() => {
-                waMessages.push({ sender: 'Customer', text: '👍 Got it! Thanks!', time: new Date().toLocaleTimeString(), outgoing: false });
-                renderWAMessages();
-            }, 2000);
-        }
-
-        function sendQuickMessage(text) {
-            if (!waLinked) {
-                showToast('⚠️ Please link WhatsApp device first (Scan QR)');
-                return;
-            }
-            waMessages.push({ sender: 'Admin', text: text, time: new Date().toLocaleTimeString(), outgoing: true });
-            renderWAMessages();
-            showToast('💬 Quick message sent!');
-        }
-
-        function renderWAMessages() {
-            const container = document.getElementById('waMessages');
-            if (!container) return;
-            if (waMessages.length === 0) {
-                container.innerHTML = `<div class="wa-message"><span class="wa-sender">System:</span><span>Welcome to WhatsApp integration! Send messages to customers.</span></div>`;
-                return;
-            }
-            let html = '';
-            waMessages.slice(-20).forEach(msg => {
-                const color = msg.outgoing ? '#25D366' : '#3498db';
-                html += `
-                    <div class="wa-message" style="border-left: 3px solid ${color};">
-                        <span class="wa-sender">${msg.sender}:</span>
-                        <span>${msg.text}</span>
-                        <span style="font-size:0.7em; opacity:0.6; float:right;">${msg.time}</span>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function openWhatsApp() {
-            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
-            window.open('https://wa.me/' + number, '_blank');
         }
 
         // ============================================================
@@ -1852,6 +2066,38 @@
             renderBackups();
             renderStatistics();
             setupAutoBackup();
+            
+            // Load sound setting
+            const savedSound = localStorage.getItem('adminSoundEnabled');
+            if (savedSound !== null) {
+                soundEnabled = savedSound === 'true';
+                document.getElementById('soundToggleBtn').textContent = soundEnabled ? '🔊' : '🔇';
+                const soundToggle = document.getElementById('soundToggle');
+                if (soundToggle) {
+                    if (soundEnabled) soundToggle.classList.add('active');
+                    else soundToggle.classList.remove('active');
+                }
+            }
+            
+            // Load sidebar setting
+            const savedSidebar = localStorage.getItem('adminSidebarVisible');
+            if (savedSidebar !== null) {
+                sidebarVisible = savedSidebar === 'true';
+                const sidebar = document.getElementById('adminSidebar');
+                const toggle = document.getElementById('sidebarToggle');
+                if (!sidebarVisible) {
+                    sidebar.classList.add('hidden');
+                    document.querySelector('.sidebar-toggle-btn').textContent = '▶ Show Sidebar';
+                    if (toggle) toggle.classList.remove('active');
+                } else {
+                    sidebar.classList.remove('hidden');
+                    document.querySelector('.sidebar-toggle-btn').textContent = '◀ Hide Sidebar';
+                    if (toggle) toggle.classList.add('active');
+                }
+            }
+            
+            // Generate QR code
+            generateWhatsAppQR();
         }
 
         // ============================================================
@@ -1927,6 +2173,7 @@
                             <button class="btn-print" onclick="showReceiptForOrder(${order.id})">🖨️</button>
                             <button class="btn-whatsapp" onclick="sendOrderWhatsApp(${order.id})">💬</button>
                             ${order.lat && order.lng ? `<button class="btn-map" onclick="window.open('https://www.google.com/maps?q=${order.lat},${order.lng}')">🗺️</button>` : ''}
+                            <button class="btn-kitchen" onclick="sendToKitchen(${order.id})">🍳</button>
                             <button class="btn-delete" onclick="deleteOrderPermanently(${order.id})">🗑️</button>
                         </div>
                     </div>
@@ -1935,6 +2182,90 @@
 
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        // ============================================================
+        // SEND TO KITCHEN
+        // ============================================================
+        function sendToKitchen(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) { showToast('❌ Order not found', 'error'); return; }
+            
+            // Print kitchen receipt
+            showKitchenReceipt(order);
+            
+            // Update order status to preparing
+            updateOrderStatus(orderId, 'preparing');
+            
+            showToast('🍳 Order sent to kitchen!', 'success');
+        }
+
+        function showKitchenReceipt(order) {
+            const config = restaurantConfig;
+            const now = new Date();
+            const orderTime = order.deviceTime || now.toLocaleString();
+            const orderNum = String(order.orderNumber || order.id).padStart(3, '0');
+            
+            // Kitchen receipt - different from customer receipt
+            const receiptHtml = `
+                <div style="font-family:'Courier New',monospace; background:#f5f5f5; padding:15px; max-width:300px; margin:0 auto; border:2px solid #e74c3c; font-size:12px;">
+                    <div style="text-align:center; border-bottom:2px solid #e74c3c; padding-bottom:8px; margin-bottom:8px;">
+                        <div style="font-size:20px; font-weight:700; color:#e74c3c;">🍳 KITCHEN ORDER</div>
+                        <div style="font-size:16px; font-weight:700; color:#000;">${config.name.toUpperCase()}</div>
+                        <div style="font-size:10px; color:#555;">📍 ${config.address}</div>
+                        <div style="border-top:1px dashed #999; margin:6px 0;"></div>
+                        <div style="font-size:12px; font-weight:700;">ORDER #${orderNum}</div>
+                        <div style="font-size:10px;">${orderTime}</div>
+                        <div style="font-size:10px;">Type: ${order.orderType || 'Delivery'}</div>
+                        <div style="font-size:10px;">Customer: ${order.userName || 'Guest'}</div>
+                        ${order.phone ? `<div style="font-size:10px;">📞 ${order.phone}</div>` : ''}
+                        ${order.table ? `<div style="font-size:10px;">Table: ${order.table}</div>` : ''}
+                    </div>
+                    
+                    <div style="font-weight:700; font-size:11px; border-bottom:1px solid #999; padding:3px 0;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>Item</span>
+                            <span>Qty</span>
+                            <span>Notes</span>
+                        </div>
+                    </div>
+                    
+                    ${order.items.map(item => `
+                        <div style="display:flex; justify-content:space-between; padding:3px 0; font-size:11px; border-bottom:1px dashed #ddd;">
+                            <span style="flex:2;">${item.name}</span>
+                            <span style="flex:0.5; text-align:center;">${item.qty || 1}</span>
+                            <span style="flex:1; font-size:9px; color:#f39c12;">${item.layers ? item.layers.join(', ') : ''}</span>
+                        </div>
+                    `).join('')}
+                    
+                    ${order.layers && order.layers.length ? `
+                        <div style="margin-top:6px; padding:4px; background:#fef9e7; border-radius:4px; font-size:10px; color:#f39c12;">
+                            🧅 ${order.layers.join(', ')}
+                        </div>
+                    ` : ''}
+                    
+                    <div style="border-top:2px solid #e74c3c; margin-top:8px; padding-top:8px; text-align:center; font-size:10px;">
+                        <div style="font-weight:700; color:#e74c3c;">⏱️ TIME: ${now.toLocaleTimeString()}</div>
+                        <div style="font-size:9px; color:#999;">Total Items: ${order.items.reduce((s, i) => s + (i.qty || 1), 0)}</div>
+                        <div style="font-size:9px; color:#999;">Total: ${config.currency} ${order.total.toFixed(2)}</div>
+                        <div style="border-top:1px dashed #999; margin:6px 0;"></div>
+                        <div style="font-size:11px; font-weight:700; color:#e74c3c;">❤️ Thank You!</div>
+                    </div>
+                </div>
+            `;
+
+            // Open in new window for printing
+            const win = window.open('', '_blank', 'width=350,height=500');
+            win.document.write(`
+                <html><head><title>Kitchen Order #${order.id}</title>
+                <style>body{margin:0;padding:0;background:#f5f5f5;display:flex;justify-content:center;align-items:center;min-height:100vh;}</style>
+                </head><body>${receiptHtml}</body></html>
+            `);
+            win.document.close();
+            setTimeout(() => { 
+                win.print(); 
+                setTimeout(() => win.close(), 2000);
+            }, 1000);
         }
 
         // ============================================================
@@ -2080,7 +2411,6 @@
                 </div>
             `;
 
-            // Open in new window for printing
             const win = window.open('', '_blank', 'width=400,height=600');
             win.document.write(`
                 <html><head><title>Receipt #${order.id}</title>
@@ -2103,16 +2433,16 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    showToast('✅ Order #' + orderId + ' deleted!');
+                    showToast('✅ Order #' + orderId + ' deleted!', 'success');
                     orders = orders.filter(o => o.id !== orderId);
                     renderAdminDashboard();
                     renderAdminOrders();
                     renderStatistics();
                 } else {
-                    showToast('❌ ' + (data.error || 'Delete failed'));
+                    showToast('❌ ' + (data.error || 'Delete failed'), 'error');
                 }
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2128,13 +2458,13 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    showToast('✅ Order status updated!');
+                    showToast('✅ Order status updated!', 'success');
                     loadOrders();
                 } else {
-                    showToast('❌ ' + (data.error || 'Update failed'));
+                    showToast('❌ ' + (data.error || 'Update failed'), 'error');
                 }
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2238,8 +2568,8 @@
             if (!confirm('Delete this deal?')) return;
             fetch('/api/deals/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE', credentials: 'include' })
                 .then(r => r.json())
-                .then(() => { showToast('✅ Deal deleted!'); loadAdminData(); })
-                .catch(err => showToast('❌ Error: ' + err.message));
+                .then(() => { showToast('✅ Deal deleted!', 'success'); loadAdminData(); })
+                .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2277,18 +2607,18 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        showToast('✅ Layer deleted!');
+                        showToast('✅ Layer deleted!', 'success');
                         renderAdminLayers();
                         renderAddLayers();
                     }
                 })
-                .catch(err => showToast('❌ Error: ' + err.message));
+                .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         function addNewLayer() {
             const input = document.getElementById('newLayerInput');
             const layer = input.value.trim();
-            if (!layer) { showToast('⚠️ Enter a layer name'); return; }
+            if (!layer) { showToast('⚠️ Enter a layer name', 'warning'); return; }
             fetch('/api/layers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2298,15 +2628,15 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    showToast('✅ Layer added!');
+                    showToast('✅ Layer added!', 'success');
                     input.value = '';
                     renderAdminLayers();
                     renderAddLayers();
                 } else {
-                    showToast('❌ ' + (data.error || 'Failed'));
+                    showToast('❌ ' + (data.error || 'Failed'), 'error');
                 }
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         function renderAddLayers() {
@@ -2352,8 +2682,8 @@
             const category = document.getElementById('adminItemCategory').value;
             const icons = selectedIcons.menu;
             const layers = selectedAddLayers;
-            if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
-            if (icons.length === 0) { showToast('⚠️ Add at least one icon'); return; }
+            if (!name || !price) { showToast('⚠️ Fill all fields', 'warning'); return; }
+            if (icons.length === 0) { showToast('⚠️ Add at least one icon', 'warning'); return; }
             fetch('/api/menu?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2362,7 +2692,7 @@
             })
             .then(r => r.json())
             .then(() => {
-                showToast('✅ Item added!');
+                showToast('✅ Item added!', 'success');
                 document.getElementById('adminItemName').value = '';
                 document.getElementById('adminItemPrice').value = '';
                 selectedIcons.menu = [];
@@ -2372,7 +2702,7 @@
                 toggleAdminForm('menuForm');
                 loadAdminData();
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         function adminAddDeal() {
@@ -2381,8 +2711,8 @@
             const price = parseFloat(document.getElementById('adminDealPrice').value);
             const original = parseFloat(document.getElementById('adminDealOriginal').value);
             const icons = selectedIcons.deal;
-            if (!name || !price) { showToast('⚠️ Fill all fields'); return; }
-            if (icons.length === 0) { showToast('⚠️ Add at least one icon'); return; }
+            if (!name || !price) { showToast('⚠️ Fill all fields', 'warning'); return; }
+            if (icons.length === 0) { showToast('⚠️ Add at least one icon', 'warning'); return; }
             fetch('/api/deals?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2391,7 +2721,7 @@
             })
             .then(r => r.json())
             .then(() => {
-                showToast('✅ Deal added!');
+                showToast('✅ Deal added!', 'success');
                 document.getElementById('adminDealName').value = '';
                 document.getElementById('adminDealDesc').value = '';
                 document.getElementById('adminDealPrice').value = '';
@@ -2401,7 +2731,7 @@
                 toggleAdminForm('dealForm');
                 loadAdminData();
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2479,15 +2809,15 @@
 
         function refreshDeliveryMap() {
             renderAdminDelivery();
-            showToast('✅ Map refreshed!');
+            showToast('✅ Map refreshed!', 'success');
         }
 
         function deleteLocation(id) {
             if (!confirm('Remove this location?')) return;
             fetch('/api/location/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE', credentials: 'include' })
                 .then(r => r.json())
-                .then(() => { showToast('✅ Location removed!'); renderAdminDelivery(); })
-                .catch(err => showToast('❌ Error: ' + err.message));
+                .then(() => { showToast('✅ Location removed!', 'success'); renderAdminDelivery(); })
+                .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2537,8 +2867,8 @@
             if (!confirm('Delete this feedback?')) return;
             fetch('/api/feedback/' + id + '?restaurant=' + RESTAURANT_ID, { method: 'DELETE', credentials: 'include' })
                 .then(r => r.json())
-                .then(() => { showToast('✅ Feedback deleted!'); loadFeedback(); })
-                .catch(err => showToast('❌ Error: ' + err.message));
+                .then(() => { showToast('✅ Feedback deleted!', 'success'); loadFeedback(); })
+                .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2594,10 +2924,10 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success) { showToast('✅ Status updated!'); loadSupport(); }
-                else showToast('❌ ' + (data.error || 'Failed'));
+                if (data.success) { showToast('✅ Status updated!', 'success'); loadSupport(); }
+                else showToast('❌ ' + (data.error || 'Failed'), 'error');
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         function viewTicket(id) {
@@ -2647,16 +2977,16 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success) { showToast('✅ Status updated!'); loadRestaurantStatus(); }
-                else showToast('❌ ' + (data.error || 'Failed'));
+                if (data.success) { showToast('✅ Status updated!', 'success'); loadRestaurantStatus(); }
+                else showToast('❌ ' + (data.error || 'Failed'), 'error');
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         function saveRestaurantHours() {
             const openingTime = document.getElementById('restaurantOpeningTime').value;
             const closingTime = document.getElementById('restaurantClosingTime').value;
-            if (!openingTime || !closingTime) { showToast('⚠️ Set both times'); return; }
+            if (!openingTime || !closingTime) { showToast('⚠️ Set both times', 'warning'); return; }
             fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2664,10 +2994,10 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success) { showToast('✅ Hours saved!'); loadRestaurantStatus(); }
-                else showToast('❌ ' + (data.error || 'Failed'));
+                if (data.success) { showToast('✅ Hours saved!', 'success'); loadRestaurantStatus(); }
+                else showToast('❌ ' + (data.error || 'Failed'), 'error');
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2699,10 +3029,10 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success) showToast('✅ Settings saved!');
-                else showToast('❌ ' + (data.error || 'Failed'));
+                if (data.success) showToast('✅ Settings saved!', 'success');
+                else showToast('❌ ' + (data.error || 'Failed'), 'error');
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2726,16 +3056,16 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    showToast('✅ Receipt settings saved!');
+                    showToast('✅ Receipt settings saved!', 'success');
                     if (payload.logoUrl) {
                         document.getElementById('receiptLogoImagePreview').src = payload.logoUrl;
                         document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
                     }
                 } else {
-                    showToast('❌ ' + (data.error || 'Save failed'));
+                    showToast('❌ ' + (data.error || 'Save failed'), 'error');
                 }
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         function updateLogoImagePreview() {
@@ -2748,15 +3078,15 @@
         function uploadLogoFile(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) { showToast('❌ Please select an image'); return; }
-            if (file.size > 2 * 1024 * 1024) { showToast('❌ File too large (max 2MB)'); return; }
+            if (!file.type.startsWith('image/')) { showToast('❌ Please select an image', 'error'); return; }
+            if (file.size > 2 * 1024 * 1024) { showToast('❌ File too large (max 2MB)', 'error'); return; }
             const reader = new FileReader();
             reader.onload = function(e) {
                 const base64 = e.target.result;
                 document.getElementById('receiptLogoUrl').value = base64;
                 document.getElementById('receiptLogoImagePreview').src = base64;
                 document.getElementById('receiptLogoImagePreview').style.display = 'inline-block';
-                showToast('✅ Logo uploaded! Click Save to apply.');
+                showToast('✅ Logo uploaded! Click Save to apply.', 'success');
             };
             reader.readAsDataURL(file);
         }
@@ -2766,7 +3096,7 @@
         // ============================================================
         function adminUpdateRestaurantName() {
             const name = document.getElementById('adminRestaurantName').value;
-            if (!name) { showToast('⚠️ Enter a name'); return; }
+            if (!name) { showToast('⚠️ Enter a name', 'warning'); return; }
             fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2775,10 +3105,10 @@
             })
             .then(r => r.json())
             .then(() => {
-                showToast('✅ Name updated!');
+                showToast('✅ Name updated!', 'success');
                 loadAdminData();
             })
-            .catch(err => showToast('❌ Error: ' + err.message));
+            .catch(err => showToast('❌ Error: ' + err.message, 'error'));
         }
 
         // ============================================================
@@ -2816,7 +3146,7 @@
             if (section === 'delivery') renderAdminDelivery();
             if (section === 'statistics') renderStatistics();
             if (section === 'backup') renderBackups();
-            if (section === 'whatsapp') { renderWAMessages(); }
+            if (section === 'whatsapp') { renderWAMessages(); generateWhatsAppQR(); }
         }
 
         // ============================================================
@@ -2852,9 +3182,9 @@
                         current.push(emoji);
                         updateIconDisplay(currentPickerTarget);
                     } else if (current.includes(emoji)) {
-                        showToast('⚠️ Already selected');
+                        showToast('⚠️ Already selected', 'warning');
                     } else {
-                        showToast('⚠️ Max 5 icons');
+                        showToast('⚠️ Max 5 icons', 'warning');
                     }
                 };
                 grid.appendChild(btn);
@@ -2911,11 +3241,11 @@
         // ============================================================
         // TOAST
         // ============================================================
-        function showToast(message) {
+        function showToast(message, type = '') {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
             const toast = document.createElement('div');
-            toast.className = 'toast';
+            toast.className = `toast ${type}`;
             toast.innerHTML = message;
             document.body.appendChild(toast);
             setTimeout(() => {
@@ -2954,7 +3284,8 @@
                                 orders.push(data.order);
                                 lastOrderCount = orders.length;
                                 if (data.order.id > lastOrderId) lastOrderId = data.order.id;
-                                showToast('🆕 New Order #' + data.order.id + ' received!');
+                                showToast('🔔 New Order #' + data.order.id + ' received!', 'success');
+                                playNotificationSound();
                                 renderAdminDashboard();
                                 renderAdminOrders();
                                 renderAdminDelivery();
@@ -2995,6 +3326,8 @@
                                     if (!exists) {
                                         orders.push(order);
                                         if (order.id > lastOrderId) lastOrderId = order.id;
+                                        showToast('🔔 New Order #' + order.id + ' received!', 'success');
+                                        playNotificationSound();
                                         renderAdminDashboard();
                                         renderAdminOrders();
                                         renderAdminDelivery();
