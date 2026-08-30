@@ -7,12 +7,6 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-// ============================================
-// ⭐ WHATSAPP WEB IMPORTS ⭐
-// ============================================
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const QRCode = require('qrcode');
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -72,11 +66,7 @@ let data = {
         openingTime: '09:00',
         closingTime: '23:00',
         lastUpdated: new Date().toISOString()
-    },
-    kitchenOrders: [],
-    whatsappSessions: [],
-    whatsappMessages: [],
-    whatsappQRs: {}
+    }
 };
 
 function loadData() {
@@ -142,154 +132,6 @@ function saveData() {
 setInterval(() => saveData(), 30000);
 
 // ============================================
-// ⭐ WHATSAPP WEB CLIENT ⭐
-// ============================================
-let whatsappClients = new Map();
-let whatsappReady = false;
-let globalQRCode = null;
-
-// Create WhatsApp sessions directory
-const whatsappSessionsDir = path.join(__dirname, 'whatsapp_sessions');
-if (!fs.existsSync(whatsappSessionsDir)) {
-    fs.mkdirSync(whatsappSessionsDir, { recursive: true });
-}
-
-function initWhatsAppClient(restaurantId) {
-    if (whatsappClients.has(restaurantId)) {
-        return whatsappClients.get(restaurantId);
-    }
-
-    console.log('🔄 Initializing WhatsApp client for:', restaurantId);
-
-    const client = new Client({
-        authStrategy: new LocalAuth({
-            clientId: 'whatsapp_' + restaurantId,
-            dataPath: path.join(whatsappSessionsDir, restaurantId)
-        }),
-        puppeteer: {
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu'
-            ]
-        }
-    });
-
-    // Store client
-    whatsappClients.set(restaurantId, client);
-
-    // QR Code event
-    client.on('qr', async (qr) => {
-        console.log('📱 QR Code generated for restaurant:', restaurantId);
-        globalQRCode = qr;
-        whatsappReady = false;
-        
-        try {
-            // Generate QR code image as data URL
-            const qrImage = await QRCode.toDataURL(qr, {
-                width: 300,
-                margin: 2,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                }
-            });
-            
-            // Store in data
-            if (!data.whatsappQRs) data.whatsappQRs = {};
-            data.whatsappQRs[restaurantId] = {
-                qr: qr,
-                qrImage: qrImage,
-                timestamp: new Date().toISOString()
-            };
-            syncAndSave();
-            console.log('✅ QR Code saved for restaurant:', restaurantId);
-        } catch (err) {
-            console.error('QR generation error:', err);
-        }
-    });
-
-    // Ready event
-    client.on('ready', () => {
-        console.log('✅ WhatsApp Web ready for restaurant:', restaurantId);
-        whatsappReady = true;
-        
-        // Update session
-        const session = data.whatsappSessions.find(s => s.restaurantId === restaurantId);
-        if (session) {
-            session.connected = true;
-            session.timestamp = new Date().toISOString();
-        } else {
-            data.whatsappSessions.push({
-                restaurantId: restaurantId,
-                connected: true,
-                timestamp: new Date().toISOString()
-            });
-        }
-        syncAndSave();
-    });
-
-    // Message event
-    client.on('message', async (message) => {
-        console.log('💬 WhatsApp message received:', message.body?.substring(0, 50) || 'Media');
-        
-        if (!data.whatsappMessages) data.whatsappMessages = [];
-        data.whatsappMessages.push({
-            id: Date.now(),
-            from: message.from,
-            body: message.body || '[Media]',
-            timestamp: new Date().toISOString(),
-            type: 'received',
-            restaurantId: restaurantId,
-            isMedia: message.hasMedia || false
-        });
-        syncAndSave();
-    });
-
-    // Disconnected event
-    client.on('disconnected', (reason) => {
-        console.log('❌ WhatsApp disconnected:', reason);
-        whatsappReady = false;
-        
-        const session = data.whatsappSessions.find(s => s.restaurantId === restaurantId);
-        if (session) {
-            session.connected = false;
-            session.disconnectedAt = new Date().toISOString();
-        }
-        syncAndSave();
-        
-        // Attempt to reconnect after delay
-        setTimeout(() => {
-            if (!whatsappReady) {
-                console.log('🔄 Reconnecting WhatsApp...');
-                client.initialize().catch(err => {
-                    console.error('Reconnect error:', err);
-                });
-            }
-        }, 10000);
-    });
-
-    // Initialize client
-    client.initialize().catch(err => {
-        console.error('WhatsApp init error:', err);
-    });
-
-    return client;
-}
-
-// Initialize WhatsApp for default restaurant on startup
-setTimeout(() => {
-    try {
-        initWhatsAppClient('restaurant-1');
-    } catch (err) {
-        console.error('Initial WhatsApp init error:', err);
-    }
-}, 5000);
-
-// ============================================
 // ⭐ MIDDLEWARE ⭐
 // ============================================
 app.use(express.json({ limit: '10mb' }));
@@ -350,7 +192,6 @@ let availableLayers = data.availableLayers;
 let customerLocations = data.customerLocations;
 let orderCounter = data.orderCounter || 1;
 let receiptSettings = data.receiptSettings;
-let kitchenOrders = data.kitchenOrders || [];
 
 function syncAndSave() {
     data.users = users;
@@ -368,7 +209,6 @@ function syncAndSave() {
         closingTime: RESTAURANT_CONFIG.closingTime,
         lastUpdated: new Date().toISOString()
     };
-    data.kitchenOrders = kitchenOrders;
     saveData();
 }
 
@@ -620,228 +460,6 @@ function broadcastOrderUpdate(order, restaurantId) {
         }
     });
 }
-
-// ============================================
-// ⭐ WHATSAPP WEB API ROUTES ⭐
-// ============================================
-
-// Get QR Code for WhatsApp Web
-app.get('/api/whatsapp/qr', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    
-    // Initialize WhatsApp client if not exists
-    if (!whatsappClients.has(restaurantId)) {
-        initWhatsAppClient(restaurantId);
-    }
-    
-    // Get QR from data
-    const qrData = data.whatsappQRs ? data.whatsappQRs[restaurantId] : null;
-    
-    if (qrData && qrData.qrImage) {
-        res.json({
-            success: true,
-            qr: qrData.qr,
-            qrImage: qrData.qrImage,
-            timestamp: qrData.timestamp,
-            ready: whatsappReady,
-            connected: data.whatsappSessions.some(s => s.restaurantId === restaurantId && s.connected)
-        });
-    } else {
-        res.json({
-            success: false,
-            message: 'QR not ready yet, please wait...',
-            ready: whatsappReady
-        });
-    }
-});
-
-// Check WhatsApp status
-app.get('/api/whatsapp/status', (req, res) => {
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const session = data.whatsappSessions.find(s => s.restaurantId === restaurantId);
-    
-    res.json({
-        connected: session ? session.connected : false,
-        ready: whatsappReady,
-        timestamp: session ? session.timestamp : null,
-        qrAvailable: data.whatsappQRs && data.whatsappQRs[restaurantId] ? true : false
-    });
-});
-
-// Send WhatsApp message (real)
-app.post('/api/whatsapp/send', async (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    try {
-        const { number, message, orderId, mediaUrl } = req.body;
-        const restaurantId = req.restaurantId || 'restaurant-1';
-        
-        if (!number || !message) {
-            return res.status(400).json({ error: 'Phone number and message required' });
-        }
-        
-        // Get or initialize client
-        let client = whatsappClients.get(restaurantId);
-        if (!client) {
-            client = initWhatsAppClient(restaurantId);
-        }
-        
-        // Wait for client to be ready
-        if (!whatsappReady) {
-            return res.status(400).json({ error: 'WhatsApp not ready. Please scan QR code first.' });
-        }
-        
-        // Format number (remove + and spaces)
-        const formattedNumber = number.replace(/[^0-9]/g, '');
-        const chatId = formattedNumber + '@c.us';
-        
-        // Send message
-        let result;
-        if (mediaUrl) {
-            const media = await MessageMedia.fromUrl(mediaUrl);
-            result = await client.sendMessage(chatId, media, { caption: message });
-        } else {
-            result = await client.sendMessage(chatId, message);
-        }
-        
-        // Store message
-        if (!data.whatsappMessages) data.whatsappMessages = [];
-        data.whatsappMessages.push({
-            id: Date.now(),
-            number: number,
-            message: message,
-            orderId: orderId || null,
-            userId: req.user.id,
-            userName: req.user.displayName,
-            timestamp: new Date().toISOString(),
-            sent: true,
-            messageId: result.id.id,
-            restaurantId: restaurantId
-        });
-        syncAndSave();
-        
-        res.json({
-            success: true,
-            message: 'Message sent successfully',
-            result: result
-        });
-        
-    } catch (error) {
-        console.error('WhatsApp send error:', error);
-        res.status(500).json({ error: 'Failed to send WhatsApp message: ' + error.message });
-    }
-});
-
-// Get WhatsApp messages
-app.get('/api/whatsapp/messages', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const messages = data.whatsappMessages || [];
-    const filtered = messages.filter(m => m.restaurantId === restaurantId);
-    res.json(filtered.slice(-100));
-});
-
-// Disconnect WhatsApp
-app.post('/api/whatsapp/disconnect', async (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    try {
-        const restaurantId = req.restaurantId || 'restaurant-1';
-        const client = whatsappClients.get(restaurantId);
-        
-        if (client) {
-            await client.destroy();
-            whatsappClients.delete(restaurantId);
-        }
-        
-        whatsappReady = false;
-        
-        // Update session
-        const session = data.whatsappSessions.find(s => s.restaurantId === restaurantId);
-        if (session) {
-            session.connected = false;
-            session.disconnectedAt = new Date().toISOString();
-        }
-        syncAndSave();
-        
-        res.json({ success: true, message: 'WhatsApp disconnected' });
-    } catch (error) {
-        console.error('WhatsApp disconnect error:', error);
-        res.status(500).json({ error: 'Failed to disconnect' });
-    }
-});
-
-// ============================================
-// ⭐ KITCHEN API ROUTES ⭐
-// ============================================
-app.post('/api/kitchen/print', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    try {
-        const { order, restaurantId } = req.body;
-        const restaurant = getOrCreateRestaurant(restaurantId || req.restaurantId);
-        
-        kitchenOrders.push({
-            id: Date.now(),
-            orderId: order.id,
-            order: order,
-            restaurantId: restaurantId || req.restaurantId,
-            printed: true,
-            timestamp: new Date().toISOString()
-        });
-        
-        if (kitchenOrders.length > 500) {
-            kitchenOrders = kitchenOrders.slice(-500);
-        }
-        
-        syncAndSave();
-        
-        console.log(`🍳 Kitchen print order #${order.id}`);
-        
-        res.json({ success: true, message: 'Order sent to kitchen printer' });
-    } catch (error) {
-        console.error('Kitchen print error:', error);
-        res.status(500).json({ error: 'Failed to print to kitchen' });
-    }
-});
-
-app.get('/api/kitchen/orders', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const orders = kitchenOrders.filter(o => o.restaurantId === restaurantId);
-    res.json(orders);
-});
-
-app.delete('/api/kitchen/orders/:id', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Not logged in' });
-    }
-    
-    const index = kitchenOrders.findIndex(o => o.id === parseInt(req.params.id));
-    if (index === -1) {
-        return res.status(404).json({ error: 'Kitchen order not found' });
-    }
-    
-    kitchenOrders.splice(index, 1);
-    syncAndSave();
-    res.json({ success: true });
-});
 
 // ============================================
 // ⭐ API ROUTES ⭐
@@ -1349,7 +967,7 @@ app.post('/api/orders', (req, res) => {
         });
     }
     
-    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table, deviceTime, deviceTimestamp, orderDestination, isStaffOrder } = req.body;
+    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table, deviceTime, deviceTimestamp } = req.body;
     if (!items || !items.length || !total) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -1374,31 +992,16 @@ app.post('/api/orders', (req, res) => {
         locationShared: orderType === 'delivery' && !!(lat && lng),
         table: table || null,
         orderNumber: orderCounter++,
+        // ⭐ Store customer's device time
         deviceTime: deviceTime || new Date().toLocaleString(),
         deviceTimestamp: deviceTimestamp || new Date().toISOString(),
-        cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString(),
-        orderDestination: orderDestination || 'admin',
-        isStaffOrder: isStaffOrder || false
+        cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString()
     };
     
     restaurant.orders.push(newOrder);
     syncAndSave();
     
     broadcastNewOrder(newOrder, restaurantId);
-    
-    // Send to kitchen if requested
-    if (orderDestination === 'kitchen' || orderDestination === 'both') {
-        kitchenOrders.push({
-            id: Date.now(),
-            orderId: newOrder.id,
-            order: newOrder,
-            restaurantId: restaurantId,
-            printed: true,
-            timestamp: new Date().toISOString()
-        });
-        syncAndSave();
-        console.log(`🍳 Kitchen order #${newOrder.id} (${orderDestination})`);
-    }
     
     if (orderType === 'delivery' && lat && lng) {
         customerLocations.push({
@@ -1790,9 +1393,7 @@ app.get('/api/test', (req, res) => {
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
         sseClients: adminClients.size,
         isOpen: RESTAURANT_CONFIG.isOpen,
-        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit,
-        whatsappConnected: data.whatsappSessions.some(s => s.connected),
-        kitchenOrders: kitchenOrders.length
+        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
     });
 });
 
@@ -1817,8 +1418,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
-    console.log(`💬 WhatsApp: ${data.whatsappSessions.some(s => s.connected) ? 'Connected' : 'Not connected'}`);
-    console.log(`🍳 Kitchen Orders: ${kitchenOrders.length}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
