@@ -645,6 +645,8 @@ app.post('/api/about-restaurant', (req, res) => {
 // ============================================
 // ⭐ LOBBY DEALS ROUTES ⭐
 // ============================================
+
+// Get all lobby deals
 app.get('/api/lobby-deals', (req, res) => {
     try {
         res.json(lobbyDeals);
@@ -653,15 +655,41 @@ app.get('/api/lobby-deals', (req, res) => {
     }
 });
 
+// Get active lobby deals (non-expired)
+app.get('/api/lobby-deals/active', (req, res) => {
+    try {
+        const now = new Date();
+        const activeDeals = lobbyDeals.filter(d => {
+            if (d.isActive === false) return false;
+            if (d.expiryDate) {
+                const expiry = new Date(d.expiryDate);
+                return expiry > now;
+            }
+            return true;
+        });
+        res.json(activeDeals);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get active deals' });
+    }
+});
+
+// Add new lobby deal
 app.post('/api/lobby-deals', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
     try {
-        const { title, description, price, originalPrice, image, discount, isActive } = req.body;
+        const { title, description, price, originalPrice, image, discount, isActive, expiryDays } = req.body;
         
         if (!title || !price) {
             return res.status(400).json({ error: 'Title and price are required' });
+        }
+        
+        let expiryDate = null;
+        if (expiryDays && parseInt(expiryDays) > 0) {
+            expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + parseInt(expiryDays));
+            expiryDate = expiryDate.toISOString();
         }
         
         const newDeal = {
@@ -673,6 +701,8 @@ app.post('/api/lobby-deals', (req, res) => {
             image: image || '',
             discount: discount || 0,
             isActive: isActive !== undefined ? isActive : true,
+            expiryDate: expiryDate,
+            expiryDays: expiryDays || null,
             createdAt: new Date().toISOString()
         };
         
@@ -685,6 +715,7 @@ app.post('/api/lobby-deals', (req, res) => {
     }
 });
 
+// Update lobby deal
 app.put('/api/lobby-deals/:id', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -697,7 +728,7 @@ app.put('/api/lobby-deals/:id', (req, res) => {
             return res.status(404).json({ error: 'Deal not found' });
         }
         
-        const { title, description, price, originalPrice, image, discount, isActive } = req.body;
+        const { title, description, price, originalPrice, image, discount, isActive, expiryDays } = req.body;
         
         if (title !== undefined) deal.title = title;
         if (description !== undefined) deal.description = description;
@@ -707,6 +738,17 @@ app.put('/api/lobby-deals/:id', (req, res) => {
         if (discount !== undefined) deal.discount = parseFloat(discount);
         if (isActive !== undefined) deal.isActive = isActive;
         
+        if (expiryDays !== undefined) {
+            deal.expiryDays = expiryDays;
+            if (expiryDays && parseInt(expiryDays) > 0) {
+                const expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + parseInt(expiryDays));
+                deal.expiryDate = expiryDate.toISOString();
+            } else {
+                deal.expiryDate = null;
+            }
+        }
+        
         syncAndSave();
         res.json({ success: true, deal: deal });
     } catch (error) {
@@ -715,6 +757,7 @@ app.put('/api/lobby-deals/:id', (req, res) => {
     }
 });
 
+// Delete single lobby deal
 app.delete('/api/lobby-deals/:id', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -733,6 +776,21 @@ app.delete('/api/lobby-deals/:id', (req, res) => {
     } catch (error) {
         console.error('Error deleting lobby deal:', error);
         res.status(500).json({ error: 'Failed to delete deal' });
+    }
+});
+
+// Delete ALL lobby deals
+app.delete('/api/lobby-deals/all', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        lobbyDeals = [];
+        syncAndSave();
+        res.json({ success: true, message: 'All lobby deals deleted' });
+    } catch (error) {
+        console.error('Error deleting all lobby deals:', error);
+        res.status(500).json({ error: 'Failed to delete all deals' });
     }
 });
 

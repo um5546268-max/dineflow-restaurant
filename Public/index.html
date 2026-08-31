@@ -116,6 +116,7 @@
             border-radius: 20px; 
             transition: all 0.3s; 
             cursor: pointer; 
+            position: relative;
         }
         .top-actions a:hover { background: #f1f2f6; }
         .deals-btn { 
@@ -147,6 +148,24 @@
             border-radius: 50%; 
             min-width: 20px; 
             text-align: center; 
+        }
+        .deal-notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.6em;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+            animation: pulseBadge 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .main-container { display: flex; flex: 1; overflow: hidden; }
@@ -507,33 +526,7 @@
             color: #2d3436;
         }
 
-        .deal-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f1f2f6;
-        }
-        .deal-item:last-child { border-bottom: none; }
-        .deal-item .deal-info { display: flex; flex-direction: column; }
-        .deal-item .deal-icons { font-size: 2em; letter-spacing: 2px; }
-        .deal-item .deal-name { font-weight: 600; color: #2d3436; }
-        .deal-item .deal-desc { font-size: 0.75em; color: #636e72; }
-        .deal-item .deal-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
-        .deal-buy-btn { 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            padding: 5px 16px; 
-            border-radius: 20px; 
-            font-weight: 600; 
-            font-size: 0.8em; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-        }
-        .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
-
-        /* ⭐ LOBBY DEAL POPUP STYLES ⭐ */
+        /* ⭐ PROFESSIONAL LOBBY DEAL STYLES ⭐ */
         #lobbyDealPopup {
             display: none;
             position: fixed;
@@ -560,90 +553,114 @@
             width: 100%;
             max-height: 95vh;
             overflow-y: auto;
-            padding: 0;
             position: relative;
             box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: lobbySlideUp 0.5s ease;
         }
-        #lobbyDealPopup .lobby-content .lobby-image {
+        @keyframes lobbySlideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #lobbyDealPopup .lobby-image-container {
+            position: relative;
             width: 100%;
-            height: 220px;
-            object-fit: cover;
+            height: 240px;
+            overflow: hidden;
             border-radius: 24px 24px 0 0;
-            background: #f1f2f6;
+            background: linear-gradient(135deg, #1a1a2e, #2d2d44);
         }
-        #lobbyDealPopup .lobby-content .lobby-body {
+        #lobbyDealPopup .lobby-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #lobbyDealPopup .lobby-image-container .lobby-discount-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #e74c3c;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.85em;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            animation: pulseBadge 2s ease-in-out infinite;
+        }
+        #lobbyDealPopup .lobby-body {
             padding: 20px 24px 24px;
         }
-        #lobbyDealPopup .lobby-content .lobby-title {
+        #lobbyDealPopup .lobby-title {
             font-size: 1.3em;
             font-weight: 700;
             color: #2d3436;
             margin-bottom: 4px;
         }
-        #lobbyDealPopup .lobby-content .lobby-desc {
+        #lobbyDealPopup .lobby-desc {
             font-size: 0.85em;
             color: #636e72;
             margin-bottom: 12px;
         }
-        #lobbyDealPopup .lobby-content .lobby-prices {
+        #lobbyDealPopup .lobby-prices {
             display: flex;
             align-items: center;
             gap: 12px;
             margin-bottom: 16px;
         }
-        #lobbyDealPopup .lobby-content .lobby-prices .original {
-            font-size: 1em;
+        #lobbyDealPopup .lobby-prices .original {
+            font-size: 0.9em;
             color: #b2bec3;
             text-decoration: line-through;
         }
-        #lobbyDealPopup .lobby-content .lobby-prices .price {
-            font-size: 1.6em;
+        #lobbyDealPopup .lobby-prices .price {
+            font-size: 1.8em;
             font-weight: 700;
             color: #e74c3c;
         }
-        #lobbyDealPopup .lobby-content .lobby-prices .discount-badge {
-            background: #e74c3c;
-            color: white;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-size: 0.75em;
-            font-weight: 700;
-        }
-        #lobbyDealPopup .lobby-content .lobby-actions {
+        #lobbyDealPopup .lobby-actions {
             display: flex;
             gap: 10px;
         }
-        #lobbyDealPopup .lobby-content .lobby-actions button {
+        #lobbyDealPopup .lobby-actions button {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-weight: 700;
             font-size: 0.95em;
             cursor: pointer;
             transition: all 0.3s;
         }
-        #lobbyDealPopup .lobby-content .lobby-actions .btn-buy {
-            background: #e74c3c;
+        #lobbyDealPopup .lobby-actions .btn-buy {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
         }
-        #lobbyDealPopup .lobby-content .lobby-actions .btn-buy:hover {
-            background: #c0392b;
+        #lobbyDealPopup .lobby-actions .btn-buy:hover {
             transform: scale(1.02);
+            box-shadow: 0 6px 30px rgba(231, 76, 60, 0.4);
         }
-        #lobbyDealPopup .lobby-content .lobby-actions .btn-close-lobby {
+        #lobbyDealPopup .lobby-actions .btn-close-lobby {
             background: #f1f2f6;
             color: #2d3436;
-            flex: 0.5;
+            flex: 0.4;
         }
-        #lobbyDealPopup .lobby-content .lobby-actions .btn-close-lobby:hover {
+        #lobbyDealPopup .lobby-actions .btn-close-lobby:hover {
             background: #dfe6e9;
+        }
+        #lobbyDealPopup .lobby-expiry {
+            text-align: center;
+            font-size: 0.75em;
+            color: #f39c12;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f2f6;
         }
         #lobbyDealPopup .lobby-close-btn {
             position: absolute;
             top: 12px;
             right: 16px;
-            font-size: 1.6em;
+            font-size: 1.4em;
             color: white;
             background: rgba(0,0,0,0.4);
             border: none;
@@ -661,6 +678,32 @@
             background: rgba(0,0,0,0.7);
             transform: rotate(90deg);
         }
+
+        .deal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        .deal-item:last-child { border-bottom: none; }
+        .deal-item .deal-info { display: flex; flex-direction: column; }
+        .deal-item .deal-icons { font-size: 2em; letter-spacing: 2px; }
+        .deal-item .deal-name { font-weight: 600; color: #2d3436; }
+        .deal-item .deal-desc { font-size: 0.75em; color: #636e72; }
+        .deal-item .deal-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
+        .deal-buy-btn { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 5px 16px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            font-size: 0.8em; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
 
         .order-form input, .order-form select, .order-form textarea {
             width: 100%;
@@ -1190,8 +1233,9 @@
             .receipt-style .receipt-grand-total { font-size: 14px; }
             .menu-item-card .btn-quick, .menu-item-card .btn-cart { font-size: 0.55em; padding: 3px 8px; }
             .about-photo-grid { grid-template-columns: 1fr; }
-            #lobbyDealPopup .lobby-content .lobby-image { height: 160px; }
-            #lobbyDealPopup .lobby-content .lobby-prices .price { font-size: 1.3em; }
+            #lobbyDealPopup .lobby-image-container { height: 180px; }
+            #lobbyDealPopup .lobby-prices .price { font-size: 1.4em; }
+            #lobbyDealPopup .lobby-actions button { padding: 12px; font-size: 0.85em; }
         }
         @media (max-width: 400px) {
             .sidebar { width: 60px; }
@@ -1206,6 +1250,7 @@
             .star-btn { font-size: 1.5em; }
             .receipt-style { padding: 10px 8px; font-size: 10px; }
             .receipt-style .receipt-header .restaurant-name { font-size: 15px; }
+            #lobbyDealPopup .lobby-image-container { height: 150px; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -1310,23 +1355,26 @@
         </div>
     </div>
 
-    <!-- ⭐ LOBBY DEAL POPUP ⭐ -->
+    <!-- ⭐ LOBBY DEAL POPUP - PROFESSIONAL ⭐ -->
     <div id="lobbyDealPopup">
         <div class="lobby-content" id="lobbyDealContent">
             <button class="lobby-close-btn" onclick="closeLobbyDeal()">✕</button>
-            <img class="lobby-image" id="lobbyDealImage" src="" alt="Deal Image" />
+            <div class="lobby-image-container">
+                <img class="lobby-image" id="lobbyDealImage" src="" alt="Deal Image" />
+                <div class="lobby-discount-badge" id="lobbyDealDiscountBadge">50% OFF</div>
+            </div>
             <div class="lobby-body">
                 <div class="lobby-title" id="lobbyDealTitle">2 Zinger Burger + 10 Wings + 1Ltr Drink</div>
                 <div class="lobby-desc" id="lobbyDealDesc">Limited time offer! Get this amazing deal today.</div>
                 <div class="lobby-prices">
                     <span class="original" id="lobbyDealOriginal">Rs 2800</span>
                     <span class="price" id="lobbyDealPrice">Rs 1400</span>
-                    <span class="discount-badge" id="lobbyDealDiscount">50% OFF</span>
                 </div>
                 <div class="lobby-actions">
                     <button class="btn-buy" onclick="buyLobbyDeal()">🔥 Grab This Deal</button>
                     <button class="btn-close-lobby" onclick="closeLobbyDeal()">✕</button>
                 </div>
+                <div class="lobby-expiry" id="lobbyDealExpiry">⏱️ Offer expires in 3 days</div>
             </div>
         </div>
     </div>
@@ -1678,10 +1726,10 @@
 
         // ⭐ LOAD LOBBY DEALS ⭐
         function loadLobbyDeals() {
-            fetch('/api/lobby-deals')
+            fetch('/api/lobby-deals/active')
                 .then(r => r.json())
                 .then(data => {
-                    lobbyDeals = data.filter(d => d.isActive !== false);
+                    lobbyDeals = data || [];
                     if (lobbyDeals.length > 0 && !lobbyDealShown) {
                         showLobbyDeal(lobbyDeals[0]);
                     }
@@ -1689,7 +1737,7 @@
                 .catch(() => {});
         }
 
-        // ⭐ SHOW LOBBY DEAL POPUP ⭐
+        // ⭐ SHOW LOBBY DEAL POPUP - PROFESSIONAL ⭐
         function showLobbyDeal(deal) {
             currentLobbyDeal = deal;
             const popup = document.getElementById('lobbyDealPopup');
@@ -1698,22 +1746,60 @@
             const desc = document.getElementById('lobbyDealDesc');
             const original = document.getElementById('lobbyDealOriginal');
             const price = document.getElementById('lobbyDealPrice');
-            const discount = document.getElementById('lobbyDealDiscount');
+            const discountBadge = document.getElementById('lobbyDealDiscountBadge');
+            const expiry = document.getElementById('lobbyDealExpiry');
 
+            // Set image
             if (deal.image) {
                 image.src = deal.image;
                 image.style.display = 'block';
+                document.querySelector('.lobby-image-container').style.background = 'linear-gradient(135deg, #1a1a2e, #2d2d44)';
             } else {
                 image.style.display = 'none';
+                document.querySelector('.lobby-image-container').style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                // Add a fallback icon
+                const container = document.querySelector('.lobby-image-container');
+                const fallback = document.createElement('div');
+                fallback.style.cssText = 'font-size:4em; display:flex; align-items:center; justify-content:center; height:100%; color:white;';
+                fallback.textContent = '🍔';
+                // Remove existing fallback if any
+                const existing = container.querySelector('.fallback-icon');
+                if (existing) existing.remove();
+                fallback.className = 'fallback-icon';
+                container.appendChild(fallback);
             }
 
+            // Set title and description
             title.textContent = deal.title || 'Special Deal';
             desc.textContent = deal.description || 'Limited time offer!';
-            original.textContent = restaurantConfig.currency + ' ' + (deal.originalPrice || deal.price * 1.5).toFixed(2);
+
+            // Set prices
+            const originalPrice = deal.originalPrice || deal.price * 1.5;
+            original.textContent = restaurantConfig.currency + ' ' + originalPrice.toFixed(2);
             price.textContent = restaurantConfig.currency + ' ' + deal.price.toFixed(2);
-            
-            const discountPercent = Math.round(((deal.originalPrice || deal.price * 1.5) - deal.price) / (deal.originalPrice || deal.price * 1.5) * 100);
-            discount.textContent = discountPercent + '% OFF';
+
+            // Set discount badge
+            const discountPercent = Math.round((originalPrice - deal.price) / originalPrice * 100);
+            discountBadge.textContent = discountPercent + '% OFF';
+
+            // Set expiry
+            if (deal.expiryDays) {
+                expiry.textContent = '⏱️ Offer expires in ' + deal.expiryDays + ' days';
+                expiry.style.display = 'block';
+            } else if (deal.expiryDate) {
+                const expiryDate = new Date(deal.expiryDate);
+                const now = new Date();
+                const diffDays = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                if (diffDays > 0) {
+                    expiry.textContent = '⏱️ Offer expires in ' + diffDays + ' days';
+                    expiry.style.display = 'block';
+                } else {
+                    expiry.textContent = '⏱️ Offer expires today!';
+                    expiry.style.display = 'block';
+                }
+            } else {
+                expiry.style.display = 'none';
+            }
 
             popup.classList.add('show');
             lobbyDealShown = true;
@@ -1721,6 +1807,26 @@
 
         function closeLobbyDeal() {
             document.getElementById('lobbyDealPopup').classList.remove('show');
+            
+            // Show notification that deal is available in deals section
+            showToast('🔥 Deal available in "Deals" section!');
+            
+            // Add a badge on the deals button
+            const dealsBtn = document.querySelector('.deals-btn');
+            if (dealsBtn) {
+                const existingBadge = dealsBtn.querySelector('.deal-notification-badge');
+                if (existingBadge) existingBadge.remove();
+                
+                const badge = document.createElement('span');
+                badge.className = 'deal-notification-badge';
+                badge.textContent = '1';
+                dealsBtn.appendChild(badge);
+                
+                // Remove badge after 8 seconds
+                setTimeout(() => {
+                    if (badge) badge.remove();
+                }, 8000);
+            }
         }
 
         function buyLobbyDeal() {
@@ -1785,7 +1891,6 @@
                         });
                         photoGrid.style.display = 'grid';
                     } else {
-                        // Default placeholder photos
                         photoGrid.innerHTML = `
                             <div style="background:#f1f2f6; border-radius:10px; padding:20px; text-align:center; color:#b2bec3; grid-column:1/-1;">
                                 📸 No photos uploaded yet
@@ -1804,6 +1909,108 @@
 
         function closeAboutPopup() {
             document.getElementById('aboutPopup').classList.remove('show');
+        }
+
+        // ⭐ OPEN DEALS WITH LOBBY DEALS ⭐
+        function openDeals() {
+            fetch(apiUrl('/api/deals?t=' + Date.now()))
+                .then(r => r.json())
+                .then(data => {
+                    deals = data;
+                    dealsPopup.classList.add('show');
+                    renderDealsWithLobby();
+                })
+                .catch(() => {
+                    dealsPopup.classList.add('show');
+                    renderDealsWithLobby();
+                });
+        }
+
+        function renderDealsWithLobby() {
+            dealsList.innerHTML = '';
+            
+            // Show regular deals
+            if (deals && deals.length > 0) {
+                deals.forEach(deal => {
+                    const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
+                    const div = document.createElement('div');
+                    div.className = 'deal-item';
+                    div.innerHTML = `
+                        <div class="deal-info">
+                            <div class="deal-icons">${icons}</div>
+                            <div class="deal-name">${deal.name}</div>
+                            <div class="deal-desc">${deal.desc || ''}</div>
+                            <div style="font-size:0.75em; color:#b2bec3;">
+                                ${deal.original ? `<del>${currencySymbol} ${deal.original.toFixed(2)}</del>` : ''}
+                                <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
+                    `;
+                    dealsList.appendChild(div);
+                });
+            }
+            
+            // Show active lobby deals
+            fetch('/api/lobby-deals/active')
+                .then(r => r.json())
+                .then(activeLobbyDeals => {
+                    if (activeLobbyDeals && activeLobbyDeals.length > 0) {
+                        // Add a separator
+                        const separator = document.createElement('div');
+                        separator.style.cssText = 'border-top: 2px dashed #e74c3c; margin: 10px 0; padding-top: 10px; text-align:center; font-weight:700; color:#e74c3c;';
+                        separator.textContent = '🔥 LIMITED TIME LOBBY DEALS 🔥';
+                        dealsList.appendChild(separator);
+                        
+                        activeLobbyDeals.forEach(deal => {
+                            const div = document.createElement('div');
+                            div.className = 'deal-item';
+                            div.style.cssText = 'background: #fdf2f2; border-radius: 8px; padding: 12px; margin: 6px 0;';
+                            div.innerHTML = `
+                                <div class="deal-info">
+                                    ${deal.image ? `<img src="${deal.image}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; margin-bottom:6px;" />` : ''}
+                                    <div class="deal-name" style="font-size:1.1em;">${deal.title}</div>
+                                    <div class="deal-desc">${deal.description || ''}</div>
+                                    <div style="font-size:0.75em; color:#b2bec3;">
+                                        ${deal.originalPrice ? `<del>${currencySymbol} ${deal.originalPrice.toFixed(2)}</del>` : ''}
+                                        <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
+                                    </div>
+                                    ${deal.expiryDays ? `<div style="font-size:0.7em; color:#f39c12;">⏱️ ${deal.expiryDays} days left</div>` : ''}
+                                </div>
+                                <button class="deal-buy-btn" onclick="buyLobbyDealFromDeals(${deal.id})">Buy</button>
+                            `;
+                            dealsList.appendChild(div);
+                        });
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function buyLobbyDealFromDeals(dealId) {
+            const deal = lobbyDeals.find(d => d.id === dealId);
+            if (!deal) return;
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                closeDeals();
+                pendingOrder = {
+                    items: [{ name: deal.title, price: deal.price, qty: 1, isDeal: true }],
+                    total: deal.price
+                };
+                openOrderForm();
+            });
+        }
+
+        function closeDeals() {
+            dealsPopup.classList.remove('show');
         }
 
         function checkPersistentLogin() {
@@ -2790,53 +2997,6 @@
 
         function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
         function printReceipt() { window.print(); }
-
-        function openDeals() {
-            fetch(apiUrl('/api/deals?t=' + Date.now()))
-                .then(r => r.json())
-                .then(data => {
-                    deals = data;
-                    dealsPopup.classList.add('show');
-                    renderDeals();
-                })
-                .catch(() => {
-                    if (deals.length === 0) {
-                        deals = [];
-                    }
-                    dealsPopup.classList.add('show');
-                    renderDeals();
-                });
-        }
-
-        function closeDeals() {
-            dealsPopup.classList.remove('show');
-        }
-
-        function renderDeals() {
-            dealsList.innerHTML = '';
-            if (!deals || deals.length === 0) {
-                dealsList.innerHTML = '<p style="color:#b2bec3; text-align:center; padding:20px;">No deals available</p>';
-                return;
-            }
-            deals.forEach(deal => {
-                const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
-                const div = document.createElement('div');
-                div.className = 'deal-item';
-                div.innerHTML = `
-                    <div class="deal-info">
-                        <div class="deal-icons">${icons}</div>
-                        <div class="deal-name">${deal.name}</div>
-                        <div class="deal-desc">${deal.desc || ''}</div>
-                        <div style="font-size:0.75em; color:#b2bec3;">
-                            ${deal.original ? `<del>${currencySymbol} ${deal.original.toFixed(2)}</del>` : ''}
-                            <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
-                `;
-                dealsList.appendChild(div);
-            });
-        }
 
         function buyDeal(dealId) {
             if (!isLoggedIn) {

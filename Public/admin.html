@@ -540,6 +540,12 @@
             background: #1e8449;
             transform: scale(1.02);
         }
+        .admin-add-btn.danger {
+            background: #e74c3c;
+        }
+        .admin-add-btn.danger:hover {
+            background: #c0392b;
+        }
 
         .admin-form {
             background: white;
@@ -990,6 +996,44 @@
             color: #e74c3c;
         }
 
+        /* ⭐ ABOUT PHOTO GRID ⭐ */
+        .about-photo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .about-photo-grid img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        .about-photo-grid img:hover {
+            border-color: #e74c3c;
+            transform: scale(1.02);
+        }
+        .about-photo-grid .photo-upload-box {
+            border: 2px dashed #dfe6e9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #b2bec3;
+            font-size: 0.85em;
+            text-align: center;
+            padding: 10px;
+        }
+        .about-photo-grid .photo-upload-box:hover {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
         /* ⭐ CALCULATOR STYLES ⭐ */
         .calc-btn {
             padding: 10px;
@@ -1046,42 +1090,37 @@
             color: white;
         }
 
-        /* ⭐ ABOUT PHOTO GRID ⭐ */
-        .about-photo-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .about-photo-grid img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #eee;
-            transition: all 0.3s;
-        }
-        .about-photo-grid img:hover {
-            border-color: #e74c3c;
-            transform: scale(1.02);
-        }
-        .about-photo-grid .photo-upload-box {
-            border: 2px dashed #dfe6e9;
-            border-radius: 8px;
+        /* ⭐ LOBBY DEAL CARD ⭐ */
+        .lobby-deal-card {
             display: flex;
             align-items: center;
-            justify-content: center;
-            height: 100px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: #b2bec3;
-            font-size: 0.85em;
-            text-align: center;
-            padding: 10px;
+            gap: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 4px solid #e74c3c;
         }
-        .about-photo-grid .photo-upload-box:hover {
-            border-color: #e74c3c;
-            background: #fdf2f2;
+        .lobby-deal-card .deal-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .lobby-deal-card .deal-info {
+            flex: 1;
+        }
+        .lobby-deal-card .deal-info .deal-title {
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        .lobby-deal-card .deal-info .deal-meta {
+            font-size: 0.8em;
+            color: #636e72;
+        }
+        .lobby-deal-card .deal-actions {
+            display: flex;
+            gap: 6px;
         }
 
         @media print {
@@ -1120,6 +1159,8 @@
             .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(5, 1fr); }
             .about-photo-grid { grid-template-columns: 1fr 1fr; }
             .about-photo-grid img { height: 80px; }
+            .lobby-deal-card { flex-direction: column; align-items: stretch; }
+            .lobby-deal-card .deal-image { width: 100%; height: 120px; }
         }
         @media (max-width: 400px) {
             .admin-sidebar { width: 110px; }
@@ -1157,6 +1198,7 @@
             <a class="admin-nav-item" data-admin="support" onclick="showAdminSection('support')">🎫 Support</a>
             <a class="admin-nav-item" data-admin="layers" onclick="showAdminSection('layers')">🧅 Layers</a>
             <a class="admin-nav-item" data-admin="delivery" onclick="showAdminSection('delivery')">📍 Delivery</a>
+            <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
         </div>
 
@@ -1317,14 +1359,16 @@
                     <div class="settings-option" style="align-items:flex-start;">
                         <div>
                             <div class="option-label">Photos</div>
-                            <div class="option-desc">Add photo URLs (one per line)</div>
+                            <div class="option-desc">Upload multiple photos</div>
                         </div>
                         <div style="width:100%;">
-                            <textarea id="aboutPhotos" rows="3" style="width:100%; padding:8px; border-radius:8px; border:1px solid #dfe6e9;" placeholder="https://example.com/photo1.jpg"></textarea>
-                            <div style="font-size:0.7em; color:#b2bec3; margin-top:4px;">Enter one URL per line</div>
+                            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                <input type="file" id="aboutPhotoUpload" accept="image/*" multiple style="padding:4px; flex:1;" onchange="uploadAboutPhotos(event)" />
+                                <button class="admin-submit-btn" onclick="addAboutPhotoUrls()" style="padding:4px 16px; font-size:0.85em;">➕ Add URLs</button>
+                            </div>
                             <div style="margin-top:8px;">
-                                <label style="font-size:0.85em; font-weight:600;">Upload Photo:</label>
-                                <input type="file" id="aboutPhotoUpload" accept="image/*" style="display:block; margin-top:4px; padding:4px;" onchange="uploadAboutPhoto(event)" />
+                                <textarea id="aboutPhotos" rows="3" style="width:100%; padding:8px; border-radius:8px; border:1px solid #dfe6e9;" placeholder="https://example.com/photo1.jpg"></textarea>
+                                <div style="font-size:0.7em; color:#b2bec3; margin-top:4px;">Enter one URL per line or upload multiple images</div>
                             </div>
                             <div class="about-photo-grid" id="aboutPhotoPreviewGrid"></div>
                         </div>
@@ -1338,6 +1382,11 @@
                 <h3 style="margin-bottom:15px;">🎮 Lobby Popup Deals</h3>
                 <p style="font-size:0.85em; color:#636e72; margin-bottom:15px;">These deals appear as a popup when customers open the app (like game lobby)</p>
                 
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
+                    <button class="admin-add-btn danger" onclick="deleteAllLobbyDeals()" style="margin:0;">🗑️ Delete All Deals</button>
+                    <span style="font-size:0.8em; color:#b2bec3;">This will permanently remove all lobby deals</span>
+                </div>
+                
                 <div class="settings-card">
                     <h4>Add New Lobby Deal</h4>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -1346,10 +1395,13 @@
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
                         <input type="number" id="lobbyDealOriginal" placeholder="Original Price (Rs)" step="0.01" />
-                        <input type="text" id="lobbyDealImage" placeholder="Image URL (optional)" />
+                        <input type="number" id="lobbyDealExpiry" placeholder="Expires in (days)" min="1" />
                     </div>
                     <div style="margin-top:8px;">
-                        <label style="font-size:0.85em; font-weight:600;">Or Upload Image:</label>
+                        <input type="text" id="lobbyDealImage" placeholder="Image URL (optional)" style="width:100%;" />
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label style="font-size:0.85em; font-weight:600;">Upload Image:</label>
                         <input type="file" id="lobbyDealImageUpload" accept="image/*" style="display:block; margin-top:4px; padding:4px;" onchange="uploadLobbyDealImage(event)" />
                     </div>
                     <input type="text" id="lobbyDealDesc" placeholder="Description (optional)" style="width:100%; margin-top:8px;" />
@@ -1441,6 +1493,37 @@
                 
                 <div class="admin-table" id="deliveryLocationsList">
                     <p style="color:#b2bec3; padding:15px;">Loading customer locations...</p>
+                </div>
+            </div>
+
+            <!-- ⭐ CALCULATOR ⭐ -->
+            <div class="admin-section" id="adminCalculator">
+                <h3 style="margin-bottom:15px;">🧮 Calculator</h3>
+                <div class="settings-card">
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; max-width:320px; margin:0 auto;">
+                        <input type="text" id="calcDisplay" style="grid-column:span 4; text-align:right; font-size:1.4em; padding:12px; border-radius:8px; border:1px solid #dfe6e9; background:white; color:#2d3436;" readonly />
+                        <button class="calc-btn clear" onclick="calcClear()">C</button>
+                        <button class="calc-btn" onclick="calcInput('%')">%</button>
+                        <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+                        <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+                        <button class="calc-btn" onclick="calcInput('7')">7</button>
+                        <button class="calc-btn" onclick="calcInput('8')">8</button>
+                        <button class="calc-btn" onclick="calcInput('9')">9</button>
+                        <button class="calc-btn operator" onclick="calcInput('-')">−</button>
+                        <button class="calc-btn" onclick="calcInput('4')">4</button>
+                        <button class="calc-btn" onclick="calcInput('5')">5</button>
+                        <button class="calc-btn" onclick="calcInput('6')">6</button>
+                        <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+                        <button class="calc-btn" onclick="calcInput('1')">1</button>
+                        <button class="calc-btn" onclick="calcInput('2')">2</button>
+                        <button class="calc-btn" onclick="calcInput('3')">3</button>
+                        <button class="calc-btn equals" onclick="calcCalculate()" style="grid-row:span 2;">=</button>
+                        <button class="calc-btn" onclick="calcInput('0')" style="grid-column:span 2;">0</button>
+                        <button class="calc-btn" onclick="calcInput('.')">.</button>
+                    </div>
+                    <div style="text-align:center; margin-top:10px; font-size:0.8em; color:#b2bec3;">
+                        💡 Use keyboard: numbers, +, -, *, /, Enter, Escape
+                    </div>
                 </div>
             </div>
 
@@ -1630,32 +1713,6 @@
                     <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="admin-submit-btn" onclick="saveReceiptSettings()">💾 Save Receipt Settings</button>
                         <button class="admin-cancel-btn" onclick="previewSampleReceipt()">👁️ Preview Sample Receipt</button>
-                    </div>
-                </div>
-
-                <!-- ⭐ CALCULATOR -->
-                <div class="settings-card">
-                    <h4>🧮 Calculator</h4>
-                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; max-width:320px;">
-                        <input type="text" id="calcDisplay" style="grid-column:span 4; text-align:right; font-size:1.4em; padding:12px; border-radius:8px; border:1px solid #dfe6e9; background:white; color:#2d3436;" readonly />
-                        <button class="calc-btn clear" onclick="calcClear()">C</button>
-                        <button class="calc-btn" onclick="calcInput('%')">%</button>
-                        <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
-                        <button class="calc-btn operator" onclick="calcInput('*')">×</button>
-                        <button class="calc-btn" onclick="calcInput('7')">7</button>
-                        <button class="calc-btn" onclick="calcInput('8')">8</button>
-                        <button class="calc-btn" onclick="calcInput('9')">9</button>
-                        <button class="calc-btn operator" onclick="calcInput('-')">−</button>
-                        <button class="calc-btn" onclick="calcInput('4')">4</button>
-                        <button class="calc-btn" onclick="calcInput('5')">5</button>
-                        <button class="calc-btn" onclick="calcInput('6')">6</button>
-                        <button class="calc-btn operator" onclick="calcInput('+')">+</button>
-                        <button class="calc-btn" onclick="calcInput('1')">1</button>
-                        <button class="calc-btn" onclick="calcInput('2')">2</button>
-                        <button class="calc-btn" onclick="calcInput('3')">3</button>
-                        <button class="calc-btn equals" onclick="calcCalculate()" style="grid-row:span 2;">=</button>
-                        <button class="calc-btn" onclick="calcInput('0')" style="grid-column:span 2;">0</button>
-                        <button class="calc-btn" onclick="calcInput('.')">.</button>
                     </div>
                 </div>
 
@@ -1863,7 +1920,7 @@
 
         // Keyboard support for calculator
         document.addEventListener('keydown', function(e) {
-            if (document.getElementById('adminSettings').classList.contains('active')) {
+            if (document.getElementById('adminCalculator').classList.contains('active')) {
                 const key = e.key;
                 if (key >= '0' && key <= '9') calcInput(key);
                 else if (key === '.') calcInput('.');
@@ -2169,34 +2226,48 @@
             }
         }
 
-        function uploadAboutPhoto(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        function uploadAboutPhotos(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
 
-            if (!file.type.startsWith('image/')) {
-                showToast('❌ Please select an image file');
-                return;
+            let uploadedCount = 0;
+            const currentPhotos = document.getElementById('aboutPhotos').value.split('\n').filter(p => p.trim());
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.startsWith('image/')) {
+                    showToast('⚠️ Please select image files only');
+                    continue;
+                }
+
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('⚠️ File "' + file.name + '" is too large (max 2MB)');
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentPhotos.push(e.target.result);
+                    uploadedCount++;
+                    if (uploadedCount === files.length) {
+                        document.getElementById('aboutPhotos').value = currentPhotos.join('\n');
+                        renderAboutPhotoPreview(currentPhotos);
+                        showToast('✅ ' + uploadedCount + ' photo(s) uploaded! Click Save to apply.');
+                        event.target.value = '';
+                    }
+                };
+                reader.onerror = function() {
+                    showToast('❌ Failed to read file: ' + file.name);
+                };
+                reader.readAsDataURL(file);
             }
+        }
 
-            if (file.size > 2 * 1024 * 1024) {
-                showToast('❌ File size should be less than 2MB');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64 = e.target.result;
-                const currentPhotos = document.getElementById('aboutPhotos').value.split('\n').filter(p => p.trim());
-                currentPhotos.push(base64);
-                document.getElementById('aboutPhotos').value = currentPhotos.join('\n');
-                renderAboutPhotoPreview(currentPhotos);
-                showToast('✅ Photo uploaded! Click Save to apply.');
-                event.target.value = '';
-            };
-            reader.onerror = function() {
-                showToast('❌ Failed to read file');
-            };
-            reader.readAsDataURL(file);
+        function addAboutPhotoUrls() {
+            const photosText = document.getElementById('aboutPhotos').value;
+            const photos = photosText.split('\n').filter(p => p.trim());
+            renderAboutPhotoPreview(photos);
+            showToast('✅ Preview updated! Click Save to apply.');
         }
 
         function saveAboutRestaurant() {
@@ -2308,6 +2379,7 @@
                     <th>Title</th>
                     <th>Price</th>
                     <th>Original</th>
+                    <th>Expires</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -2315,6 +2387,12 @@
 
             lobbyDeals.forEach(deal => {
                 const isActive = deal.isActive !== false;
+                const isExpired = deal.expiryDate ? new Date(deal.expiryDate) < new Date() : false;
+                const status = isActive && !isExpired ? '🟢 Active' : (isExpired ? '🔴 Expired' : '🔴 Inactive');
+                const statusColor = isActive && !isExpired ? '#27ae60' : '#e74c3c';
+                
+                const expiryDisplay = deal.expiryDate ? new Date(deal.expiryDate).toLocaleDateString() : 'Never';
+                
                 html += `
                     <tr>
                         <td>
@@ -2323,13 +2401,14 @@
                         <td>${deal.title || 'Untitled'}</td>
                         <td>${currencySymbol} ${deal.price.toFixed(2)}</td>
                         <td>${deal.originalPrice ? currencySymbol + ' ' + deal.originalPrice.toFixed(2) : '-'}</td>
+                        <td style="font-size:0.8em;">${expiryDisplay}</td>
                         <td>
-                            <span style="padding:2px 12px; border-radius:12px; font-size:0.7em; font-weight:600; ${isActive ? 'background:#e8f8f0; color:#27ae60;' : 'background:#fdf2f2; color:#e74c3c;'}">
-                                ${isActive ? '🟢 Active' : '🔴 Inactive'}
+                            <span style="padding:2px 12px; border-radius:12px; font-size:0.7em; font-weight:600; background:${statusColor === '#27ae60' ? '#e8f8f0' : '#fdf2f2'}; color:${statusColor};">
+                                ${status}
                             </span>
                         </td>
                         <td>
-                            <button class="admin-action-btn btn-edit" onclick="toggleLobbyDeal(${deal.id})">${isActive ? '🔴 Disable' : '🟢 Enable'}</button>
+                            <button class="admin-action-btn btn-edit" onclick="toggleLobbyDeal(${deal.id})">${isActive && !isExpired ? '🔴 Disable' : '🟢 Enable'}</button>
                             <button class="admin-action-btn btn-delete" onclick="deleteLobbyDeal(${deal.id})">🗑️</button>
                         </td>
                     </tr>
@@ -2345,6 +2424,7 @@
             const originalPrice = parseFloat(document.getElementById('lobbyDealOriginal').value) || price * 1.5;
             const image = document.getElementById('lobbyDealImage').value || '';
             const description = document.getElementById('lobbyDealDesc').value || '';
+            const expiryDays = parseInt(document.getElementById('lobbyDealExpiry').value) || null;
 
             if (!title || !price) {
                 showToast('⚠️ Title and price are required');
@@ -2355,7 +2435,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ title, price, originalPrice, image, description, isActive: true })
+                body: JSON.stringify({ title, price, originalPrice, image, description, isActive: true, expiryDays })
             })
             .then(r => r.json())
             .then(data => {
@@ -2366,6 +2446,7 @@
                     document.getElementById('lobbyDealOriginal').value = '';
                     document.getElementById('lobbyDealImage').value = '';
                     document.getElementById('lobbyDealDesc').value = '';
+                    document.getElementById('lobbyDealExpiry').value = '';
                     tempLobbyDealImage = '';
                     loadLobbyDeals();
                 } else {
@@ -2421,6 +2502,28 @@
             })
             .catch(err => {
                 console.error('Delete lobby deal error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        function deleteAllLobbyDeals() {
+            if (!confirm('⚠️ Are you sure you want to delete ALL lobby deals? This cannot be undone!')) return;
+
+            fetch('/api/lobby-deals/all', {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ All lobby deals deleted!');
+                    loadLobbyDeals();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Delete all lobby deals error:', err);
                 showToast('❌ Error: ' + err.message);
             });
         }
@@ -4265,6 +4368,7 @@
                 support: 'adminSupport',
                 layers: 'adminLayers',
                 delivery: 'adminDelivery',
+                calculator: 'adminCalculator',
                 settings: 'adminSettings'
             };
             const target = document.getElementById(sectionMap[section]);
@@ -4280,6 +4384,7 @@
             if (section === 'support') renderSupport();
             if (section === 'layers') renderAdminLayers();
             if (section === 'delivery') renderAdminDelivery();
+            if (section === 'calculator') { /* Calculator is ready */ }
         }
 
         // ============================================================
