@@ -66,7 +66,16 @@ let data = {
         openingTime: '09:00',
         closingTime: '23:00',
         lastUpdated: new Date().toISOString()
-    }
+    },
+    aboutRestaurant: {
+        description: 'Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. Our ingredients are always fresh and our service is top-notch. Visit us for an unforgettable dining experience!',
+        photos: [],
+        established: '2022',
+        ownerName: 'Chef Ali',
+        aboutTitle: 'About The Heaven Slice',
+        workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
+    },
+    lobbyDeals: []
 };
 
 function loadData() {
@@ -86,6 +95,19 @@ function loadData() {
                 RESTAURANT_CONFIG.isOpen = data.restaurantStatus.isOpen;
                 RESTAURANT_CONFIG.openingTime = data.restaurantStatus.openingTime;
                 RESTAURANT_CONFIG.closingTime = data.restaurantStatus.closingTime;
+            }
+            if (!data.aboutRestaurant) {
+                data.aboutRestaurant = {
+                    description: 'Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. Our ingredients are always fresh and our service is top-notch. Visit us for an unforgettable dining experience!',
+                    photos: [],
+                    established: '2022',
+                    ownerName: 'Chef Ali',
+                    aboutTitle: 'About The Heaven Slice',
+                    workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
+                };
+            }
+            if (!data.lobbyDeals) {
+                data.lobbyDeals = [];
             }
             
             console.log('✅ Data loaded from file');
@@ -120,6 +142,8 @@ function saveData() {
             closingTime: RESTAURANT_CONFIG.closingTime,
             lastUpdated: new Date().toISOString()
         };
+        data.aboutRestaurant = aboutRestaurant;
+        data.lobbyDeals = lobbyDeals;
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
         console.log('💾 Data saved to file');
         return true;
@@ -192,6 +216,15 @@ let availableLayers = data.availableLayers;
 let customerLocations = data.customerLocations;
 let orderCounter = data.orderCounter || 1;
 let receiptSettings = data.receiptSettings;
+let aboutRestaurant = data.aboutRestaurant || {
+    description: 'Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. Our ingredients are always fresh and our service is top-notch. Visit us for an unforgettable dining experience!',
+    photos: [],
+    established: '2022',
+    ownerName: 'Chef Ali',
+    aboutTitle: 'About The Heaven Slice',
+    workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
+};
+let lobbyDeals = data.lobbyDeals || [];
 
 function syncAndSave() {
     data.users = users;
@@ -209,6 +242,8 @@ function syncAndSave() {
         closingTime: RESTAURANT_CONFIG.closingTime,
         lastUpdated: new Date().toISOString()
     };
+    data.aboutRestaurant = aboutRestaurant;
+    data.lobbyDeals = lobbyDeals;
     saveData();
 }
 
@@ -571,6 +606,133 @@ app.post('/api/receipt-settings', (req, res) => {
     } catch (error) {
         console.error('Error saving receipt settings:', error);
         res.status(500).json({ error: 'Failed to save settings' });
+    }
+});
+
+// ============================================
+// ⭐ ABOUT RESTAURANT ROUTES ⭐
+// ============================================
+app.get('/api/about-restaurant', (req, res) => {
+    try {
+        res.json(aboutRestaurant);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get about data' });
+    }
+});
+
+app.post('/api/about-restaurant', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const { description, photos, established, ownerName, aboutTitle, workingHours } = req.body;
+        
+        if (description !== undefined) aboutRestaurant.description = description;
+        if (photos !== undefined) aboutRestaurant.photos = photos;
+        if (established !== undefined) aboutRestaurant.established = established;
+        if (ownerName !== undefined) aboutRestaurant.ownerName = ownerName;
+        if (aboutTitle !== undefined) aboutRestaurant.aboutTitle = aboutTitle;
+        if (workingHours !== undefined) aboutRestaurant.workingHours = workingHours;
+        
+        syncAndSave();
+        res.json({ success: true, about: aboutRestaurant });
+    } catch (error) {
+        console.error('Error saving about data:', error);
+        res.status(500).json({ error: 'Failed to save about data' });
+    }
+});
+
+// ============================================
+// ⭐ LOBBY DEALS ROUTES ⭐
+// ============================================
+app.get('/api/lobby-deals', (req, res) => {
+    try {
+        res.json(lobbyDeals);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get lobby deals' });
+    }
+});
+
+app.post('/api/lobby-deals', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const { title, description, price, originalPrice, image, discount, isActive } = req.body;
+        
+        if (!title || !price) {
+            return res.status(400).json({ error: 'Title and price are required' });
+        }
+        
+        const newDeal = {
+            id: lobbyDeals.length + 1,
+            title: title,
+            description: description || '',
+            price: parseFloat(price),
+            originalPrice: parseFloat(originalPrice) || parseFloat(price) * 1.5,
+            image: image || '',
+            discount: discount || 0,
+            isActive: isActive !== undefined ? isActive : true,
+            createdAt: new Date().toISOString()
+        };
+        
+        lobbyDeals.push(newDeal);
+        syncAndSave();
+        res.status(201).json({ success: true, deal: newDeal });
+    } catch (error) {
+        console.error('Error adding lobby deal:', error);
+        res.status(500).json({ error: 'Failed to add deal' });
+    }
+});
+
+app.put('/api/lobby-deals/:id', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const dealId = parseInt(req.params.id);
+        const deal = lobbyDeals.find(d => d.id === dealId);
+        
+        if (!deal) {
+            return res.status(404).json({ error: 'Deal not found' });
+        }
+        
+        const { title, description, price, originalPrice, image, discount, isActive } = req.body;
+        
+        if (title !== undefined) deal.title = title;
+        if (description !== undefined) deal.description = description;
+        if (price !== undefined) deal.price = parseFloat(price);
+        if (originalPrice !== undefined) deal.originalPrice = parseFloat(originalPrice);
+        if (image !== undefined) deal.image = image;
+        if (discount !== undefined) deal.discount = parseFloat(discount);
+        if (isActive !== undefined) deal.isActive = isActive;
+        
+        syncAndSave();
+        res.json({ success: true, deal: deal });
+    } catch (error) {
+        console.error('Error updating lobby deal:', error);
+        res.status(500).json({ error: 'Failed to update deal' });
+    }
+});
+
+app.delete('/api/lobby-deals/:id', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const dealId = parseInt(req.params.id);
+        const index = lobbyDeals.findIndex(d => d.id === dealId);
+        
+        if (index === -1) {
+            return res.status(404).json({ error: 'Deal not found' });
+        }
+        
+        lobbyDeals.splice(index, 1);
+        syncAndSave();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting lobby deal:', error);
+        res.status(500).json({ error: 'Failed to delete deal' });
     }
 });
 
@@ -992,7 +1154,6 @@ app.post('/api/orders', (req, res) => {
         locationShared: orderType === 'delivery' && !!(lat && lng),
         table: table || null,
         orderNumber: orderCounter++,
-        // ⭐ Store customer's device time
         deviceTime: deviceTime || new Date().toLocaleString(),
         deviceTimestamp: deviceTimestamp || new Date().toISOString(),
         cancellationDeadline: new Date(Date.now() + (RESTAURANT_CONFIG.cancellationTimeLimit || 5) * 60000).toISOString()

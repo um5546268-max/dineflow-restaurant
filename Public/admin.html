@@ -990,6 +990,100 @@
             color: #e74c3c;
         }
 
+        /* ⭐ CALCULATOR STYLES ⭐ */
+        .calc-btn {
+            padding: 10px;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            background: white;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            color: #2d3436;
+        }
+        .calc-btn:hover {
+            background: #f1f2f6;
+            transform: scale(1.02);
+        }
+        .calc-btn.operator {
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+        .calc-btn.operator:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        .calc-btn.equals {
+            background: #27ae60;
+            color: white;
+        }
+        .calc-btn.equals:hover {
+            background: #1e8449;
+        }
+        .calc-btn.clear {
+            background: #e74c3c;
+            color: white;
+        }
+        .calc-btn.clear:hover {
+            background: #c0392b;
+        }
+        body.dark-mode .calc-btn {
+            background: #2d2d44;
+            color: #f5f5f5;
+            border-color: #3d3d5c;
+        }
+        body.dark-mode .calc-btn:hover {
+            background: #3d3d5c;
+        }
+        body.dark-mode .calc-btn.operator {
+            background: #3d1a1a;
+            color: #e74c3c;
+        }
+        body.dark-mode .calc-btn.operator:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        /* ⭐ ABOUT PHOTO GRID ⭐ */
+        .about-photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .about-photo-grid img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        .about-photo-grid img:hover {
+            border-color: #e74c3c;
+            transform: scale(1.02);
+        }
+        .about-photo-grid .photo-upload-box {
+            border: 2px dashed #dfe6e9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #b2bec3;
+            font-size: 0.85em;
+            text-align: center;
+            padding: 10px;
+        }
+        .about-photo-grid .photo-upload-box:hover {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
         @media print {
             body * { visibility: hidden; }
             #receiptPrint, #receiptPrint * { visibility: visible; }
@@ -1024,6 +1118,8 @@
             .order-receipt-card .receipt-grand-total { font-size: 12px; }
             .icon-picker-popup { width: 95%; max-width: 350px; }
             .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(5, 1fr); }
+            .about-photo-grid { grid-template-columns: 1fr 1fr; }
+            .about-photo-grid img { height: 80px; }
         }
         @media (max-width: 400px) {
             .admin-sidebar { width: 110px; }
@@ -1031,6 +1127,7 @@
             .order-receipt-card .receipt-header .restaurant-name { font-size: 13px; }
             .order-receipt-card .receipt-row { font-size: 9px; }
             .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(4, 1fr); }
+            .about-photo-grid { grid-template-columns: 1fr; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -1054,6 +1151,8 @@
             <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
             <a class="admin-nav-item" data-admin="menu" onclick="showAdminSection('menu')">🍽️ Menu</a>
             <a class="admin-nav-item" data-admin="deals" onclick="showAdminSection('deals')">🔥 Deals</a>
+            <a class="admin-nav-item" data-admin="about" onclick="showAdminSection('about')">🏪 About</a>
+            <a class="admin-nav-item" data-admin="lobbydeals" onclick="showAdminSection('lobbydeals')">🎮 Lobby Deals</a>
             <a class="admin-nav-item" data-admin="feedback" onclick="showAdminSection('feedback')">⭐ Feedback</a>
             <a class="admin-nav-item" data-admin="support" onclick="showAdminSection('support')">🎫 Support</a>
             <a class="admin-nav-item" data-admin="layers" onclick="showAdminSection('layers')">🧅 Layers</a>
@@ -1172,6 +1271,93 @@
                 </div>
                 <div class="admin-table" id="adminDealsTable">
                     <p style="color:#b2bec3; padding:15px;">Loading deals...</p>
+                </div>
+            </div>
+
+            <!-- ⭐ ABOUT RESTAURANT ⭐ -->
+            <div class="admin-section" id="adminAbout">
+                <h3 style="margin-bottom:15px;">🏪 About Restaurant</h3>
+                <div class="settings-card">
+                    <h4>Restaurant Information</h4>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">About Title</div>
+                            <div class="option-desc">Title shown in about popup</div>
+                        </div>
+                        <input type="text" id="aboutTitle" style="width:250px;" />
+                    </div>
+                    <div class="settings-option" style="align-items:flex-start;">
+                        <div>
+                            <div class="option-label">Description</div>
+                            <div class="option-desc">About the restaurant</div>
+                        </div>
+                        <textarea id="aboutDescription" rows="4" style="width:300px; padding:8px; border-radius:8px; border:1px solid #dfe6e9;"></textarea>
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Established</div>
+                            <div class="option-desc">Year established</div>
+                        </div>
+                        <input type="text" id="aboutEstablished" style="width:150px;" />
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Owner Name</div>
+                            <div class="option-desc">Restaurant owner</div>
+                        </div>
+                        <input type="text" id="aboutOwner" style="width:200px;" />
+                    </div>
+                    <div class="settings-option">
+                        <div>
+                            <div class="option-label">Working Hours</div>
+                            <div class="option-desc">Opening hours</div>
+                        </div>
+                        <input type="text" id="aboutHours" style="width:250px;" />
+                    </div>
+                    <div class="settings-option" style="align-items:flex-start;">
+                        <div>
+                            <div class="option-label">Photos</div>
+                            <div class="option-desc">Add photo URLs (one per line)</div>
+                        </div>
+                        <div style="width:100%;">
+                            <textarea id="aboutPhotos" rows="3" style="width:100%; padding:8px; border-radius:8px; border:1px solid #dfe6e9;" placeholder="https://example.com/photo1.jpg"></textarea>
+                            <div style="font-size:0.7em; color:#b2bec3; margin-top:4px;">Enter one URL per line</div>
+                            <div style="margin-top:8px;">
+                                <label style="font-size:0.85em; font-weight:600;">Upload Photo:</label>
+                                <input type="file" id="aboutPhotoUpload" accept="image/*" style="display:block; margin-top:4px; padding:4px;" onchange="uploadAboutPhoto(event)" />
+                            </div>
+                            <div class="about-photo-grid" id="aboutPhotoPreviewGrid"></div>
+                        </div>
+                    </div>
+                    <button class="admin-submit-btn" onclick="saveAboutRestaurant()">💾 Save About Info</button>
+                </div>
+            </div>
+
+            <!-- ⭐ LOBBY DEALS ⭐ -->
+            <div class="admin-section" id="adminLobbydeals">
+                <h3 style="margin-bottom:15px;">🎮 Lobby Popup Deals</h3>
+                <p style="font-size:0.85em; color:#636e72; margin-bottom:15px;">These deals appear as a popup when customers open the app (like game lobby)</p>
+                
+                <div class="settings-card">
+                    <h4>Add New Lobby Deal</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <input type="text" id="lobbyDealTitle" placeholder="Deal Title (e.g., 2 Zinger Burger + 10 Wings)" />
+                        <input type="number" id="lobbyDealPrice" placeholder="Price (Rs)" step="0.01" />
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+                        <input type="number" id="lobbyDealOriginal" placeholder="Original Price (Rs)" step="0.01" />
+                        <input type="text" id="lobbyDealImage" placeholder="Image URL (optional)" />
+                    </div>
+                    <div style="margin-top:8px;">
+                        <label style="font-size:0.85em; font-weight:600;">Or Upload Image:</label>
+                        <input type="file" id="lobbyDealImageUpload" accept="image/*" style="display:block; margin-top:4px; padding:4px;" onchange="uploadLobbyDealImage(event)" />
+                    </div>
+                    <input type="text" id="lobbyDealDesc" placeholder="Description (optional)" style="width:100%; margin-top:8px;" />
+                    <button class="admin-add-btn" onclick="addLobbyDeal()" style="margin-top:10px;">➕ Add Lobby Deal</button>
+                </div>
+                
+                <div class="admin-table" id="lobbyDealsList">
+                    <p style="color:#b2bec3; padding:15px;">Loading lobby deals...</p>
                 </div>
             </div>
 
@@ -1335,6 +1521,7 @@
                     <button class="admin-submit-btn" onclick="saveCancellationSettings()" style="margin-top:10px;">💾 Save Cancellation Settings</button>
                 </div>
 
+                <!-- Receipt Settings -->
                 <div class="settings-card">
                     <h4>🧾 Receipt Settings</h4>
                     <p style="font-size:0.75em; color:#b2bec3; margin-bottom:10px;">Controls the printed bill: logo, QR code, discount rule and footer text.</p>
@@ -1443,6 +1630,32 @@
                     <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="admin-submit-btn" onclick="saveReceiptSettings()">💾 Save Receipt Settings</button>
                         <button class="admin-cancel-btn" onclick="previewSampleReceipt()">👁️ Preview Sample Receipt</button>
+                    </div>
+                </div>
+
+                <!-- ⭐ CALCULATOR -->
+                <div class="settings-card">
+                    <h4>🧮 Calculator</h4>
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; max-width:320px;">
+                        <input type="text" id="calcDisplay" style="grid-column:span 4; text-align:right; font-size:1.4em; padding:12px; border-radius:8px; border:1px solid #dfe6e9; background:white; color:#2d3436;" readonly />
+                        <button class="calc-btn clear" onclick="calcClear()">C</button>
+                        <button class="calc-btn" onclick="calcInput('%')">%</button>
+                        <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+                        <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+                        <button class="calc-btn" onclick="calcInput('7')">7</button>
+                        <button class="calc-btn" onclick="calcInput('8')">8</button>
+                        <button class="calc-btn" onclick="calcInput('9')">9</button>
+                        <button class="calc-btn operator" onclick="calcInput('-')">−</button>
+                        <button class="calc-btn" onclick="calcInput('4')">4</button>
+                        <button class="calc-btn" onclick="calcInput('5')">5</button>
+                        <button class="calc-btn" onclick="calcInput('6')">6</button>
+                        <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+                        <button class="calc-btn" onclick="calcInput('1')">1</button>
+                        <button class="calc-btn" onclick="calcInput('2')">2</button>
+                        <button class="calc-btn" onclick="calcInput('3')">3</button>
+                        <button class="calc-btn equals" onclick="calcCalculate()" style="grid-row:span 2;">=</button>
+                        <button class="calc-btn" onclick="calcInput('0')" style="grid-column:span 2;">0</button>
+                        <button class="calc-btn" onclick="calcInput('.')">.</button>
                     </div>
                 </div>
 
@@ -1596,6 +1809,8 @@
 
         let selectedIcons = { menu: [], deal: [] };
         let selectedAddLayers = [];
+        let aboutData = {};
+        let lobbyDeals = [];
 
         let receiptSettings = {
             logoIcon: '👨‍🍳',
@@ -1618,6 +1833,49 @@
             '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🥛', '☕', '🧃', '🥤',
             '🧋', '🧊', '🥢', '🍽️', '🍴', '🥄', '🧂', '🍿', '🥮'
         ];
+
+        // ============================================================
+        // CALCULATOR FUNCTIONS
+        // ============================================================
+        let calcDisplay = document.getElementById('calcDisplay');
+        let calcExpression = '';
+
+        function calcInput(value) {
+            calcExpression += value;
+            calcDisplay.value = calcExpression;
+        }
+
+        function calcClear() {
+            calcExpression = '';
+            calcDisplay.value = '';
+        }
+
+        function calcCalculate() {
+            try {
+                let result = Function('"use strict"; return (' + calcExpression + ')')();
+                calcDisplay.value = result;
+                calcExpression = result.toString();
+            } catch(e) {
+                calcDisplay.value = 'Error';
+                calcExpression = '';
+            }
+        }
+
+        // Keyboard support for calculator
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('adminSettings').classList.contains('active')) {
+                const key = e.key;
+                if (key >= '0' && key <= '9') calcInput(key);
+                else if (key === '.') calcInput('.');
+                else if (key === '+') calcInput('+');
+                else if (key === '-') calcInput('-');
+                else if (key === '*') calcInput('*');
+                else if (key === '/') calcInput('/');
+                else if (key === 'Enter') calcCalculate();
+                else if (key === 'Escape' || key === 'c' || key === 'C') calcClear();
+                else if (key === '%') calcInput('%');
+            }
+        });
 
         // ============================================================
         // HYBRID REAL-TIME ORDERS (SSE + Polling)
@@ -1870,6 +2128,302 @@
                 connectToOrderStream();
             }
         });
+
+        // ============================================================
+        // ABOUT RESTAURANT FUNCTIONS
+        // ============================================================
+        function loadAboutData() {
+            fetch('/api/about-restaurant')
+                .then(r => r.json())
+                .then(data => {
+                    aboutData = data;
+                    document.getElementById('aboutTitle').value = data.aboutTitle || '';
+                    document.getElementById('aboutDescription').value = data.description || '';
+                    document.getElementById('aboutEstablished').value = data.established || '';
+                    document.getElementById('aboutOwner').value = data.ownerName || '';
+                    document.getElementById('aboutHours').value = data.workingHours || '';
+                    if (data.photos && data.photos.length > 0) {
+                        document.getElementById('aboutPhotos').value = data.photos.join('\n');
+                        renderAboutPhotoPreview(data.photos);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function renderAboutPhotoPreview(photos) {
+            const grid = document.getElementById('aboutPhotoPreviewGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            if (photos && photos.length > 0) {
+                photos.forEach(photo => {
+                    if (photo && photo.trim()) {
+                        const img = document.createElement('img');
+                        img.src = photo.trim();
+                        img.alt = 'Restaurant Photo';
+                        img.onerror = function() { this.style.display = 'none'; };
+                        grid.appendChild(img);
+                    }
+                });
+            } else {
+                grid.innerHTML = '<div style="color:#b2bec3; font-size:0.85em; grid-column:1/-1; text-align:center; padding:10px;">No photos uploaded yet</div>';
+            }
+        }
+
+        function uploadAboutPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast('❌ Please select an image file');
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('❌ File size should be less than 2MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                const currentPhotos = document.getElementById('aboutPhotos').value.split('\n').filter(p => p.trim());
+                currentPhotos.push(base64);
+                document.getElementById('aboutPhotos').value = currentPhotos.join('\n');
+                renderAboutPhotoPreview(currentPhotos);
+                showToast('✅ Photo uploaded! Click Save to apply.');
+                event.target.value = '';
+            };
+            reader.onerror = function() {
+                showToast('❌ Failed to read file');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveAboutRestaurant() {
+            const title = document.getElementById('aboutTitle').value;
+            const description = document.getElementById('aboutDescription').value;
+            const established = document.getElementById('aboutEstablished').value;
+            const ownerName = document.getElementById('aboutOwner').value;
+            const workingHours = document.getElementById('aboutHours').value;
+            const photosText = document.getElementById('aboutPhotos').value;
+            const photos = photosText.split('\n').filter(p => p.trim());
+
+            const payload = {
+                aboutTitle: title,
+                description: description,
+                established: established,
+                ownerName: ownerName,
+                workingHours: workingHours,
+                photos: photos
+            };
+
+            const saveBtn = document.querySelector('#adminAbout .admin-submit-btn');
+            if (saveBtn) {
+                saveBtn.textContent = '⏳ Saving...';
+                saveBtn.disabled = true;
+            }
+
+            fetch('/api/about-restaurant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ About info saved successfully!');
+                    aboutData = data.about;
+                    renderAboutPhotoPreview(photos);
+                } else {
+                    showToast('❌ ' + (data.error || 'Save failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Save about error:', err);
+                showToast('❌ Error: ' + err.message);
+            })
+            .finally(() => {
+                if (saveBtn) {
+                    saveBtn.textContent = '💾 Save About Info';
+                    saveBtn.disabled = false;
+                }
+            });
+        }
+
+        // ============================================================
+        // LOBBY DEALS FUNCTIONS
+        // ============================================================
+        let tempLobbyDealImage = '';
+
+        function uploadLobbyDealImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast('❌ Please select an image file');
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('❌ File size should be less than 2MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempLobbyDealImage = e.target.result;
+                document.getElementById('lobbyDealImage').value = tempLobbyDealImage;
+                showToast('✅ Image uploaded!');
+                event.target.value = '';
+            };
+            reader.onerror = function() {
+                showToast('❌ Failed to read file');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadLobbyDeals() {
+            fetch('/api/lobby-deals')
+                .then(r => r.json())
+                .then(data => {
+                    lobbyDeals = data || [];
+                    renderLobbyDeals();
+                })
+                .catch(() => {});
+        }
+
+        function renderLobbyDeals() {
+            const container = document.getElementById('lobbyDealsList');
+            if (!container) return;
+
+            if (lobbyDeals.length === 0) {
+                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No lobby deals added yet</p>';
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Image</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Original</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            `;
+
+            lobbyDeals.forEach(deal => {
+                const isActive = deal.isActive !== false;
+                html += `
+                    <tr>
+                        <td>
+                            ${deal.image ? `<img src="${deal.image}" style="width:50px; height:50px; object-fit:cover; border-radius:6px;" />` : '📷 No image'}
+                        </td>
+                        <td>${deal.title || 'Untitled'}</td>
+                        <td>${currencySymbol} ${deal.price.toFixed(2)}</td>
+                        <td>${deal.originalPrice ? currencySymbol + ' ' + deal.originalPrice.toFixed(2) : '-'}</td>
+                        <td>
+                            <span style="padding:2px 12px; border-radius:12px; font-size:0.7em; font-weight:600; ${isActive ? 'background:#e8f8f0; color:#27ae60;' : 'background:#fdf2f2; color:#e74c3c;'}">
+                                ${isActive ? '🟢 Active' : '🔴 Inactive'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="admin-action-btn btn-edit" onclick="toggleLobbyDeal(${deal.id})">${isActive ? '🔴 Disable' : '🟢 Enable'}</button>
+                            <button class="admin-action-btn btn-delete" onclick="deleteLobbyDeal(${deal.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</table>`;
+            container.innerHTML = html;
+        }
+
+        function addLobbyDeal() {
+            const title = document.getElementById('lobbyDealTitle').value;
+            const price = parseFloat(document.getElementById('lobbyDealPrice').value);
+            const originalPrice = parseFloat(document.getElementById('lobbyDealOriginal').value) || price * 1.5;
+            const image = document.getElementById('lobbyDealImage').value || '';
+            const description = document.getElementById('lobbyDealDesc').value || '';
+
+            if (!title || !price) {
+                showToast('⚠️ Title and price are required');
+                return;
+            }
+
+            fetch('/api/lobby-deals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ title, price, originalPrice, image, description, isActive: true })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Lobby deal added!');
+                    document.getElementById('lobbyDealTitle').value = '';
+                    document.getElementById('lobbyDealPrice').value = '';
+                    document.getElementById('lobbyDealOriginal').value = '';
+                    document.getElementById('lobbyDealImage').value = '';
+                    document.getElementById('lobbyDealDesc').value = '';
+                    tempLobbyDealImage = '';
+                    loadLobbyDeals();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to add deal'));
+                }
+            })
+            .catch(err => {
+                console.error('Add lobby deal error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        function toggleLobbyDeal(id) {
+            const deal = lobbyDeals.find(d => d.id === id);
+            if (!deal) return;
+
+            fetch('/api/lobby-deals/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ isActive: deal.isActive === false })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Deal status updated!');
+                    loadLobbyDeals();
+                } else {
+                    showToast('❌ ' + (data.error || 'Update failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Toggle lobby deal error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        function deleteLobbyDeal(id) {
+            if (!confirm('Delete this lobby deal?')) return;
+
+            fetch('/api/lobby-deals/' + id, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Lobby deal deleted!');
+                    loadLobbyDeals();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Delete lobby deal error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
 
         // ============================================================
         // RESTAURANT STATUS FUNCTIONS
@@ -2283,6 +2837,8 @@
 
             loadFeedback();
             loadSupport();
+            loadAboutData();
+            loadLobbyDeals();
 
             fetch('/api/locations/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
@@ -3588,6 +4144,25 @@
             });
         }
 
+        function previewSampleReceipt() {
+            const sampleOrder = {
+                items: [
+                    { name: 'Cheese Burger', price: 1299, qty: 2 },
+                    { name: 'French Fries', price: 499, qty: 1 },
+                    { name: 'Chocolate Shake', price: 599, qty: 1 }
+                ],
+                total: 3696,
+                orderNumber: '001',
+                userName: 'Sample Customer',
+                phone: '0300-0000000',
+                address: 'Sample Address',
+                orderType: 'delivery',
+                paymentMethod: 'cash',
+                layers: ['🧀 Cheese', '🥬 Lettuce']
+            };
+            showReceipt(sampleOrder, true);
+        }
+
         // ============================================================
         // ADMIN FORM
         // ============================================================
@@ -3607,6 +4182,8 @@
         // ============================================================
         // ICON PICKER
         // ============================================================
+        let currentPickerTarget = 'menu';
+
         function openIconPicker(target) {
             currentPickerTarget = target;
             const popup = document.getElementById('iconPickerPopup');
@@ -3682,6 +4259,8 @@
                 orders: 'adminOrders',
                 menu: 'adminMenu',
                 deals: 'adminDeals',
+                about: 'adminAbout',
+                lobbydeals: 'adminLobbydeals',
                 feedback: 'adminFeedback',
                 support: 'adminSupport',
                 layers: 'adminLayers',
@@ -3695,6 +4274,8 @@
             if (section === 'orders') renderAdminOrders();
             if (section === 'menu') renderAdminMenu();
             if (section === 'deals') renderAdminDeals();
+            if (section === 'about') { loadAboutData(); }
+            if (section === 'lobbydeals') { loadLobbyDeals(); }
             if (section === 'feedback') renderFeedback();
             if (section === 'support') renderSupport();
             if (section === 'layers') renderAdminLayers();

@@ -126,6 +126,14 @@
             cursor: pointer; 
         }
         .deals-btn:hover { background: #c0392b !important; transform: scale(1.02); }
+        .about-btn {
+            background: #3498db !important;
+            color: white !important;
+            padding: 6px 16px !important;
+            border-radius: 25px !important;
+            cursor: pointer;
+        }
+        .about-btn:hover { background: #2980b9 !important; transform: scale(1.02); }
         .cart-icon { position: relative; font-size: 1.2em; cursor: pointer; }
         .cart-badge { 
             position: absolute; 
@@ -454,6 +462,51 @@
         .popup-title { font-size: 1.3em; font-weight: 700; color: #2d3436; margin-bottom: 4px; }
         .popup-subtitle { color: #636e72; margin-bottom: 15px; font-size: 0.85em; }
 
+        /* ⭐ ABOUT POPUP STYLES ⭐ */
+        .about-photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .about-photo-grid img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        .about-photo-grid img:hover {
+            transform: scale(1.02);
+            border-color: #e74c3c;
+        }
+        .about-info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f2f6;
+            font-size: 0.9em;
+        }
+        .about-info-item .label {
+            font-weight: 600;
+            color: #636e72;
+            min-width: 80px;
+        }
+        .about-info-item .value {
+            color: #2d3436;
+        }
+        .about-description {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #2d3436;
+        }
+
         .deal-item {
             display: flex;
             justify-content: space-between;
@@ -479,6 +532,135 @@
             transition: all 0.3s; 
         }
         .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
+
+        /* ⭐ LOBBY DEAL POPUP STYLES ⭐ */
+        #lobbyDealPopup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: lobbyFadeIn 0.5s ease;
+        }
+        #lobbyDealPopup.show { display: flex; }
+        @keyframes lobbyFadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        #lobbyDealPopup .lobby-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            padding: 0;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        #lobbyDealPopup .lobby-content .lobby-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 24px 24px 0 0;
+            background: #f1f2f6;
+        }
+        #lobbyDealPopup .lobby-content .lobby-body {
+            padding: 20px 24px 24px;
+        }
+        #lobbyDealPopup .lobby-content .lobby-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+        #lobbyDealPopup .lobby-content .lobby-desc {
+            font-size: 0.85em;
+            color: #636e72;
+            margin-bottom: 12px;
+        }
+        #lobbyDealPopup .lobby-content .lobby-prices {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        #lobbyDealPopup .lobby-content .lobby-prices .original {
+            font-size: 1em;
+            color: #b2bec3;
+            text-decoration: line-through;
+        }
+        #lobbyDealPopup .lobby-content .lobby-prices .price {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+        #lobbyDealPopup .lobby-content .lobby-prices .discount-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+        #lobbyDealPopup .lobby-content .lobby-actions {
+            display: flex;
+            gap: 10px;
+        }
+        #lobbyDealPopup .lobby-content .lobby-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #lobbyDealPopup .lobby-content .lobby-actions .btn-buy {
+            background: #e74c3c;
+            color: white;
+        }
+        #lobbyDealPopup .lobby-content .lobby-actions .btn-buy:hover {
+            background: #c0392b;
+            transform: scale(1.02);
+        }
+        #lobbyDealPopup .lobby-content .lobby-actions .btn-close-lobby {
+            background: #f1f2f6;
+            color: #2d3436;
+            flex: 0.5;
+        }
+        #lobbyDealPopup .lobby-content .lobby-actions .btn-close-lobby:hover {
+            background: #dfe6e9;
+        }
+        #lobbyDealPopup .lobby-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 1.6em;
+            color: white;
+            background: rgba(0,0,0,0.4);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        #lobbyDealPopup .lobby-close-btn:hover {
+            background: rgba(0,0,0,0.7);
+            transform: rotate(90deg);
+        }
 
         .order-form input, .order-form select, .order-form textarea {
             width: 100%;
@@ -1007,6 +1189,9 @@
             .receipt-style .receipt-header .restaurant-name { font-size: 17px; }
             .receipt-style .receipt-grand-total { font-size: 14px; }
             .menu-item-card .btn-quick, .menu-item-card .btn-cart { font-size: 0.55em; padding: 3px 8px; }
+            .about-photo-grid { grid-template-columns: 1fr; }
+            #lobbyDealPopup .lobby-content .lobby-image { height: 160px; }
+            #lobbyDealPopup .lobby-content .lobby-prices .price { font-size: 1.3em; }
         }
         @media (max-width: 400px) {
             .sidebar { width: 60px; }
@@ -1043,6 +1228,7 @@
     <header class="top-header">
         <div class="restaurant-name" id="restaurantName">🍔 The <span>Heaven Slice</span></div>
         <div class="top-actions">
+            <a class="about-btn" onclick="openAboutPopup()">🏪 About</a>
             <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
             <span class="cart-icon" onclick="openCartPopup()">
                 🛒
@@ -1080,6 +1266,70 @@
             <span class="nav-icon">⚙️</span> Settings
         </button>
     </nav>
+
+    <!-- ⭐ ABOUT POPUP ⭐ -->
+    <div class="popup-overlay" id="aboutPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeAboutPopup()">✕</button>
+            <div class="popup-title" id="aboutPopupTitle">🏪 About The Heaven Slice</div>
+            <div id="aboutContent">
+                <div style="text-align:center; margin-bottom:10px;">
+                    <div style="font-size:3em; margin-bottom:5px;">🍔</div>
+                </div>
+                <div class="about-description" id="aboutDescriptionText">
+                    Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. 
+                    Our ingredients are always fresh and our service is top-notch. 
+                    Visit us for an unforgettable dining experience!
+                </div>
+                <div class="about-photo-grid" id="aboutPhotoGrid">
+                    <!-- Photos will be loaded here -->
+                </div>
+                <div style="margin-top:10px;">
+                    <div class="about-info-item">
+                        <span class="label">📅 Established</span>
+                        <span class="value" id="aboutEstablishedText">2022</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">👨‍🍳 Owner</span>
+                        <span class="value" id="aboutOwnerText">Chef Ali</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">🕐 Hours</span>
+                        <span class="value" id="aboutHoursText">Mon-Sun: 9:00 AM - 11:00 PM</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">📍 Address</span>
+                        <span class="value" id="aboutAddressText">Gojra Road Near Ali Marriage Hall</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">📞 Phone</span>
+                        <span class="value" id="aboutPhoneText">0300-0310275</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⭐ LOBBY DEAL POPUP ⭐ -->
+    <div id="lobbyDealPopup">
+        <div class="lobby-content" id="lobbyDealContent">
+            <button class="lobby-close-btn" onclick="closeLobbyDeal()">✕</button>
+            <img class="lobby-image" id="lobbyDealImage" src="" alt="Deal Image" />
+            <div class="lobby-body">
+                <div class="lobby-title" id="lobbyDealTitle">2 Zinger Burger + 10 Wings + 1Ltr Drink</div>
+                <div class="lobby-desc" id="lobbyDealDesc">Limited time offer! Get this amazing deal today.</div>
+                <div class="lobby-prices">
+                    <span class="original" id="lobbyDealOriginal">Rs 2800</span>
+                    <span class="price" id="lobbyDealPrice">Rs 1400</span>
+                    <span class="discount-badge" id="lobbyDealDiscount">50% OFF</span>
+                </div>
+                <div class="lobby-actions">
+                    <button class="btn-buy" onclick="buyLobbyDeal()">🔥 Grab This Deal</button>
+                    <button class="btn-close-lobby" onclick="closeLobbyDeal()">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="popup-overlay" id="dealsPopup">
         <div class="popup-content">
@@ -1395,6 +1645,10 @@
         let whatsappNumber = '923001234567';
         let orderCounter = 1;
         let receiptSettings = { logoIcon: '👨‍🍳', logoUrl: '', tagline: 'PIZZA • BURGER • FAST FOOD' };
+        let aboutData = {};
+        let lobbyDeals = [];
+        let currentLobbyDeal = null;
+        let lobbyDealShown = false;
 
         const sidebar = document.getElementById('categorySidebar');
         const menuArea = document.getElementById('menuArea');
@@ -1410,6 +1664,146 @@
         const iconAnimations = ['bounce', 'float', 'pulse', 'rotate', 'wiggle'];
         function getIconAnimation(index) {
             return iconAnimations[index % iconAnimations.length];
+        }
+
+        // ⭐ LOAD ABOUT DATA ⭐
+        function loadAboutData() {
+            fetch('/api/about-restaurant')
+                .then(r => r.json())
+                .then(data => {
+                    aboutData = data;
+                })
+                .catch(() => {});
+        }
+
+        // ⭐ LOAD LOBBY DEALS ⭐
+        function loadLobbyDeals() {
+            fetch('/api/lobby-deals')
+                .then(r => r.json())
+                .then(data => {
+                    lobbyDeals = data.filter(d => d.isActive !== false);
+                    if (lobbyDeals.length > 0 && !lobbyDealShown) {
+                        showLobbyDeal(lobbyDeals[0]);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // ⭐ SHOW LOBBY DEAL POPUP ⭐
+        function showLobbyDeal(deal) {
+            currentLobbyDeal = deal;
+            const popup = document.getElementById('lobbyDealPopup');
+            const image = document.getElementById('lobbyDealImage');
+            const title = document.getElementById('lobbyDealTitle');
+            const desc = document.getElementById('lobbyDealDesc');
+            const original = document.getElementById('lobbyDealOriginal');
+            const price = document.getElementById('lobbyDealPrice');
+            const discount = document.getElementById('lobbyDealDiscount');
+
+            if (deal.image) {
+                image.src = deal.image;
+                image.style.display = 'block';
+            } else {
+                image.style.display = 'none';
+            }
+
+            title.textContent = deal.title || 'Special Deal';
+            desc.textContent = deal.description || 'Limited time offer!';
+            original.textContent = restaurantConfig.currency + ' ' + (deal.originalPrice || deal.price * 1.5).toFixed(2);
+            price.textContent = restaurantConfig.currency + ' ' + deal.price.toFixed(2);
+            
+            const discountPercent = Math.round(((deal.originalPrice || deal.price * 1.5) - deal.price) / (deal.originalPrice || deal.price * 1.5) * 100);
+            discount.textContent = discountPercent + '% OFF';
+
+            popup.classList.add('show');
+            lobbyDealShown = true;
+        }
+
+        function closeLobbyDeal() {
+            document.getElementById('lobbyDealPopup').classList.remove('show');
+        }
+
+        function buyLobbyDeal() {
+            if (!currentLobbyDeal) return;
+            if (!isLoggedIn) {
+                closeLobbyDeal();
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                closeLobbyDeal();
+                pendingOrder = {
+                    items: [{ name: currentLobbyDeal.title, price: currentLobbyDeal.price, qty: 1, isDeal: true }],
+                    total: currentLobbyDeal.price
+                };
+                openOrderForm();
+            });
+        }
+
+        // ⭐ OPEN ABOUT POPUP ⭐
+        function openAboutPopup() {
+            const popup = document.getElementById('aboutPopup');
+            const title = document.getElementById('aboutPopupTitle');
+            const desc = document.getElementById('aboutDescriptionText');
+            const photoGrid = document.getElementById('aboutPhotoGrid');
+            const est = document.getElementById('aboutEstablishedText');
+            const owner = document.getElementById('aboutOwnerText');
+            const hours = document.getElementById('aboutHoursText');
+            const address = document.getElementById('aboutAddressText');
+            const phone = document.getElementById('aboutPhoneText');
+
+            // Load fresh data
+            fetch('/api/about-restaurant')
+                .then(r => r.json())
+                .then(data => {
+                    aboutData = data;
+                    title.textContent = data.aboutTitle || '🏪 About ' + restaurantConfig.name;
+                    desc.textContent = data.description || 'Welcome to The Heaven Slice!';
+                    est.textContent = data.established || '2022';
+                    owner.textContent = data.ownerName || 'Chef Ali';
+                    hours.textContent = data.workingHours || 'Mon-Sun: 9:00 AM - 11:00 PM';
+                    address.textContent = restaurantConfig.address || 'Gojra Road Near Ali Marriage Hall';
+                    phone.textContent = restaurantConfig.phone || '0300-0310275';
+
+                    // Load photos
+                    photoGrid.innerHTML = '';
+                    if (data.photos && data.photos.length > 0) {
+                        data.photos.forEach(photoUrl => {
+                            if (photoUrl && photoUrl.trim()) {
+                                const img = document.createElement('img');
+                                img.src = photoUrl.trim();
+                                img.alt = 'Restaurant Photo';
+                                img.onerror = function() { this.style.display = 'none'; };
+                                photoGrid.appendChild(img);
+                            }
+                        });
+                        photoGrid.style.display = 'grid';
+                    } else {
+                        // Default placeholder photos
+                        photoGrid.innerHTML = `
+                            <div style="background:#f1f2f6; border-radius:10px; padding:20px; text-align:center; color:#b2bec3; grid-column:1/-1;">
+                                📸 No photos uploaded yet
+                            </div>
+                        `;
+                        photoGrid.style.display = 'grid';
+                    }
+
+                    popup.classList.add('show');
+                })
+                .catch(() => {
+                    // Use cached data or defaults
+                    popup.classList.add('show');
+                });
+        }
+
+        function closeAboutPopup() {
+            document.getElementById('aboutPopup').classList.remove('show');
         }
 
         function checkPersistentLogin() {
@@ -1469,6 +1863,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadRestaurantConfig();
             checkPersistentLogin();
+            loadAboutData();
             
             checkRestaurantStatus();
 
@@ -1509,8 +1904,10 @@
                 document.getElementById('splashScreen').classList.add('hide');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
+                    // Show lobby deal after splash screen
+                    loadLobbyDeals();
                 }, 600);
-            }, 2000);
+            }, 2500);
 
             loadAllData();
             showPanel('menu');
