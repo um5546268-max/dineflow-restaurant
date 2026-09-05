@@ -546,6 +546,18 @@
         .admin-add-btn.danger:hover {
             background: #c0392b;
         }
+        .admin-add-btn.warning {
+            background: #f39c12;
+        }
+        .admin-add-btn.warning:hover {
+            background: #d68910;
+        }
+        .admin-add-btn.info {
+            background: #3498db;
+        }
+        .admin-add-btn.info:hover {
+            background: #2980b9;
+        }
 
         .admin-form {
             background: white;
@@ -1123,6 +1135,51 @@
             gap: 6px;
         }
 
+        /* ⭐ BACKUP SECTION STYLES ⭐ */
+        .backup-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .backup-stat-card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .backup-stat-card .stat-num {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #2d3436;
+        }
+        .backup-stat-card .stat-label {
+            font-size: 0.75em;
+            color: #636e72;
+        }
+        body.dark-mode .backup-stat-card {
+            background: #16213e;
+        }
+        body.dark-mode .backup-stat-card .stat-num {
+            color: #f5f5f5;
+        }
+
+        .backup-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f2f6;
+            font-size: 0.85em;
+        }
+        .backup-file-item:hover {
+            background: #f8f9fa;
+        }
+        body.dark-mode .backup-file-item:hover {
+            background: #2d2d44;
+        }
+
         @media print {
             body * { visibility: hidden; }
             #receiptPrint, #receiptPrint * { visibility: visible; }
@@ -1161,6 +1218,8 @@
             .about-photo-grid img { height: 80px; }
             .lobby-deal-card { flex-direction: column; align-items: stretch; }
             .lobby-deal-card .deal-image { width: 100%; height: 120px; }
+            .backup-stat-grid { grid-template-columns: 1fr 1fr; }
+            .backup-file-item { flex-wrap: wrap; gap: 4px; }
         }
         @media (max-width: 400px) {
             .admin-sidebar { width: 110px; }
@@ -1169,6 +1228,7 @@
             .order-receipt-card .receipt-row { font-size: 9px; }
             .icon-picker-popup .picker-body .emoji-grid { grid-template-columns: repeat(4, 1fr); }
             .about-photo-grid { grid-template-columns: 1fr; }
+            .backup-stat-grid { grid-template-columns: 1fr; }
         }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -1199,6 +1259,7 @@
             <a class="admin-nav-item" data-admin="layers" onclick="showAdminSection('layers')">🧅 Layers</a>
             <a class="admin-nav-item" data-admin="delivery" onclick="showAdminSection('delivery')">📍 Delivery</a>
             <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
+            <a class="admin-nav-item" data-admin="backup" onclick="showAdminSection('backup')">💾 Backup</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
         </div>
 
@@ -1523,6 +1584,65 @@
                     </div>
                     <div style="text-align:center; margin-top:10px; font-size:0.8em; color:#b2bec3;">
                         💡 Use keyboard: numbers, +, -, *, /, Enter, Escape
+                    </div>
+                </div>
+            </div>
+
+            <!-- ⭐ BACKUP & RECOVERY ⭐ -->
+            <div class="admin-section" id="adminBackup">
+                <h3 style="margin-bottom:15px;">💾 Backup & Recovery</h3>
+                
+                <div class="backup-stat-grid">
+                    <div class="backup-stat-card">
+                        <div class="stat-num" id="deletedOrdersCount">0</div>
+                        <div class="stat-label">🗑️ Deleted Orders</div>
+                    </div>
+                    <div class="backup-stat-card">
+                        <div class="stat-num" id="backupCount">0</div>
+                        <div class="stat-label">💾 Backup Files</div>
+                    </div>
+                    <div class="backup-stat-card">
+                        <div class="stat-num" id="todayOrderCountBackup">0</div>
+                        <div class="stat-label">📋 Today's Orders</div>
+                    </div>
+                    <div class="backup-stat-card">
+                        <div class="stat-num" id="lastBackupTime">Never</div>
+                        <div class="stat-label">⏰ Last Backup</div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>📋 Today's Orders</h4>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+                        <button class="admin-add-btn warning" onclick="printTodayOrders()" style="margin:0;">🖨️ Print All Today</button>
+                        <button class="admin-add-btn danger" onclick="deleteAllTodayOrders()" style="margin:0;">🗑️ Delete All Today</button>
+                        <span id="todayOrderRevenue" style="font-weight:600; color:#e74c3c; font-size:0.9em;">Rs 0.00</span>
+                    </div>
+                    <div id="todayOrdersList" style="max-height:350px; overflow-y:auto;">
+                        <p style="color:#b2bec3; padding:15px;">Loading today's orders...</p>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>💾 Backup Management</h4>
+                    <p style="font-size:0.8em; color:#636e72; margin-bottom:10px;">Auto backup runs every 5-10 hours. Manual backup also available.</p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                        <button class="admin-add-btn info" onclick="createManualBackup()" style="margin:0;">📦 Create Backup Now</button>
+                        <span id="lastBackupTimeLabel" style="align-self:center; font-size:0.85em; color:#b2bec3;">Last backup: Never</span>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <label style="font-weight:600; font-size:0.85em;">Backup Files:</label>
+                        <div id="backupFilesList" style="margin-top:5px; max-height:200px; overflow-y:auto;">
+                            <p style="color:#b2bec3; padding:10px;">Loading backups...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h4>🗑️ Deleted Orders (Recovery)</h4>
+                    <p style="font-size:0.8em; color:#636e72; margin-bottom:10px;">Orders moved to backup when deleted. You can recover them here.</p>
+                    <div id="deletedOrdersList" style="max-height:300px; overflow-y:auto;">
+                        <p style="color:#b2bec3; padding:15px;">Loading deleted orders...</p>
                     </div>
                 </div>
             </div>
@@ -2838,6 +2958,334 @@
         }
 
         // ============================================================
+        // ⭐ BACKUP & RECOVERY FUNCTIONS ⭐
+        // ============================================================
+
+        function loadBackupStatus() {
+            fetch('/api/backup/status')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('deletedOrdersCount').textContent = data.deletedOrdersCount || 0;
+                    document.getElementById('backupCount').textContent = data.backupCount || 0;
+                    
+                    const lastBackup = data.lastBackup ? new Date(data.lastBackup).toLocaleString() : 'Never';
+                    document.getElementById('lastBackupTime').textContent = lastBackup;
+                    document.getElementById('lastBackupTimeLabel').textContent = 'Last backup: ' + lastBackup;
+                    
+                    // Render backup files
+                    const container = document.getElementById('backupFilesList');
+                    if (data.backups && data.backups.length > 0) {
+                        let html = '';
+                        data.backups.forEach(backup => {
+                            const date = new Date(backup.created).toLocaleString();
+                            const size = (backup.size / 1024).toFixed(1) + ' KB';
+                            html += `
+                                <div class="backup-file-item">
+                                    <span>📄 ${backup.file}</span>
+                                    <span style="color:#636e72; font-size:0.8em;">${date} (${size})</span>
+                                    <button class="admin-action-btn btn-edit" onclick="restoreFromBackup('${backup.file}')" style="padding:2px 10px;">↩️ Restore</button>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<p style="color:#b2bec3; padding:10px;">No backup files found</p>';
+                    }
+                })
+                .catch(() => {});
+            
+            loadDeletedOrders();
+            loadTodayOrders();
+        }
+
+        function loadDeletedOrders() {
+            fetch('/api/backup/deleted-orders')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('deletedOrdersList');
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No deleted orders in backup</p>';
+                        return;
+                    }
+                    
+                    let html = `<table>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Deleted At</th>
+                            <th>Actions</th>
+                        </tr>
+                    `;
+                    
+                    data.slice().reverse().forEach(order => {
+                        html += `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.userName || 'Guest'}</td>
+                                <td>${currencySymbol} ${order.total.toFixed(2)}</td>
+                                <td style="font-size:0.75em;">${order.deletedAt ? new Date(order.deletedAt).toLocaleString() : 'N/A'}</td>
+                                <td>
+                                    <button class="admin-action-btn btn-save" onclick="recoverOrder(${order.id})">↩️ Recover</button>
+                                    <button class="admin-action-btn btn-delete" onclick="permanentlyDeleteOrder(${order.id})">🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += `</table>`;
+                    container.innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('deletedOrdersList').innerHTML = '<p style="color:#b2bec3; padding:15px;">Error loading deleted orders</p>';
+                });
+        }
+
+        function loadTodayOrders() {
+            fetch('/api/orders/today')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('todayOrdersList');
+                    const countEl = document.getElementById('todayOrderCountBackup');
+                    const revenueEl = document.getElementById('todayOrderRevenue');
+                    
+                    if (countEl) {
+                        countEl.textContent = data.totalOrders || 0;
+                    }
+                    if (revenueEl) {
+                        revenueEl.textContent = currencySymbol + ' ' + (data.totalRevenue || 0).toFixed(2);
+                    }
+                    
+                    if (!data.orders || data.orders.length === 0) {
+                        container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders placed today</p>';
+                        return;
+                    }
+                    
+                    let html = `<table>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    `;
+                    
+                    data.orders.slice().reverse().forEach(order => {
+                        const statusClass = `status-${order.status}`;
+                        const items = order.items.map(i => i.name).join(', ');
+                        html += `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.userName || 'Guest'}</td>
+                                <td style="font-size:0.8em;">${items}</td>
+                                <td>${currencySymbol} ${order.total.toFixed(2)}</td>
+                                <td><span class="status-badge ${statusClass}">${order.status.toUpperCase()}</span></td>
+                                <td style="font-size:0.75em;">${order.deviceTime || order.date || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `</table>`;
+                    container.innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('todayOrdersList').innerHTML = '<p style="color:#b2bec3; padding:15px;">Error loading today\'s orders</p>';
+                });
+        }
+
+        function printTodayOrders() {
+            fetch('/api/orders/today')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.orders || data.orders.length === 0) {
+                        showToast('⚠️ No orders to print today');
+                        return;
+                    }
+                    
+                    let printContent = `
+                        <html>
+                        <head><title>Today's Orders</title>
+                        <style>
+                            body { font-family: 'Courier New', monospace; padding: 20px; }
+                            h1 { text-align: center; color: #e74c3c; }
+                            .order { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+                            .order-header { font-weight: 700; font-size: 1.1em; }
+                            .order-items { margin: 5px 0; }
+                            .order-total { font-weight: 700; color: #e74c3c; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+                            th { background: #f8f9fa; }
+                            .summary { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                            .print-btn { display: none; }
+                            @media print { .no-print { display: none; } }
+                        </style>
+                        </head>
+                        <body>
+                            <h1>📋 Orders Report - ${new Date().toLocaleDateString()}</h1>
+                            <div class="summary">
+                                <strong>Total Orders:</strong> ${data.totalOrders} &nbsp;|&nbsp;
+                                <strong>Total Revenue:</strong> ${currencySymbol} ${data.totalRevenue.toFixed(2)}
+                            </div>
+                    `;
+                    
+                    data.orders.forEach(order => {
+                        printContent += `
+                            <div class="order">
+                                <div class="order-header">#${order.id} - ${order.userName || 'Guest'}</div>
+                                <div>${order.deviceTime || order.date || 'N/A'}</div>
+                                <div class="order-items">${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}</div>
+                                <div class="order-total">Total: ${currencySymbol} ${order.total.toFixed(2)}</div>
+                                <div>Status: ${order.status.toUpperCase()} | Payment: ${order.paymentMethod || 'Cash'}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    printContent += `
+                            <p style="text-align:center; margin-top:20px; color:#b2bec3;">Printed: ${new Date().toLocaleString()}</p>
+                        </body>
+                        </html>
+                    `;
+                    
+                    const win = window.open('', '_blank', 'width=800,height=600');
+                    win.document.write(printContent);
+                    win.document.close();
+                    setTimeout(() => { win.print(); }, 500);
+                })
+                .catch(() => showToast('❌ Error loading orders'));
+        }
+
+        function deleteAllTodayOrders() {
+            if (!confirm('⚠️ Are you sure you want to delete ALL orders placed today? This will move them to backup and can be recovered.')) return;
+            
+            fetch('/api/orders/today/all', {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    loadBackupStatus();
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to delete orders'));
+                }
+            })
+            .catch(err => {
+                console.error('Delete today orders error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        function createManualBackup() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Creating...';
+            btn.disabled = true;
+            
+            fetch('/api/backup/create', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    loadBackupStatus();
+                } else {
+                    showToast('❌ ' + (data.error || 'Backup failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Backup error:', err);
+                showToast('❌ Error: ' + err.message);
+            })
+            .finally(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        function restoreFromBackup(filename) {
+            if (!confirm(`⚠️ Restore from "${filename}"? This will replace current data. Current data will be backed up first.`)) return;
+            
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Restoring...';
+            btn.disabled = true;
+            
+            fetch('/api/backup/restore', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ filename })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    loadBackupStatus();
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Restore failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Restore error:', err);
+                showToast('❌ Error: ' + err.message);
+            })
+            .finally(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        function recoverOrder(orderId) {
+            if (!confirm(`Recover order #${orderId}? It will be moved back to active orders.`)) return;
+            
+            fetch('/api/backup/recover-order/' + orderId, {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    loadBackupStatus();
+                    loadAdminData();
+                } else {
+                    showToast('❌ ' + (data.error || 'Recovery failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Recover order error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        function permanentlyDeleteOrder(orderId) {
+            if (!confirm(`⚠️ Permanently delete order #${orderId}? This cannot be undone!`)) return;
+            
+            fetch('/api/backup/deleted-order/' + orderId, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ ' + data.message);
+                    loadBackupStatus();
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'));
+                }
+            })
+            .catch(err => {
+                console.error('Permanent delete error:', err);
+                showToast('❌ Error: ' + err.message);
+            });
+        }
+
+        // ============================================================
         // LOAD ALL DATA
         // ============================================================
         function loadAdminData() {
@@ -2942,6 +3390,7 @@
             loadSupport();
             loadAboutData();
             loadLobbyDeals();
+            loadBackupStatus();
 
             fetch('/api/locations/all?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
@@ -3530,7 +3979,6 @@
                             <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp</a>
                             ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">🗺️ Map</a>` : ''}
                             ${locationHtml}
-                            <!-- Delete Order Button -->
                             <button class="btn-delete" onclick="deleteOrderPermanently(${order.id})" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️ Delete</button>
                         </div>
                     </div>
@@ -4369,6 +4817,7 @@
                 layers: 'adminLayers',
                 delivery: 'adminDelivery',
                 calculator: 'adminCalculator',
+                backup: 'adminBackup',
                 settings: 'adminSettings'
             };
             const target = document.getElementById(sectionMap[section]);
@@ -4385,6 +4834,7 @@
             if (section === 'layers') renderAdminLayers();
             if (section === 'delivery') renderAdminDelivery();
             if (section === 'calculator') { /* Calculator is ready */ }
+            if (section === 'backup') { loadBackupStatus(); }
         }
 
         // ============================================================
