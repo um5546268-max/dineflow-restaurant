@@ -33,6 +33,12 @@ let RESTAURANT_CONFIG = {
 // ⭐ DATA PERSISTENCE ⭐
 // ============================================
 const DATA_FILE = path.join(__dirname, 'data.json');
+const BACKUP_DIR = path.join(__dirname, 'backups');
+
+// Create backup directory if it doesn't exist
+if (!fs.existsSync(BACKUP_DIR)) {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+}
 
 let data = {
     users: [],
@@ -75,7 +81,10 @@ let data = {
         aboutTitle: 'About The Heaven Slice',
         workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
     },
-    lobbyDeals: []
+    lobbyDeals: [],
+    deletedOrders: [],
+    lastBackup: null,
+    backupHistory: []
 };
 
 function loadData() {
@@ -109,10 +118,17 @@ function loadData() {
             if (!data.lobbyDeals) {
                 data.lobbyDeals = [];
             }
+            if (!data.deletedOrders) {
+                data.deletedOrders = [];
+            }
+            if (!data.backupHistory) {
+                data.backupHistory = [];
+            }
             
             console.log('✅ Data loaded from file');
             console.log(`📊 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
             console.log(`🕐 Restaurant: ${RESTAURANT_CONFIG.isOpen ? 'OPEN' : 'CLOSED'} (${RESTAURANT_CONFIG.openingTime} - ${RESTAURANT_CONFIG.closingTime})`);
+            console.log(`🗑️ Deleted Orders: ${data.deletedOrders.length}`);
             return true;
         }
         return false;
@@ -144,6 +160,7 @@ function saveData() {
         };
         data.aboutRestaurant = aboutRestaurant;
         data.lobbyDeals = lobbyDeals;
+        data.deletedOrders = deletedOrders;
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
         console.log('💾 Data saved to file');
         return true;
@@ -152,6 +169,70 @@ function saveData() {
         return false;
     }
 }
+
+// ⭐ AUTO BACKUP FUNCTION
+function createAutoBackup() {
+    try {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backupFile = path.join(BACKUP_DIR, `backup-${timestamp}.json`);
+        
+        const backupData = JSON.parse(JSON.stringify(data));
+        backupData.backupTimestamp = new Date().toISOString();
+        backupData.backupType = 'auto';
+        
+        fs.writeFileSync(backupFile, JSON.stringify(backupData, null, 2), 'utf8');
+        
+        if (!data.backupHistory) data.backupHistory = [];
+        data.backupHistory.push({
+            timestamp: new Date().toISOString(),
+            file: path.basename(backupFile),
+            size: fs.statSync(backupFile).size,
+            orderCount: data.restaurants.reduce((sum, r) => sum + r.orders.length, 0),
+            deletedCount: deletedOrders.length
+        });
+        
+        const backups = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.json')).sort();
+        while (backups.length > 20) {
+            const oldest = backups.shift();
+            fs.unlinkSync(path.join(BACKUP_DIR, oldest));
+        }
+        
+        data.lastBackup = new Date().toISOString();
+        syncAndSave();
+        console.log(`📦 Auto backup created: ${path.basename(backupFile)}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Auto backup failed:', error);
+        return false;
+    }
+}
+
+function scheduleAutoBackup() {
+    const minInterval = 5 * 60 * 60 * 1000;
+    const maxInterval = 10 * 60 * 60 * 1000;
+    const interval = minInterval + Math.random() * (maxInterval - minInterval);
+    
+    setTimeout(() => {
+        createAutoBackup();
+        scheduleAutoBackup();
+    }, interval);
+}
+
+setTimeout(() => {
+    scheduleAutoBackup();
+    console.log('⏰ Auto backup scheduler started (every 5-10 hours)');
+}, 5000);
+
+let saveCounter = 0;
+const originalSyncAndSave = syncAndSave;
+syncAndSave = function() {
+    saveCounter++;
+    const result = originalSyncAndSave();
+    if (saveCounter % 50 === 0) {
+        createAutoBackup();
+    }
+    return result;
+};
 
 setInterval(() => saveData(), 30000);
 
@@ -225,6 +306,7 @@ let aboutRestaurant = data.aboutRestaurant || {
     workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
 };
 let lobbyDeals = data.lobbyDeals || [];
+let deletedOrders = data.deletedOrders || [];
 
 function syncAndSave() {
     data.users = users;
@@ -244,6 +326,7 @@ function syncAndSave() {
     };
     data.aboutRestaurant = aboutRestaurant;
     data.lobbyDeals = lobbyDeals;
+    data.deletedOrders = deletedOrders;
     saveData();
 }
 
@@ -497,6 +580,210 @@ function broadcastOrderUpdate(order, restaurantId) {
 }
 
 // ============================================
+// ⭐ BACKUP & RECOVERY ROUTES ⭐
+// ============================================
+
+app.get('/api/backup/status', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const backups = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.json')).sort();
+        const backupInfo = backups.map(file => {
+            const stats = fs.statSync(path.join(BACKUP_DIR, file));
+            return {
+                file: file,
+                size: stats.size,
+                created: stats.birthtime.toISOString(),
+                modified: stats.mtime.toISOString()
+            };
+        });
+        
+        res.json({
+            lastBackup: data.lastBackup || null,
+            backupCount: backupInfo.length,
+            backups: backupInfo.slice(0, 20),
+            deletedOrdersCount: deletedOrders.length,
+            autoBackupEnabled: true
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get backup status' });
+    }
+});
+
+app.post('/api/backup/create', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const result = createAutoBackup();
+        if (result) {
+            res.json({ success: true, message: 'Backup created successfully', lastBackup: data.lastBackup });
+        } else {
+            res.status(500).json({ error: 'Failed to create backup' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to create backup' });
+    }
+});
+
+app.post('/api/backup/restore', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const { filename } = req.body;
+        if (!filename) {
+            return res.status(400).json({ error: 'Filename required' });
+        }
+        
+        const backupFile = path.join(BACKUP_DIR, filename);
+        if (!fs.existsSync(backupFile)) {
+            return res.status(404).json({ error: 'Backup file not found' });
+        }
+        
+        const backupContent = fs.readFileSync(backupFile, 'utf8');
+        const backupData = JSON.parse(backupContent);
+        
+        if (!backupData.restaurants) {
+            return res.status(400).json({ error: 'Invalid backup file' });
+        }
+        
+        restaurants.length = 0;
+        restaurants.push(...backupData.restaurants);
+        
+        if (backupData.deletedOrders) {
+            deletedOrders.length = 0;
+            deletedOrders.push(...backupData.deletedOrders);
+        }
+        
+        if (backupData.aboutRestaurant) {
+            aboutRestaurant = backupData.aboutRestaurant;
+        }
+        
+        if (backupData.lobbyDeals) {
+            lobbyDeals = backupData.lobbyDeals;
+        }
+        
+        if (backupData.receiptSettings) {
+            receiptSettings = backupData.receiptSettings;
+        }
+        
+        if (backupData.restaurantConfig) {
+            RESTAURANT_CONFIG = backupData.restaurantConfig;
+        }
+        
+        if (backupData.feedbacks) {
+            feedbacks = backupData.feedbacks;
+        }
+        
+        if (backupData.supportTickets) {
+            supportTickets = backupData.supportTickets;
+        }
+        
+        if (backupData.customerLocations) {
+            customerLocations = backupData.customerLocations;
+        }
+        
+        if (backupData.availableLayers) {
+            availableLayers = backupData.availableLayers;
+        }
+        
+        if (backupData.orderCounter) {
+            orderCounter = backupData.orderCounter;
+        }
+        
+        syncAndSave();
+        
+        res.json({ 
+            success: true, 
+            message: 'Restaurant restored from backup successfully!',
+            ordersRestored: restaurants.reduce((sum, r) => sum + r.orders.length, 0),
+            deletedRestored: deletedOrders.length
+        });
+    } catch (error) {
+        console.error('Restore error:', error);
+        res.status(500).json({ error: 'Failed to restore from backup: ' + error.message });
+    }
+});
+
+app.get('/api/backup/deleted-orders', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        res.json(deletedOrders);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get deleted orders' });
+    }
+});
+
+app.post('/api/backup/recover-order/:id', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const orderId = parseInt(req.params.id);
+        const index = deletedOrders.findIndex(o => o.id === orderId);
+        
+        if (index === -1) {
+            return res.status(404).json({ error: 'Deleted order not found' });
+        }
+        
+        const recoveredOrder = deletedOrders[index];
+        deletedOrders.splice(index, 1);
+        
+        const restaurant = restaurants.find(r => r.restaurantId === recoveredOrder.restaurantId);
+        if (restaurant) {
+            recoveredOrder.recoveredAt = new Date().toISOString();
+            recoveredOrder.status = 'pending';
+            restaurant.orders.push(recoveredOrder);
+        } else {
+            const defaultRestaurant = getOrCreateRestaurant('restaurant-1');
+            recoveredOrder.recoveredAt = new Date().toISOString();
+            recoveredOrder.status = 'pending';
+            defaultRestaurant.orders.push(recoveredOrder);
+        }
+        
+        syncAndSave();
+        
+        res.json({ 
+            success: true, 
+            message: 'Order #' + orderId + ' recovered successfully!',
+            order: recoveredOrder
+        });
+    } catch (error) {
+        console.error('Recover order error:', error);
+        res.status(500).json({ error: 'Failed to recover order' });
+    }
+});
+
+app.delete('/api/backup/deleted-order/:id', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+        const orderId = parseInt(req.params.id);
+        const index = deletedOrders.findIndex(o => o.id === orderId);
+        
+        if (index === -1) {
+            return res.status(404).json({ error: 'Deleted order not found' });
+        }
+        
+        deletedOrders.splice(index, 1);
+        syncAndSave();
+        
+        res.json({ 
+            success: true, 
+            message: 'Order #' + orderId + ' permanently deleted!'
+        });
+    } catch (error) {
+        console.error('Delete deleted order error:', error);
+        res.status(500).json({ error: 'Failed to delete order' });
+    }
+});
+
+// ============================================
 // ⭐ API ROUTES ⭐
 // ============================================
 
@@ -646,7 +933,6 @@ app.post('/api/about-restaurant', (req, res) => {
 // ⭐ LOBBY DEALS ROUTES ⭐
 // ============================================
 
-// Get all lobby deals
 app.get('/api/lobby-deals', (req, res) => {
     try {
         res.json(lobbyDeals);
@@ -655,7 +941,6 @@ app.get('/api/lobby-deals', (req, res) => {
     }
 });
 
-// Get active lobby deals (non-expired)
 app.get('/api/lobby-deals/active', (req, res) => {
     try {
         const now = new Date();
@@ -673,7 +958,6 @@ app.get('/api/lobby-deals/active', (req, res) => {
     }
 });
 
-// Add new lobby deal
 app.post('/api/lobby-deals', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -715,7 +999,6 @@ app.post('/api/lobby-deals', (req, res) => {
     }
 });
 
-// Update lobby deal
 app.put('/api/lobby-deals/:id', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -757,7 +1040,6 @@ app.put('/api/lobby-deals/:id', (req, res) => {
     }
 });
 
-// Delete single lobby deal
 app.delete('/api/lobby-deals/:id', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -779,7 +1061,6 @@ app.delete('/api/lobby-deals/:id', (req, res) => {
     }
 });
 
-// Delete ALL lobby deals
 app.delete('/api/lobby-deals/all', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -916,11 +1197,86 @@ app.delete('/api/orders/:id', (req, res) => {
     
     const deletedOrder = restaurant.orders[index];
     restaurant.orders.splice(index, 1);
+    
+    deletedOrder.deletedAt = new Date().toISOString();
+    deletedOrder.deletedBy = req.user.displayName || 'Admin';
+    deletedOrder.restaurantId = restaurantId;
+    deletedOrders.push(deletedOrder);
+    
     syncAndSave();
     
     broadcastOrderUpdate({ ...deletedOrder, status: 'deleted' }, restaurantId);
     
-    res.json({ success: true, message: 'Order deleted permanently' });
+    res.json({ 
+        success: true, 
+        message: 'Order deleted and backed up',
+        orderId: deletedOrder.id
+    });
+});
+
+app.delete('/api/orders/today/all', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    
+    const today = new Date().toDateString();
+    const ordersToDelete = restaurant.orders.filter(o => {
+        const orderDate = new Date(o.createdAt || o.date);
+        return orderDate.toDateString() === today;
+    });
+    
+    if (ordersToDelete.length === 0) {
+        return res.json({ 
+            success: true, 
+            message: 'No orders found for today',
+            deletedCount: 0
+        });
+    }
+    
+    ordersToDelete.forEach(order => {
+        order.deletedAt = new Date().toISOString();
+        order.deletedBy = req.user.displayName || 'Admin';
+        order.restaurantId = restaurantId;
+        deletedOrders.push(order);
+    });
+    
+    restaurant.orders = restaurant.orders.filter(o => {
+        const orderDate = new Date(o.createdAt || o.date);
+        return orderDate.toDateString() !== today;
+    });
+    
+    syncAndSave();
+    
+    res.json({ 
+        success: true, 
+        message: ordersToDelete.length + ' orders deleted and backed up',
+        deletedCount: ordersToDelete.length
+    });
+});
+
+app.get('/api/orders/today', (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    
+    const today = new Date().toDateString();
+    const todayOrders = restaurant.orders.filter(o => {
+        const orderDate = new Date(o.createdAt || o.date);
+        return orderDate.toDateString() === today;
+    });
+    
+    res.json({
+        date: new Date().toISOString(),
+        totalOrders: todayOrders.length,
+        orders: todayOrders,
+        totalRevenue: todayOrders.reduce((sum, o) => sum + o.total, 0)
+    });
 });
 
 // ============================================
@@ -1612,7 +1968,9 @@ app.get('/api/test', (req, res) => {
         discountThreshold: RESTAURANT_CONFIG.discountThreshold,
         sseClients: adminClients.size,
         isOpen: RESTAURANT_CONFIG.isOpen,
-        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit
+        cancellationTimeLimit: RESTAURANT_CONFIG.cancellationTimeLimit,
+        deletedOrders: deletedOrders.length,
+        lastBackup: data.lastBackup || 'Never'
     });
 });
 
@@ -1637,6 +1995,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`📊 Restaurants: ${restaurants.length}`);
     console.log(`👤 Users: ${users.length}`);
     console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
+    console.log(`🗑️ Deleted Orders: ${deletedOrders.length}`);
+    console.log(`💾 Last Backup: ${data.lastBackup || 'Never'}`);
     console.log('========================================');
     console.log('✅ Server is ready!');
     console.log('========================================');
@@ -1644,12 +2004,14 @@ app.listen(PORT, '0.0.0.0', () => {
 
 process.on('SIGINT', () => {
     console.log('🛑 Saving data before shutdown...');
+    createAutoBackup();
     saveData();
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
     console.log('🛑 Saving data before shutdown...');
+    createAutoBackup();
     saveData();
     process.exit(0);
 });
