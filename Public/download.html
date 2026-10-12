@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +7,10 @@
   <meta name="theme-color" content="#17120e" />
 
   <title>Download Sangat Cafe App</title>
-  <meta name="description" content="Download the Sangat Cafe Android app and enjoy easy cafe ordering." />
+  <meta
+    name="description"
+    content="Download the Sangat Cafe Android app and enjoy easy cafe ordering."
+  />
 
   <style>
     * {
@@ -90,6 +93,7 @@
       min-height: 58px;
       margin: 28px 0 12px;
       padding: 16px;
+      border: none;
       border-radius: 15px;
       background: var(--green);
       color: #102718;
@@ -104,9 +108,9 @@
       background: #80d69b;
     }
 
-    .download.disabled {
-      background: #51483e;
-      color: #e5d9ca;
+    .download:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 4px;
     }
 
     .note {
@@ -161,6 +165,16 @@
     footer span {
       color: var(--gold);
     }
+
+    @media (max-width: 380px) {
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        padding: 30px 20px;
+      }
+    }
   </style>
 </head>
 
@@ -176,12 +190,11 @@
       Order your favourites with the Sangat Cafe mobile app.
     </p>
 
-    <!-- Replace this URL with your actual public APK download URL -->
     <a
       id="downloadButton"
       class="download"
       href="https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk"
-      rel="noopener"
+      aria-label="Download Sangat Cafe Android app"
     >
       <span aria-hidden="true">↓</span>
       <span>Download Android App</span>
@@ -208,7 +221,11 @@
 
       <div class="step">
         <span class="number">3</span>
-        <span>Open the downloaded file and follow Android's installation prompts. Allow installation from this source only if you trust the APK.</span>
+        <span>
+          Open the downloaded file and follow Android's installation
+          prompts. Allow installation from this source only if you
+          trust the APK.
+        </span>
       </div>
 
       <div class="step">
@@ -223,25 +240,25 @@
   </main>
 
   <script>
-    // Prevent customers from using the button before a real APK link is added.
-    const apkUrl = "https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk";
-    const button = document.getElementById("downloadButton");
-    const note = document.getElementById("downloadNote");
+    (() => {
+      const apkUrl =
+        "https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk";
 
-    if (
-      !apkUrl.startsWith("https://") ||
-      apkUrl === "https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk"
-    ) {
-      button.href = "#";
-      button.classList.add("disabled");
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        alert("The Sangat Cafe APK download link is not configured yet.");
-      });
-      note.textContent = "App download will be available soon.";
-    } else {
+      const button = document.getElementById("downloadButton");
+      const note = document.getElementById("downloadNote");
+
+      // Enable the download button using the real APK URL.
       button.href = apkUrl;
-    }
+      button.classList.remove("disabled");
+      button.removeAttribute("aria-disabled");
+
+      // Give the customer feedback when the download link is opened.
+      button.addEventListener("click", () => {
+        note.textContent =
+          "Opening your download. Please wait...";
+      });
+    })();
   </script>
 </body>
 </html>
+```
