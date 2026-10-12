@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 // ⭐ RESTAURANT CONFIGURATION ⭐
 // ============================================
 let RESTAURANT_CONFIG = {
-    name: 'The Heaven Slice',
+    name: 'Sangat Cafe',
     est: '2022',
     address: 'Gojra Road Near Ali Marriage Hall',
     phone: '0300-0310275',
@@ -1931,6 +1931,20 @@ app.get('/logout', (req, res) => {
 // ============================================
 // SERVE HTML PAGES
 // ============================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'Public', 'index.html'));
+});
+
+
+ // ============================================
+ // SERVE HTML PAGES
+ // ============================================
+
+// Sangat Cafe Android App Download Page
+app.get('/download', (req, res) => {
+    res.sendFile(path.join(__dirname, 'Public', 'download.html'));
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });

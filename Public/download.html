@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17120e" />
+
+  <title>Download Sangat Cafe App</title>
+  <meta name="description" content="Download the Sangat Cafe Android app and enjoy easy cafe ordering." />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      color-scheme: dark;
+      --cream: #f8e8cf;
+      --gold: #e5ad63;
+      --green: #63bd83;
+      --muted: #c4b9ac;
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--cream);
+      background:
+        radial-gradient(ellipse at top, #46301e 0%, transparent 55%),
+        #17120e;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 460px;
+      padding: 38px 26px;
+      text-align: center;
+      border: 1px solid #57422e;
+      border-radius: 28px;
+      background: rgba(36, 27, 20, 0.94);
+      box-shadow: 0 25px 80px #0008;
+    }
+
+    .logo {
+      width: 86px;
+      height: 86px;
+      margin: 0 auto 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 25px;
+      background: linear-gradient(145deg, #f8d7a5, #bc8144);
+      font-size: 43px;
+      box-shadow: 0 10px 35px #d79a4430;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px 0;
+      font-size: clamp(30px, 8vw, 42px);
+      letter-spacing: -1.5px;
+    }
+
+    .description {
+      max-width: 330px;
+      margin: 0 auto;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 58px;
+      margin: 28px 0 12px;
+      padding: 16px;
+      border-radius: 15px;
+      background: var(--green);
+      color: #102718;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 800;
+      transition: transform .2s, background .2s;
+    }
+
+    .download:hover {
+      transform: translateY(-2px);
+      background: #80d69b;
+    }
+
+    .download.disabled {
+      background: #51483e;
+      color: #e5d9ca;
+    }
+
+    .note {
+      color: #a99d8e;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 26px 0;
+      background: #4a3929;
+    }
+
+    h2 {
+      margin-bottom: 16px;
+      font-size: 17px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .number {
+      flex: 0 0 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: #493522;
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    footer {
+      margin-top: 26px;
+      color: #8f8275;
+      font-size: 11px;
+    }
+
+    footer span {
+      color: var(--gold);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="logo" aria-hidden="true">☕</div>
+
+    <p class="eyebrow">Welcome to</p>
+    <h1>Sangat Cafe</h1>
+
+    <p class="description">
+      Good food. Great moments.
+      Order your favourites with the Sangat Cafe mobile app.
+    </p>
+
+    <!-- Replace this URL with your actual public APK download URL -->
+    <a
+      id="downloadButton"
+      class="download"
+      href="https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk"
+      rel="noopener"
+    >
+      <span aria-hidden="true">↓</span>
+      <span>Download Android App</span>
+    </a>
+
+    <p id="downloadNote" class="note">
+      Android app · APK installation
+    </p>
+
+    <div class="divider"></div>
+
+    <h2>How to install</h2>
+
+    <div class="steps">
+      <div class="step">
+        <span class="number">1</span>
+        <span>Tap the Download Android App button.</span>
+      </div>
+
+      <div class="step">
+        <span class="number">2</span>
+        <span>Wait for the APK file to finish downloading.</span>
+      </div>
+
+      <div class="step">
+        <span class="number">3</span>
+        <span>Open the downloaded file and follow Android's installation prompts. Allow installation from this source only if you trust the APK.</span>
+      </div>
+
+      <div class="step">
+        <span class="number">4</span>
+        <span>Open Sangat Cafe and start exploring the app.</span>
+      </div>
+    </div>
+
+    <footer>
+      Made with care for <span>Sangat Cafe</span>
+    </footer>
+  </main>
+
+  <script>
+    // Prevent customers from using the button before a real APK link is added.
+    const apkUrl = "https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk";
+    const button = document.getElementById("downloadButton");
+    const note = document.getElementById("downloadNote");
+
+    if (
+      !apkUrl.startsWith("https://") ||
+      apkUrl === "https://github.com/um5546268-max/sangat-cafe-app/releases/download/v1.0.0/app-release.apk"
+    ) {
+      button.href = "#";
+      button.classList.add("disabled");
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        alert("The Sangat Cafe APK download link is not configured yet.");
+      });
+      note.textContent = "App download will be available soon.";
+    } else {
+      button.href = apkUrl;
+    }
+  </script>
+</body>
+</html>
