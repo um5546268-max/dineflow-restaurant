@@ -1180,7 +1180,6 @@
             background: #2d2d44;
         }
 
-        
 @media print {
     body * {
         visibility: hidden;
@@ -3777,11 +3776,15 @@
                 `;
             });
 
-            const qrSrc = receiptSettings.qrCodeUrl && receiptSettings.qrCodeUrl.trim()
-                ? receiptSettings.qrCodeUrl
-                : `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(window.location.origin)}`;
+            
+const downloadPageUrl = "https://dineflow-restaurant-eq0b.onrender.com/download";
 
-            const html = `
+const qrSrc = receiptSettings.qrCodeUrl && receiptSettings.qrCodeUrl.trim()
+    ? receiptSettings.qrCodeUrl
+    : `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(downloadPageUrl)}`;
+
+const html = `
+
                 <div id="receiptPrint">
                     <div class="receipt-style">
                         <div class="receipt-header">
