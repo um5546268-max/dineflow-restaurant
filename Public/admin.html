@@ -3831,9 +3831,7 @@ const html = `
                             ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📞 ${order.phone}</div>` : ''}
                             ${order.address && order.orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📍 ${order.address}</div>` : ''}
                             ${order.paymentMethod ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">💳 ${order.paymentMethod}</div>` : ''}
-                            ```javascript
-${order.layers && order.layers.length ? `<div class="receipt-customer" style="font-family:Arial,sans-serif; font-weight:700; font-size:12px; color:#000; line-height:1.5; -webkit-print-color-adjust:exact; print-color-adjust:exact;">Onion/Layers: ${order.layers.join(', ')}</div>` : ''}
-```
+                            ${order.layers && order.layers.length ? `<div class="receipt-customer" style="font-family:Arial,sans-serif; font-weight:700; font-size:12px; color:#000; line-height:1.5;">Onion/Layers: ${order.layers.join(', ')}</div>` : ''}
                         </div>
 
                         <div class="receipt-table-header">
