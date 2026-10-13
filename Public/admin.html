@@ -1191,22 +1191,24 @@
         visibility: visible;
     }
 
-    #receiptPrint {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 80mm;
-        box-sizing: border-box;
-        padding: 4px;
-        margin: 0;
-        background: white;
-        color: black;
-        border: none;
-        font-family: Arial, sans-serif;
-        font-size: 13px;
-        line-height: 1.35;
-        font-weight: 500;
-    }
+    
+#receiptPrint {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 72mm;
+    max-width: 72mm;
+    box-sizing: border-box;
+    padding: 2mm;
+    margin: 0;
+    overflow-wrap: break-word;
+    background: white;
+    color: black;
+    border: none;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.35;
+}
 
     #receiptPrint * {
         box-sizing: border-box;
