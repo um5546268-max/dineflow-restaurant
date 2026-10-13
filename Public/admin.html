@@ -1180,22 +1180,60 @@
             background: #2d2d44;
         }
 
-        @media print {
-            body * { visibility: hidden; }
-            #receiptPrint, #receiptPrint * { visibility: visible; }
-            #receiptPrint {
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: 80mm;
-                padding: 10px;
-                background: white;
-                color: black;
-                border: none;
-            }
-            .receipt-popup .receipt-actions { display: none; }
-            .receipt-popup .receipt-close { display: none; }
-        }
+        
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #receiptPrint,
+    #receiptPrint * {
+        visibility: visible;
+    }
+
+    #receiptPrint {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        box-sizing: border-box;
+        padding: 4px;
+        margin: 0;
+        background: white;
+        color: black;
+        border: none;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.35;
+        font-weight: 500;
+    }
+
+    #receiptPrint * {
+        box-sizing: border-box;
+    }
+
+    #receiptPrint p,
+    #receiptPrint span,
+    #receiptPrint div,
+    #receiptPrint td,
+    #receiptPrint th {
+        font-size: 13px;
+    }
+
+    #receiptPrint .total,
+    #receiptPrint .grand-total {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .receipt-popup .receipt-actions {
+        display: none;
+    }
+
+    .receipt-popup .receipt-close {
+        display: none;
+    }
+}
 
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.9); }
