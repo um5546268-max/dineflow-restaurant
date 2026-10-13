@@ -3831,7 +3831,9 @@ const html = `
                             ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📞 ${order.phone}</div>` : ''}
                             ${order.address && order.orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📍 ${order.address}</div>` : ''}
                             ${order.paymentMethod ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">💳 ${order.paymentMethod}</div>` : ''}
-                            ${order.layers && order.layers.length ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
+                            ```javascript
+${order.layers && order.layers.length ? `<div class="receipt-customer" style="font-family:Arial,sans-serif; font-weight:700; font-size:12px; color:#000; line-height:1.5; -webkit-print-color-adjust:exact; print-color-adjust:exact;">Onion/Layers: ${order.layers.join(', ')}</div>` : ''}
+```
                         </div>
 
                         <div class="receipt-table-header">
@@ -3871,7 +3873,10 @@ const html = `
 <img src="${qrSrc}" alt="QR Code"
      style="display:block; width:80px; height:80px; max-width:100%; object-fit:contain; margin:8px auto;" />
 
-                                <div style="font-size:9px; color:#555;">Scan QR Code To Download App</div>
+                                
+<div style="font-family:Arial,sans-serif; font-size:11px; font-weight:700; color:#000; line-height:1.4; text-align:center; margin-top:5px;">
+    Scan QR Code To Download App
+</div>
                             </div>
                             <div class="receipt-divider"></div>
                             <div class="thank-you"><span class="heart">❤️</span> ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}</div>
