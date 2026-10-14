@@ -5086,7 +5086,8 @@ async function generateOrderCard(orderId) {
             background.onerror = reject;
         });
 
-        // Generate the personalized card.
+        
+        // Generate the personalized order card.
         const canvas = document.createElement('canvas');
         canvas.width = 1080;
         canvas.height = 1080;
@@ -5097,42 +5098,79 @@ async function generateOrderCard(orderId) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(0,0,0,0.85)';
+        ctx.shadowBlur = 4;
 
-        ctx.font = 'bold 52px Arial';
-        ctx.fillText('SANGAT CAFE', 540, 115, 950);
-
+        // Customer greeting — no extra cafe heading.
         ctx.font = 'bold 34px Arial';
-        ctx.fillText(`Hello ${customerName}!`, 540, 330, 900);
+        ctx.fillText(`Hello ${customerName}!`, 540, 275, 940);
 
         ctx.font = '27px Arial';
         ctx.fillText(
-            'Thank you for choosing Sangat Cafe!',
-            540, 385, 940
+            'Thank you for your order!',
+            540, 320, 940
         );
 
-        ctx.font = 'bold 34px Arial';
-        ctx.fillText('ORDER CONFIRMATION', 540, 485, 950);
-
-        ctx.font = '30px Arial';
-        ctx.fillText(`Order: #${order.id}`, 540, 555, 900);
-        ctx.fillText(`Order Type: ${orderType}`, 540, 615, 900);
-
-        ctx.font = 'bold 40px Arial';
-        ctx.fillText(`Total: Rs ${total}`, 540, 690, 950);
+        // Order number and type.
+        ctx.font = 'bold 32px Arial';
+        ctx.fillText(`ORDER #${order.id}`, 540, 390, 940);
 
         ctx.font = '27px Arial';
+        ctx.fillText(`Order Type: ${orderType}`, 540, 435, 940);
+
+        // Actual products and quantities.
+        const orderItems = Array.isArray(order.items)
+            ? order.items
+            : [];
+
+        const maxVisibleItems = 6;
+        const visibleItems = orderItems.slice(0, maxVisibleItems);
+        const startY = 505;
+        const lineHeight = 42;
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 25px Arial';
+
+        visibleItems.forEach((item, index) => {
+            const name = String(item.name || 'Item');
+            const qty = Number(item.qty || 1);
+            const y = startY + index * lineHeight;
+
+            ctx.fillText(
+                `${name}  x${qty}`,
+                115,
+                y,
+                850
+            );
+        });
+
+        if (orderItems.length > maxVisibleItems) {
+            ctx.font = '22px Arial';
+            ctx.fillText(
+                `+ ${orderItems.length - maxVisibleItems} more items`,
+                115,
+                startY + maxVisibleItems * lineHeight,
+                850
+            );
+        }
+
+        // Total bill.
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 38px Arial';
         ctx.fillText(
-            'Your delicious meal is being prepared!',
-            540, 835, 950
+            `TOTAL BILL: Rs ${total}`,
+            540, 825, 950
         );
 
-        ctx.font = 'bold 30px Arial';
-        ctx.fillText('Team Sangat Cafe ❤️', 540, 900, 950);
+        ctx.font = '25px Arial';
+        ctx.fillText(
+            'Your order is being prepared!',
+            540, 885, 950
+        );
 
         ctx.shadowBlur = 0;
 
+        // Convert card to PNG.
         const blob = await new Promise(resolve =>
             canvas.toBlob(resolve, 'image/png')
         );
@@ -5219,22 +5257,6 @@ async function generateOrderCard(orderId) {
                     style="display:block;width:100%;height:auto;
                     border-radius:12px;background:#222;">
 
-                <div style="
-                    margin:14px 0;
-                    padding:12px;
-                    border-radius:10px;
-                    background:#242424;
-                    color:#ccc;
-                    font-size:13px;
-                    line-height:1.6;
-                ">
-                    <div>Customer: <strong id="sangatCardCustomer"></strong></div>
-                    <div>Phone: <strong id="sangatCardPhone"></strong></div>
-                    <div style="margin-top:5px;">
-                        WhatsApp will open with your message ready.
-                        Attach the card before sending.
-                    </div>
-                </div>
 
                 <button id="sangatCardSend" type="button"
                     style="width:100%;padding:14px;border:0;
