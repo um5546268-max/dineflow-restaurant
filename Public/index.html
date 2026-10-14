@@ -2916,7 +2916,7 @@
             }
 
             const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fdineflow-restaurant-eq0b.onrender.com%2Fdownload';
-            
+
             const html = `
                 <div id="receiptPrint">
                     <div class="receipt-style">
@@ -2975,17 +2975,40 @@
                             <span>${config.currency} ${grandTotal.toFixed(2)}</span>
                         </div>
                         
-                        <div class="receipt-footer">
-                            <div class="qr-section">
-                                <img src="${qrUrl}" alt="QR Code" style="max-width:80px; height:auto;" />
-                                <div class="qr-text">Scan QR Code To Download App</div>
-                            </div>
-                            <div class="receipt-divider"></div>
-                            <div class="thank-you"><span class="heart">❤️</span> ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}</div>
-                            <div class="great-day">${receiptSettings.footerMessage || 'Have a Great Day!'}</div>
-                            <div style="font-size:8px; color:#aaa; margin-top:4px;">
-                                Printed: ${now.toLocaleString()}
-                            </div>
+<div class="receipt-footer">
+    <div class="qr-section">
+        <img src="${qrUrl}" alt="QR Code" style="max-width:80px; height:auto;" />
+        <div class="qr-text">Scan QR Code To Download App</div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div class="thank-you">
+        <span class="heart">❤️</span>
+        ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}
+    </div>
+
+    <div class="great-day">
+        ${receiptSettings.footerMessage || 'Have a Great Day!'}
+    </div>
+
+    <div style="font-size:8px; color:#aaa; margin-top:4px;">
+        Printed: ${now.toLocaleString()}
+    </div>
+
+    <div style="
+        font-size:9px;
+        color:#333;
+        text-align:center;
+        margin-top:8px;
+        padding-top:5px;
+        border-top:1px dashed #aaa;
+        line-height:1.6;
+    ">
+        <div>Developed by <strong>Pixelpulse.ltd</strong></div>
+        <div>Contact: <strong>03480140014</strong></div>
+    </div>
+</div>
                         </div>
                     </div>
                 </div>
