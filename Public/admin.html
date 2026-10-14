@@ -3992,8 +3992,22 @@ const html = `
                         <button onclick="copyCoordinatesToWhatsApp(${order.lat}, ${order.lng}, '${order.id}', '${order.userName}', '${order.phone}', '${order.address}')" class="btn-whatsapp" style="padding:2px 8px; border:none; border-radius:12px; font-size:0.65em; font-weight:600; cursor:pointer; background:#25D366; color:white;">💬 WhatsApp</button>
                     </div>` : '<span style="color:#b2bec3; font-size:0.7em;">Not shared</span>';
 
-                const whatsappMsg = `Order #${order.id}%0A📦 ${orderTypeLabel}%0A👤 ${order.userName || 'Guest'}%0A📞 ${order.phone || 'N/A'}%0A📍 ${order.address || 'N/A'}%0A💰 Total: ${config.currency} ${grandTotal.toFixed(2)}`;
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
+const customerWhatsAppNumber = String(order.phone || '')
+    .replace(/\D/g, '')
+    .replace(/^0/, '92');
+
+const whatsappMsg =
+    `🍔 *SANGAT CAFE* ❤️\n\n` +
+    `Hi ${order.userName || 'there'}! 👋\n` +
+    `Thank you for your order!\n\n` +
+    `🧾 Order: #${order.id}\n` +
+    `📦 Type: ${orderTypeLabel}\n` +
+    `💰 Total: ${config.currency} ${grandTotal.toFixed(2)}\n\n` +
+    `Your order has been received. Thank you for choosing Sangat Cafe! 😊`;
+
+const whatsappUrl = customerWhatsAppNumber
+    ? `https://wa.me/${customerWhatsAppNumber}?text=${encodeURIComponent(whatsappMsg)}`
+    : '';
 
                 html += `
                     <div class="order-receipt-card" id="order-card-${order.id}">
@@ -4069,7 +4083,10 @@ const html = `
                                 <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                             </select>
                             <button class="btn-print" onclick="showReceiptForOrder(${order.id})">🖨️ Print</button>
-                            <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp</a>
+${whatsappUrl
+    ? `<a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp Customer</a>`
+    : `<button type="button" disabled title="Customer phone number unavailable" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; background:#999; color:white;">📵 No Customer Number</button>`
+}
                             ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">🗺️ Map</a>` : ''}
                             ${locationHtml}
                             <button class="btn-delete" onclick="deleteOrderPermanently(${order.id})" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️ Delete</button>
