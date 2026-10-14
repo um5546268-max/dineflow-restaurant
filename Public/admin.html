@@ -4089,8 +4089,17 @@ const whatsappUrl = customerWhatsAppNumber
                             </select>
                             <button class="btn-print" onclick="showReceiptForOrder(${order.id})">🖨️ Print</button>
 ${whatsappUrl
-    ? `<a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp Customer</a>`
-    : `<button type="button" disabled title="Customer phone number unavailable" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; background:#999; color:white;">📵 No Customer Number</button>`
+    ? `<button type="button"
+        onclick="generateOrderCard(${order.id})"
+        class="btn-whatsapp"
+        style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">
+        🧾 Generate Order Card
+       </button>`
+    : `<button type="button" disabled
+        title="Customer phone number unavailable"
+        style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; background:#999; color:white;">
+        📵 No Customer Number
+       </button>`
 }
                             ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">🗺️ Map</a>` : ''}
                             ${locationHtml}
@@ -5035,6 +5044,170 @@ ${whatsappUrl
                 });
             }
         });
+        
+async function generateOrderCard(orderId) {
+    try {
+        // Find the selected order in the existing orders array.
+        const order = orders.find(
+            o => String(o.id) === String(orderId)
+        );
+
+        if (!order) {
+            showToast('❌ Order not found. Refresh the admin panel.');
+            return;
+        }
+
+        const customerName = order.userName || 'Valued Customer';
+        const orderType =
+            order.orderType ||
+            order.type ||
+            order.deliveryType ||
+            'Order';
+
+        const currency = 'Rs';
+        const total = Number(order.total || 0).toFixed(2);
+
+        // Load the blank card background from your Render website.
+        const background = new Image();
+        background.src = '/sangat-cafe-card.png';
+
+        await new Promise((resolve, reject) => {
+            background.onload = resolve;
+            background.onerror = reject;
+        });
+
+        // Draw the personalized card.
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1080;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(background, 0, 0, 1080, 1080);
+
+        // Text styling.
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 5;
+
+        // Header and greeting.
+        ctx.font = 'bold 52px Arial';
+        ctx.fillText('SANGAT CAFE', 540, 115);
+
+        ctx.font = 'bold 34px Arial';
+        ctx.fillText(
+            `Hello ${customerName}!`,
+            540, 330,
+            900
+        );
+
+        ctx.font = '27px Arial';
+        ctx.fillText(
+            'Thank you for choosing Sangat Cafe!',
+            540, 385,
+            940
+        );
+
+        // Order details.
+        ctx.font = 'bold 34px Arial';
+        ctx.fillText('ORDER CONFIRMATION', 540, 485);
+
+        ctx.font = '30px Arial';
+        ctx.fillText(`Order: #${order.id}`, 540, 555);
+        ctx.fillText(`Order Type: ${orderType}`, 540, 615);
+        ctx.font = 'bold 40px Arial';
+        ctx.fillText(`Total: ${currency} ${total}`, 540, 690);
+
+        // Footer.
+        ctx.font = '27px Arial';
+        ctx.fillText(
+            'Your delicious meal is being prepared!',
+            540, 835,
+            950
+        );
+
+        ctx.font = 'bold 30px Arial';
+        ctx.fillText('— Team Sangat Cafe ❤️', 540, 900);
+
+        ctx.shadowBlur = 0;
+
+        // Convert the finished card into an image file.
+        const blob = await new Promise(resolve =>
+            canvas.toBlob(resolve, 'image/png')
+        );
+
+        if (!blob) {
+            throw new Error('Could not create the card image.');
+        }
+
+        const file = new File(
+            [blob],
+            `Sangat-Cafe-Order-${order.id}.png`,
+            { type: 'image/png' }
+        );
+
+        const phone = String(order.phone || '')
+            .replace(/\D/g, '')
+            .replace(/^0/, '92');
+
+        const message =
+            `Hello ${customerName}! Thank you for ordering from Sangat Cafe. ` +
+            `Your order #${order.id} has been received. ` +
+            `Total: ${currency} ${total}. ❤️`;
+
+        // Prefer the native share sheet when image sharing is supported.
+        if (
+            phone &&
+            navigator.share &&
+            navigator.canShare &&
+            navigator.canShare({ files: [file] })
+        ) {
+            await navigator.share({
+                files: [file],
+                title: 'Sangat Cafe Order Confirmation',
+                text: message
+            });
+
+            showToast('✅ Share window opened!');
+            return;
+        }
+
+        // Otherwise, download the card and open the customer's WhatsApp chat.
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
+
+        if (phone) {
+            const whatsappUrl =
+                `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+            showToast(
+                '✅ Card downloaded! Attach the PNG in WhatsApp.'
+            );
+        } else {
+            showToast(
+                '✅ Card downloaded! Customer phone number is missing.'
+            );
+        }
+
+    } catch (error) {
+        if (error.name === 'AbortError') return;
+
+        console.error('Order card error:', error);
+        showToast(
+            '❌ Could not generate card. Check the browser console.'
+        );
+    }
+}
     </script>
 </body>
 </html>
