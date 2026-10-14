@@ -16,19 +16,18 @@ const PORT = process.env.PORT || 5000;
 let RESTAURANT_CONFIG = {
     name: 'Sangat Cafe',
     est: '2022',
-    address: 'Gojra Road Near Ali Marriage Hall',
-    phone: '0300-0310275',
-    whatsapp: '923001234567',
+    address: 'Chak no 275 j Pensra FSD road near Haier Plaza',
+    phone: '03001060275',
+    whatsapp: '923001060275',
     currency: 'Rs',
-    discountAmount: 330,
-    discountThreshold: 2000,
+    discountAmount: 0,
+    discountThreshold: 0,
     openingTime: '09:00',
     closingTime: '23:00',
     isOpen: true,
     cancellationTimeLimit: 5,
     allowCancellation: true
 };
-
 // ============================================
 // ⭐ DATA PERSISTENCE ⭐
 // ============================================
