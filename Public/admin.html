@@ -5156,46 +5156,33 @@ async function generateOrderCard(orderId) {
             `Your order #${order.id} has been received. ` +
             `Total: ${currency} ${total}. ❤️`;
 
-        // Prefer the native share sheet when image sharing is supported.
-        if (
-            phone &&
-            navigator.share &&
-            navigator.canShare &&
-            navigator.canShare({ files: [file] })
-        ) {
-            await navigator.share({
-                files: [file],
-                title: 'Sangat Cafe Order Confirmation',
-                text: message
-            });
-
-            showToast('✅ Share window opened!');
-            return;
-        }
-
-        // Otherwise, download the card and open the customer's WhatsApp chat.
+        
+        // Download the personalized card.
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
+
         link.href = downloadUrl;
-        link.download = file.name;
+        link.download = `Sangat-Cafe-Order-${order.id}.png`;
+
         document.body.appendChild(link);
         link.click();
         link.remove();
 
         setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
 
+        // Open the customer's WhatsApp chat directly.
         if (phone) {
             const whatsappUrl =
                 `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
-            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+            window.open(whatsappUrl, '_blank');
 
             showToast(
-                '✅ Card downloaded! Attach the PNG in WhatsApp.'
+                '✅ Card downloaded! Attach the PNG in WhatsApp and send it.'
             );
         } else {
             showToast(
-                '✅ Card downloaded! Customer phone number is missing.'
+                '✅ Card downloaded, but the customer phone number is missing.'
             );
         }
 
