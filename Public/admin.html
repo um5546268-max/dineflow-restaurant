@@ -3997,13 +3997,18 @@ const customerWhatsAppNumber = String(order.phone || '')
     .replace(/^0/, '92');
 
 const whatsappMsg =
-    `🍔 *SANGAT CAFE* ❤️\n\n` +
-    `Hi ${order.userName || 'there'}! 👋\n` +
-    `Thank you for your order!\n\n` +
-    `🧾 Order: #${order.id}\n` +
-    `📦 Type: ${orderTypeLabel}\n` +
-    `💰 Total: ${config.currency} ${grandTotal.toFixed(2)}\n\n` +
-    `Your order has been received. Thank you for choosing Sangat Cafe! 😊`;
+    `🍔 *SANGAT CAFE*\n` +
+    `━━━━━━━━━━━━━━━━\n\n` +
+    `Hello *${order.userName || 'Valued Customer'}*! 👋\n\n` +
+    `Thank you for choosing Sangat Cafe! ❤️\n\n` +
+    `✅ Your order has been received successfully.\n\n` +
+    `🧾 *Order:* #${order.id}\n` +
+    `🍽️ *Order Type:* ${orderTypeLabel}\n` +
+    `💰 *Total Amount:* ${config.currency} ${grandTotal.toFixed(2)}\n\n` +
+    `We're getting your delicious meal ready! 😋\n\n` +
+    `Thank you for being our valued customer. ` +
+    `We look forward to serving you again!\n\n` +
+    `*— Team Sangat Cafe* ❤️`;
 
 const whatsappUrl = customerWhatsAppNumber
     ? `https://wa.me/${customerWhatsAppNumber}?text=${encodeURIComponent(whatsappMsg)}`
