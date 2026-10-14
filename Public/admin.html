@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     
-    <title>The Heaven Slice - Admin Panel</title>
+    <title>Sangat Cafe - Admin Panel</title>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1302,7 +1302,7 @@ font-weight: 500;
 <body>
 
     <header class="admin-header">
-        <h2>👑 The Heaven Slice - Admin</h2>
+        <h2>👑 Sangat Cafe - Admin</h2>
         <div class="admin-header-actions">
             <span id="connectionStatus" class="connection-status disconnected">🔴 Connecting...</span>
             <a href="/" class="view-site-btn">📱 View Site</a>
@@ -2032,22 +2032,21 @@ font-weight: 500;
         let currencySymbol = 'Rs';
         let whatsappNumber = '923051322275';
         let allLocations = [];
-        let restaurantConfig = {
-            name: 'Sangat Cafe',
-            est: '2022',
-            address: 'Chak 275 jb Painsra front of Haier Plaze',
-            phone: '0305-13322275',
-            whatsapp: '923051322275',
-            currency: 'Rs',
-            discountAmount: 0,
-            discountThreshold: 0,
-            openingTime: '09:00',
-            closingTime: '23:00',
-            isOpen: true,
-            cancellationTimeLimit: 5,
-            allowCancellation: true
-        };
-
+let restaurantConfig = {
+    name: 'Sangat Cafe',
+    est: '2022',
+    address: 'Chak no 275 j Pensra FSD road near Haier Plaza',
+    phone: '03001060275',
+    whatsapp: '923001060275',
+    currency: 'Rs',
+    discountAmount: 0,
+    discountThreshold: 0,
+    openingTime: '09:00',
+    closingTime: '23:00',
+    isOpen: true,
+    cancellationTimeLimit: 5,
+    allowCancellation: true
+};
         let selectedIcons = { menu: [], deal: [] };
         let selectedAddLayers = [];
         let aboutData = {};
@@ -3367,7 +3366,7 @@ font-weight: 500;
                 .then(data => {
                     restaurantConfig = data;
                     currencySymbol = data.currency || 'Rs';
-                    whatsappNumber = data.whatsapp || '923001234567';
+                    whatsappNumber = data.whatsapp || '92300-1060275';
                     const header = document.querySelector('.admin-header h2');
                     if (header) header.textContent = `👑 ${data.name} - Admin`;
                     const display = document.getElementById('whatsappNumberDisplay');
@@ -3383,7 +3382,7 @@ font-weight: 500;
             fetch('/api/whatsapp-number')
                 .then(r => r.json())
                 .then(data => {
-                    whatsappNumber = data.number || '923001234567';
+                    whatsappNumber = data.number || '923001060275';
                     const display = document.getElementById('whatsappNumberDisplay');
                     if (display) display.textContent = whatsappNumber;
                 })
@@ -3437,7 +3436,7 @@ font-weight: 500;
             fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
-                    document.getElementById('adminRestaurantName').value = data.name || 'The Heaven Slice';
+                    document.getElementById('adminRestaurantName').value = data.name || 'Sangat Cafe';
                 })
                 .catch(() => {});
 
@@ -3632,29 +3631,49 @@ font-weight: 500;
             });
         }
 
-        // ============================================================
-        // WHATSAPP FUNCTIONS
-        // ============================================================
-        function openWhatsApp() {
-            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
-            window.open('https://wa.me/' + number, '_blank');
-        }
+// ============================================================
+// WHATSAPP FUNCTIONS
+// ============================================================
+function openWhatsApp() {
+    const number = String(
+        restaurantConfig.whatsapp || '923001060275'
+    ).replace(/\D/g, '');
 
-        function copyCoordinatesToWhatsApp(lat, lng, orderId, customerName, phone, address) {
-            const whatsappNumber = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
-            const message = `📍 *Customer Location Details*%0A%0A` +
-                `🧑 *Customer:* ${customerName || 'Guest'}%0A` +
-                `📞 *Phone:* ${phone || 'N/A'}%0A` +
-                `📍 *Address:* ${address || 'N/A'}%0A` +
-                `📦 *Order #:* ${orderId || 'N/A'}%0A%0A` +
-                `🗺️ *Coordinates:*%0A` +
-                `Latitude: ${lat}%0A` +
-                `Longitude: ${lng}%0A%0A` +
-                `🔗 *Google Maps:*%0A` +
-                `https://www.google.com/maps?q=${lat},${lng}`;
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
-            window.open(whatsappUrl, '_blank');
-        }
+    window.open(
+        'https://wa.me/' + number,
+        '_blank',
+        'noopener,noreferrer'
+    );
+}
+
+function copyCoordinatesToWhatsApp(
+    lat, lng, orderId, customerName, phone, address
+) {
+    const whatsappNumber = String(
+        restaurantConfig.whatsapp || '923001060275'
+    ).replace(/\D/g, '');
+
+    const message =
+        `📍 *Customer Location Details*\n\n` +
+        `🧑 *Customer:* ${customerName || 'Guest'}\n` +
+        `📞 *Phone:* ${phone || 'N/A'}\n` +
+        `📍 *Address:* ${address || 'N/A'}\n` +
+        `📦 *Order #:* ${orderId || 'N/A'}\n\n` +
+        `🗺️ *Coordinates:*\n` +
+        `Latitude: ${lat}\n` +
+        `Longitude: ${lng}\n\n` +
+        `🔗 *Google Maps:*\n` +
+        `https://www.google.com/maps?q=${lat},${lng}`;
+
+    const whatsappUrl =
+        `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+    window.open(
+        whatsappUrl,
+        '_blank',
+        'noopener,noreferrer'
+    );
+}
 
         function copyMapLink(lat, lng) {
             const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
