@@ -1255,6 +1255,30 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+        
+.developer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 12px;
+    border: 1px solid #c9a227;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #171717, #29210b);
+    color: #f5d76e;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.developer-btn:hover {
+    background: #c9a227;
+    color: #111;
+    box-shadow: 0 0 12px rgba(201, 162, 39, 0.35);
+}
     </style>
 </head>
 <body>
@@ -1270,17 +1294,28 @@
         <div class="splash-loader"><div class="splash-progress"></div></div>
     </div>
 
-    <header class="top-header">
-        <div class="restaurant-name" id="restaurantName">🍔 The <span>Heaven Slice</span></div>
-        <div class="top-actions">
-            <a class="about-btn" onclick="openAboutPopup()">🏪 About</a>
-            <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
-            <span class="cart-icon" onclick="openCartPopup()">
-                🛒
-                <span class="cart-badge" id="cartCount">0</span>
-            </span>
-        </div>
-    </header>
+    
+<header class="top-header">
+    <div class="restaurant-name" id="restaurantName">
+        🍔 The <span>Heaven Slice</span>
+    </div>
+
+    <div class="top-actions">
+        <a class="about-btn" onclick="openAboutPopup()">🏪 About</a>
+
+        <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
+
+        <a class="developer-btn" onclick="showPanel('developer')">
+            💻 Developer
+        </a>
+
+        <span class="cart-icon" onclick="openCartPopup()">
+            🛒
+            <span class="cart-badge" id="cartCount">0</span>
+        </span>
+    </div>
+</header>
+
 
     <div class="main-container">
         <aside class="sidebar" id="categorySidebar"></aside>
@@ -1310,9 +1345,6 @@
         <button class="nav-item" data-panel="settings" onclick="showPanel('settings')">
             <span class="nav-icon">⚙️</span> Settings
         </button>
-<button class="nav-item" data-panel="developer" onclick="showPanel('developer')">
-    <span class="nav-icon">💻</span> Developer
-</button>
 
     </nav>
 
