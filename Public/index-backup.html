@@ -1,0 +1,3710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- ⭐ FAVICON ⭐ -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍔</text></svg>">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <title>The Heaven Slice - Restaurant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #2d3436;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #splashScreen.hide { opacity: 0; transform: scale(1.1); pointer-events: none; }
+        #splashScreen .splash-logo { font-size: 5em; animation: pulse 1.5s infinite; }
+        #splashScreen .splash-name { 
+            color: white; 
+            font-size: 2.5em; 
+            font-weight: 700; 
+            margin-top: 10px; 
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        #splashScreen .splash-sub { 
+            color: rgba(255,255,255,0.7); 
+            font-size: 1em; 
+            margin-top: 5px; 
+        }
+        #splashScreen .splash-loader { 
+            margin-top: 30px; 
+            width: 200px; 
+            height: 4px; 
+            background: rgba(255,255,255,0.2); 
+            border-radius: 2px; 
+            overflow: hidden; 
+        }
+        #splashScreen .splash-loader .splash-progress { 
+            height: 100%; 
+            background: white; 
+            border-radius: 2px; 
+            width: 0%; 
+            animation: loadProgress 2s ease-in-out forwards; 
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
+
+        .restaurant-status-banner {
+            padding: 6px 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .restaurant-status-banner.open {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .restaurant-status-banner.closed {
+            background: #fdf2f2;
+            color: #e74c3c;
+            animation: pulseBanner 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseBanner {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .top-header {
+            background: white;
+            padding: 12px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .restaurant-name { font-size: 1.3em; font-weight: 700; color: #e74c3c; }
+        .restaurant-name span { font-weight: 300; color: #2d3436; }
+        .top-actions { display: flex; gap: 10px; align-items: center; }
+        .top-actions a { 
+            text-decoration: none; 
+            color: #2d3436; 
+            font-weight: 600; 
+            font-size: 0.85em; 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            transition: all 0.3s; 
+            cursor: pointer; 
+            position: relative;
+        }
+        .top-actions a:hover { background: #f1f2f6; }
+        .deals-btn { 
+            background: #e74c3c !important; 
+            color: white !important; 
+            padding: 6px 16px !important; 
+            border-radius: 25px !important; 
+            cursor: pointer; 
+        }
+        .deals-btn:hover { background: #c0392b !important; transform: scale(1.02); }
+        .about-btn {
+            background: #3498db !important;
+            color: white !important;
+            padding: 6px 16px !important;
+            border-radius: 25px !important;
+            cursor: pointer;
+        }
+        .about-btn:hover { background: #2980b9 !important; transform: scale(1.02); }
+        .cart-icon { position: relative; font-size: 1.2em; cursor: pointer; }
+        .cart-badge { 
+            position: absolute; 
+            top: -8px; 
+            right: -10px; 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 0.6em; 
+            font-weight: 700; 
+            padding: 2px 8px; 
+            border-radius: 50%; 
+            min-width: 20px; 
+            text-align: center; 
+        }
+        .deal-notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.6em;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+            animation: pulseBadge 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar {
+            width: 90px;
+            background: white;
+            padding: 10px 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 1px solid #eee;
+            height: 100%;
+        }
+        .sidebar::-webkit-scrollbar { width: 3px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            text-align: center;
+            background: none;
+            border-right: none;
+            width: 100%;
+            font-family: inherit;
+        }
+        .category-item:hover { background: #f8f9fa; }
+        .category-item.active { 
+            border-left-color: #e74c3c; 
+            background: #fdf2f2; 
+        }
+        .category-item .cat-icon { font-size: 1.5em; margin-bottom: 3px; }
+        .category-item .cat-name { 
+            font-size: 0.6em; 
+            font-weight: 600; 
+            color: #636e72; 
+            line-height: 1.2;
+        }
+        .category-item.active .cat-name { color: #e74c3c; }
+
+        .menu-area {
+            flex: 1;
+            padding: 12px 16px;
+            overflow-y: auto;
+            background: #f0f2f5;
+            height: 100%;
+        }
+        .menu-area::-webkit-scrollbar { width: 5px; }
+        .menu-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        .section-title { 
+            font-size: 1em; 
+            font-weight: 700; 
+            color: #2d3436; 
+            margin-bottom: 12px; 
+            padding-bottom: 6px; 
+            border-bottom: 2px solid #e74c3c; 
+            display: inline-block; 
+        }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+        }
+        
+        .menu-item-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1 / 1;
+            min-height: 180px;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .menu-item-card:hover { 
+            box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+            border-color: #e74c3c;
+        }
+        .menu-item-card:active {
+            opacity: 0.8;
+        }
+        
+        .menu-item-card .item-icons { 
+            font-size: 3.2em; 
+            display: block; 
+            margin-bottom: 6px;
+            line-height: 1;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+            transition: all 0.3s ease;
+        }
+        .menu-item-card:hover .item-icons { 
+            filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
+        }
+        
+        .menu-item-card .item-icons.bounce {
+            animation: iconBounce 3s ease-in-out infinite;
+        }
+        .menu-item-card .item-icons.float {
+            animation: iconFloat 4s ease-in-out infinite;
+        }
+        .menu-item-card .item-icons.pulse {
+            animation: iconPulse 2.5s ease-in-out infinite;
+        }
+        .menu-item-card .item-icons.rotate {
+            animation: iconRotate 8s linear infinite;
+        }
+        .menu-item-card .item-icons.wiggle {
+            animation: iconWiggle 2s ease-in-out infinite;
+        }
+        
+        @keyframes iconBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
+        }
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes iconRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes iconWiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-8deg); }
+            75% { transform: rotate(8deg); }
+        }
+        
+        .menu-item-card .item-name { 
+            font-weight: 700; 
+            font-size: 0.85em; 
+            color: #2d3436; 
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+        .menu-item-card .item-price { 
+            font-weight: 700; 
+            color: #e74c3c; 
+            font-size: 1em;
+        }
+        .menu-item-card .item-category { 
+            font-size: 0.55em; 
+            color: #b2bec3; 
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .menu-item-card .customizable-badge {
+            font-size: 0.5em;
+            background: #fef9e7;
+            color: #f39c12;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+        .menu-item-card .item-actions { 
+            display: flex; 
+            gap: 4px; 
+            margin-top: 6px; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+            width: 100%;
+        }
+        .menu-item-card .btn-quick { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 0.6em; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            flex: 1;
+            min-width: 50px;
+        }
+        .menu-item-card .btn-quick:hover { 
+            background: #c0392b; 
+            transform: scale(1.05); 
+        }
+        .menu-item-card .btn-cart { 
+            background: #f1f2f6; 
+            color: #2d3436; 
+            border: none; 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 0.6em; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            flex: 1;
+            min-width: 50px;
+        }
+        .menu-item-card .btn-cart:hover { 
+            background: #dfe6e9; 
+            transform: scale(1.05); 
+        }
+        
+        .menu-item-card .qty-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.65em;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 50%;
+            min-width: 22px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
+        }
+
+        .bottom-nav {
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 6px 8px;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #b2bec3;
+            font-size: 0.55em;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 3px 8px;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .nav-item .nav-icon { font-size: 1.2em; margin-bottom: 1px; }
+        .nav-item.active { color: #e74c3c; }
+        .nav-item:hover { color: #e74c3c; background: #fdf2f2; }
+        .nav-item .nav-badge { 
+            position: absolute; 
+            top: -2px; 
+            right: 2px; 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 0.5em; 
+            font-weight: 700; 
+            padding: 1px 6px; 
+            border-radius: 50%; 
+            min-width: 16px; 
+            text-align: center; 
+        }
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+        .popup-overlay.show { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .popup-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 25px 20px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .popup-close { 
+            position: absolute; 
+            top: 10px; 
+            right: 14px; 
+            font-size: 1.4em; 
+            cursor: pointer; 
+            color: #b2bec3; 
+            transition: all 0.3s; 
+            background: none; 
+            border: none; 
+        }
+        .popup-close:hover { color: #e74c3c; transform: rotate(90deg); }
+        .popup-title { font-size: 1.3em; font-weight: 700; color: #2d3436; margin-bottom: 4px; }
+        .popup-subtitle { color: #636e72; margin-bottom: 15px; font-size: 0.85em; }
+
+        /* ⭐ ABOUT POPUP STYLES ⭐ */
+        .about-photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .about-photo-grid img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        .about-photo-grid img:hover {
+            transform: scale(1.02);
+            border-color: #e74c3c;
+        }
+        .about-info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f2f6;
+            font-size: 0.9em;
+        }
+        .about-info-item .label {
+            font-weight: 600;
+            color: #636e72;
+            min-width: 80px;
+        }
+        .about-info-item .value {
+            color: #2d3436;
+        }
+        .about-description {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #2d3436;
+        }
+
+        /* ⭐ PROFESSIONAL LOBBY DEAL STYLES ⭐ */
+        #lobbyDealPopup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: lobbyFadeIn 0.5s ease;
+        }
+        #lobbyDealPopup.show { display: flex; }
+        @keyframes lobbyFadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        #lobbyDealPopup .lobby-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: lobbySlideUp 0.5s ease;
+        }
+        @keyframes lobbySlideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #lobbyDealPopup .lobby-image-container {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            overflow: hidden;
+            border-radius: 24px 24px 0 0;
+            background: linear-gradient(135deg, #1a1a2e, #2d2d44);
+        }
+        #lobbyDealPopup .lobby-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #lobbyDealPopup .lobby-image-container .lobby-discount-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #e74c3c;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.85em;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            animation: pulseBadge 2s ease-in-out infinite;
+        }
+        #lobbyDealPopup .lobby-body {
+            padding: 20px 24px 24px;
+        }
+        #lobbyDealPopup .lobby-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2d3436;
+            margin-bottom: 4px;
+        }
+        #lobbyDealPopup .lobby-desc {
+            font-size: 0.85em;
+            color: #636e72;
+            margin-bottom: 12px;
+        }
+        #lobbyDealPopup .lobby-prices {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        #lobbyDealPopup .lobby-prices .original {
+            font-size: 0.9em;
+            color: #b2bec3;
+            text-decoration: line-through;
+        }
+        #lobbyDealPopup .lobby-prices .price {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+        #lobbyDealPopup .lobby-actions {
+            display: flex;
+            gap: 10px;
+        }
+        #lobbyDealPopup .lobby-actions button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #lobbyDealPopup .lobby-actions .btn-buy {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+        }
+        #lobbyDealPopup .lobby-actions .btn-buy:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 30px rgba(231, 76, 60, 0.4);
+        }
+        #lobbyDealPopup .lobby-actions .btn-close-lobby {
+            background: #f1f2f6;
+            color: #2d3436;
+            flex: 0.4;
+        }
+        #lobbyDealPopup .lobby-actions .btn-close-lobby:hover {
+            background: #dfe6e9;
+        }
+        #lobbyDealPopup .lobby-expiry {
+            text-align: center;
+            font-size: 0.75em;
+            color: #f39c12;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f2f6;
+        }
+        #lobbyDealPopup .lobby-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 1.4em;
+            color: white;
+            background: rgba(0,0,0,0.4);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        #lobbyDealPopup .lobby-close-btn:hover {
+            background: rgba(0,0,0,0.7);
+            transform: rotate(90deg);
+        }
+
+        .deal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        .deal-item:last-child { border-bottom: none; }
+        .deal-item .deal-info { display: flex; flex-direction: column; }
+        .deal-item .deal-icons { font-size: 2em; letter-spacing: 2px; }
+        .deal-item .deal-name { font-weight: 600; color: #2d3436; }
+        .deal-item .deal-desc { font-size: 0.75em; color: #636e72; }
+        .deal-item .deal-price { font-weight: 700; color: #e74c3c; font-size: 1em; }
+        .deal-buy-btn { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 5px 16px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            font-size: 0.8em; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .deal-buy-btn:hover { background: #c0392b; transform: scale(1.05); }
+
+        .order-form input, .order-form select, .order-form textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #dfe6e9;
+            border-radius: 10px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            font-family: inherit;
+            transition: border 0.3s;
+        }
+        .order-form input:focus, .order-form select:focus, .order-form textarea:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .order-submit-btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: #27ae60; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 1em; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .order-submit-btn:hover { background: #1e8449; transform: scale(1.02); }
+        .order-total-display { 
+            text-align: center; 
+            font-size: 1.2em; 
+            font-weight: 700; 
+            color: #e74c3c; 
+            padding: 10px; 
+            background: #fdf2f2; 
+            border-radius: 10px; 
+            margin-bottom: 15px; 
+        }
+
+        .order-type-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            background: white;
+            color: #2d3436;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.8em;
+        }
+        .order-type-btn.active {
+            border-color: #e74c3c;
+            background: #e74c3c;
+            color: white;
+        }
+        .order-type-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .layer-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .layer-option {
+            padding: 6px 14px;
+            border: 2px solid #dfe6e9;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85em;
+            background: white;
+            color: #2d3436;
+        }
+        .layer-option:hover {
+            border-color: #3498db;
+            transform: scale(1.02);
+        }
+        .layer-option.selected {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3436;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .status-pending { background: #fdf2f2; color: #e74c3c; }
+        .status-confirmed { background: #e8f4fd; color: #3498db; }
+        .status-preparing { background: #fef9e7; color: #f39c12; }
+        .status-ready { background: #e8f8f0; color: #27ae60; }
+        .status-delivered { background: #e8f8f0; color: #27ae60; }
+        .status-cancelled { background: #fdf2f2; color: #e74c3c; }
+
+        .star-btn {
+            font-size: 2.2em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+        .star-btn.active {
+            opacity: 1;
+            filter: grayscale(0%);
+            transform: scale(1.1);
+        }
+        .star-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .support-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .support-options .support-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #eee;
+        }
+        .support-options .support-card:hover {
+            background: #fdf2f2;
+            border-color: #e74c3c;
+            transform: translateY(-2px);
+        }
+        .support-options .support-card .support-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        .support-options .support-card .support-label {
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        .support-options .support-card .support-desc {
+            font-size: 0.7em;
+            color: #b2bec3;
+            margin-top: 3px;
+        }
+
+        #locationMap {
+            width: 100%;
+            height: 250px;
+            border-radius: 10px;
+            background: #f1f2f6;
+            display: none;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        #locationMap iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .receipt-style {
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            padding: 20px 15px;
+            max-width: 380px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            font-size: 13px;
+        }
+        .receipt-style .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        .receipt-style .receipt-header .restaurant-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #000;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+        }
+        .receipt-style .receipt-header .est {
+            font-size: 11px;
+            color: #555;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-header .address {
+            font-size: 10px;
+            color: #444;
+            line-height: 1.3;
+        }
+        .receipt-style .receipt-header .phone {
+            font-size: 10px;
+            color: #444;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-divider {
+            border-top: 1px dashed #999;
+            margin: 6px 0;
+        }
+        .receipt-style .receipt-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin: 4px 0;
+        }
+        .receipt-style .receipt-order-info {
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-order-info .order-left {
+            text-align: left;
+        }
+        .receipt-style .receipt-order-info .order-right {
+            text-align: right;
+        }
+        .receipt-style .receipt-customer {
+            font-size: 11px;
+            padding: 2px 0;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-table-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 11px;
+            border-bottom: 1px solid #999;
+            padding: 3px 0;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+        .receipt-style .receipt-table-header span {
+            flex: 1;
+        }
+        .receipt-style .receipt-table-header .col-qty {
+            text-align: center;
+            flex: 0.5;
+        }
+        .receipt-style .receipt-table-header .col-price {
+            text-align: right;
+            flex: 0.8;
+        }
+        .receipt-style .receipt-table-header .col-amount {
+            text-align: right;
+            flex: 0.8;
+        }
+        .receipt-style .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            padding: 2px 0;
+        }
+        .receipt-style .receipt-row .item-name {
+            flex: 2;
+            font-weight: 600;
+        }
+        .receipt-style .receipt-row .item-qty {
+            flex: 0.5;
+            text-align: center;
+        }
+        .receipt-style .receipt-row .item-price {
+            flex: 0.8;
+            text-align: right;
+        }
+        .receipt-style .receipt-row .item-amount {
+            flex: 0.8;
+            text-align: right;
+        }
+        .receipt-style .receipt-totals {
+            border-top: 2px double #333;
+            padding-top: 6px;
+            margin-top: 6px;
+        }
+        .receipt-style .receipt-totals .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 2px 0;
+        }
+        .receipt-style .receipt-totals .total-row .label {
+            font-weight: 600;
+        }
+        .receipt-style .receipt-totals .total-row .value {
+            font-weight: 600;
+        }
+        .receipt-style .receipt-totals .total-row.discount {
+            color: #e74c3c;
+        }
+        .receipt-style .receipt-grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 6px 0;
+            border-top: 2px double #333;
+            margin-top: 4px;
+        }
+        .receipt-style .receipt-footer {
+            text-align: center;
+            border-top: 2px dashed #333;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-size: 10px;
+            color: #555;
+        }
+        .receipt-style .receipt-footer .qr-section {
+            margin: 6px 0;
+        }
+        .receipt-style .receipt-footer .qr-section img {
+            max-width: 70px;
+            height: auto;
+        }
+        .receipt-style .receipt-footer .qr-section .qr-text {
+            font-size: 9px;
+            color: #555;
+        }
+        .receipt-style .receipt-footer .thank-you {
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+            margin-top: 4px;
+        }
+        .receipt-style .receipt-footer .great-day {
+            font-size: 10px;
+            color: #555;
+        }
+        .receipt-style .receipt-footer .heart {
+            color: #e74c3c;
+        }
+
+        .order-status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .receipt-popup {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .receipt-popup.show { display: flex; }
+        .receipt-popup .receipt-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            padding: 15px;
+            position: relative;
+        }
+        .receipt-popup .receipt-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #b2bec3;
+            background: none;
+            border: none;
+            z-index: 10;
+        }
+        .receipt-popup .receipt-close:hover { color: #e74c3c; }
+        .receipt-popup .receipt-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+        .receipt-popup .receipt-actions button {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85em;
+        }
+        .receipt-popup .btn-print-receipt { background: #27ae60; color: white; }
+        .receipt-popup .btn-print-receipt:hover { background: #1e8449; }
+        .receipt-popup .btn-close-receipt { background: #b2bec3; color: white; }
+        .receipt-popup .btn-close-receipt:hover { background: #636e72; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #receiptPrint, #receiptPrint * { visibility: visible; }
+            #receiptPrint {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 80mm;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                font-size: 11px;
+                background: white;
+                color: black;
+                border: none;
+            }
+            .receipt-popup .receipt-actions { display: none; }
+            .receipt-popup .receipt-close { display: none; }
+        }
+
+        .cart-items-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .cart-items-list .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        .cart-items-list .cart-item .item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cart-items-list .cart-item .item-info .item-icon {
+            font-size: 1.8em;
+        }
+        .cart-items-list .cart-item .item-info .item-details {
+            font-size: 0.85em;
+        }
+        .cart-items-list .cart-item .item-info .item-details .item-name {
+            font-weight: 600;
+        }
+        .cart-items-list .cart-item .item-info .item-details .item-qty-price {
+            color: #636e72;
+            font-size: 0.8em;
+        }
+        .cart-items-list .cart-item .item-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cart-items-list .cart-item .item-actions .qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+        .cart-items-list .cart-item .item-actions .qty-btn.minus {
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+        .cart-items-list .cart-item .item-actions .qty-btn.minus:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        .cart-items-list .cart-item .item-actions .qty-btn.plus {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+        .cart-items-list .cart-item .item-actions .qty-btn.plus:hover {
+            background: #27ae60;
+            color: white;
+        }
+        .cart-items-list .cart-item .item-actions .qty-text {
+            font-weight: 700;
+            min-width: 20px;
+            text-align: center;
+        }
+        .cart-items-list .cart-item .item-actions .item-total {
+            font-weight: 700;
+            color: #e74c3c;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        @media (max-width: 600px) {
+            .sidebar { width: 75px; }
+            .category-item .cat-icon { font-size: 1.2em; }
+            .category-item .cat-name { font-size: 0.5em; }
+            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+            .menu-item-card { min-height: 150px; padding: 12px 8px; }
+            .menu-item-card .item-icons { font-size: 2.6em; }
+            .top-header { padding: 8px 12px; }
+            .restaurant-name { font-size: 1.1em; }
+            .top-actions a { font-size: 0.75em; padding: 4px 10px; }
+            .order-form .form-row { grid-template-columns: 1fr; }
+            .popup-content { padding: 18px 14px; margin: 10px; }
+            .bottom-nav .nav-item { font-size: 0.5em; padding: 3px 6px; }
+            .bottom-nav .nav-item .nav-icon { font-size: 1em; }
+            .deal-item .deal-icons { font-size: 1.2em; }
+            .star-btn { font-size: 1.8em; }
+            .support-options { grid-template-columns: 1fr; }
+            .receipt-style { padding: 12px 10px; font-size: 11px; }
+            .receipt-style .receipt-header .restaurant-name { font-size: 17px; }
+            .receipt-style .receipt-grand-total { font-size: 14px; }
+            .menu-item-card .btn-quick, .menu-item-card .btn-cart { font-size: 0.55em; padding: 3px 8px; }
+            .about-photo-grid { grid-template-columns: 1fr; }
+            #lobbyDealPopup .lobby-image-container { height: 180px; }
+            #lobbyDealPopup .lobby-prices .price { font-size: 1.4em; }
+            #lobbyDealPopup .lobby-actions button { padding: 12px; font-size: 0.85em; }
+        }
+        @media (max-width: 400px) {
+            .sidebar { width: 60px; }
+            .category-item { padding: 8px 4px; }
+            .category-item .cat-icon { font-size: 1em; }
+            .category-item .cat-name { font-size: 0.45em; }
+            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+            .menu-item-card { min-height: 130px; padding: 10px 6px; }
+            .menu-item-card .item-icons { font-size: 2.2em; }
+            .menu-item-card .item-name { font-size: 0.7em; }
+            .menu-item-card .item-price { font-size: 0.85em; }
+            .star-btn { font-size: 1.5em; }
+            .receipt-style { padding: 10px 8px; font-size: 10px; }
+            .receipt-style .receipt-header .restaurant-name { font-size: 15px; }
+            #lobbyDealPopup .lobby-image-container { height: 150px; }
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="restaurantStatusBanner" class="restaurant-status-banner open">
+        🟢 Restaurant is OPEN - Order Now!
+    </div>
+
+    <div id="splashScreen">
+        <div class="splash-logo">🍔</div>
+        <div class="splash-name" id="splashName">The Heaven Slice</div>
+        <div class="splash-sub">Restaurant Ordering System</div>
+        <div class="splash-loader"><div class="splash-progress"></div></div>
+    </div>
+
+    <header class="top-header">
+        <div class="restaurant-name" id="restaurantName">🍔 The <span>Heaven Slice</span></div>
+        <div class="top-actions">
+            <a class="about-btn" onclick="openAboutPopup()">🏪 About</a>
+            <a class="deals-btn" onclick="openDeals()">🔥 Deals</a>
+            <span class="cart-icon" onclick="openCartPopup()">
+                🛒
+                <span class="cart-badge" id="cartCount">0</span>
+            </span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar" id="categorySidebar"></aside>
+        <main class="menu-area" id="menuArea"></main>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-panel="menu" onclick="showPanel('menu')">
+            <span class="nav-icon">🍽️</span> Menu
+        </button>
+        <button class="nav-item" data-panel="orders" onclick="showPanel('orders')">
+            <span class="nav-icon">📦</span> Orders
+            <span class="nav-badge" id="orderBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" data-panel="account" onclick="showPanel('account')">
+            <span class="nav-icon">👤</span> Account
+        </button>
+        <button class="nav-item" data-panel="feedback" onclick="showPanel('feedback')">
+            <span class="nav-icon">⭐</span> Feedback
+        </button>
+        <button class="nav-item" data-panel="support" onclick="showPanel('support')">
+            <span class="nav-icon">🎫</span> Support
+        </button>
+        <button class="nav-item" data-panel="location" onclick="showPanel('location')">
+            <span class="nav-icon">📍</span> Location
+        </button>
+        <button class="nav-item" data-panel="settings" onclick="showPanel('settings')">
+            <span class="nav-icon">⚙️</span> Settings
+        </button>
+    </nav>
+
+    <!-- ⭐ ABOUT POPUP ⭐ -->
+    <div class="popup-overlay" id="aboutPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeAboutPopup()">✕</button>
+            <div class="popup-title" id="aboutPopupTitle">🏪 About The Heaven Slice</div>
+            <div id="aboutContent">
+                <div style="text-align:center; margin-bottom:10px;">
+                    <div style="font-size:3em; margin-bottom:5px;">🍔</div>
+                </div>
+                <div class="about-description" id="aboutDescriptionText">
+                    Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. 
+                    Our ingredients are always fresh and our service is top-notch. 
+                    Visit us for an unforgettable dining experience!
+                </div>
+                <div class="about-photo-grid" id="aboutPhotoGrid">
+                    <!-- Photos will be loaded here -->
+                </div>
+                <div style="margin-top:10px;">
+                    <div class="about-info-item">
+                        <span class="label">📅 Established</span>
+                        <span class="value" id="aboutEstablishedText">2022</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">👨‍🍳 Owner</span>
+                        <span class="value" id="aboutOwnerText">Chef Ali</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">🕐 Hours</span>
+                        <span class="value" id="aboutHoursText">Mon-Sun: 9:00 AM - 11:00 PM</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">📍 Address</span>
+                        <span class="value" id="aboutAddressText">Gojra Road Near Ali Marriage Hall</span>
+                    </div>
+                    <div class="about-info-item">
+                        <span class="label">📞 Phone</span>
+                        <span class="value" id="aboutPhoneText">0300-0310275</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⭐ LOBBY DEAL POPUP - PROFESSIONAL ⭐ -->
+    <div id="lobbyDealPopup">
+        <div class="lobby-content" id="lobbyDealContent">
+            <button class="lobby-close-btn" onclick="closeLobbyDeal()">✕</button>
+            <div class="lobby-image-container">
+                <img class="lobby-image" id="lobbyDealImage" src="" alt="Deal Image" />
+                <div class="lobby-discount-badge" id="lobbyDealDiscountBadge">50% OFF</div>
+            </div>
+            <div class="lobby-body">
+                <div class="lobby-title" id="lobbyDealTitle">2 Zinger Burger + 10 Wings + 1Ltr Drink</div>
+                <div class="lobby-desc" id="lobbyDealDesc">Limited time offer! Get this amazing deal today.</div>
+                <div class="lobby-prices">
+                    <span class="original" id="lobbyDealOriginal">Rs 2800</span>
+                    <span class="price" id="lobbyDealPrice">Rs 1400</span>
+                </div>
+                <div class="lobby-actions">
+                    <button class="btn-buy" onclick="buyLobbyDeal()">🔥 Grab This Deal</button>
+                    <button class="btn-close-lobby" onclick="closeLobbyDeal()">✕</button>
+                </div>
+                <div class="lobby-expiry" id="lobbyDealExpiry">⏱️ Offer expires in 3 days</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="dealsPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeDeals()">✕</button>
+            <div class="popup-title">🔥 Today's Deals</div>
+            <div class="popup-subtitle">Limited time offers!</div>
+            <div id="dealsList"></div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="orderPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeOrderPopup()">✕</button>
+            <div class="popup-title">📝 Place Order</div>
+            <div class="popup-subtitle">Fill in your details</div>
+            <div class="order-total-display" id="orderTotalDisplay">Total: Rs 0.00</div>
+            <form class="order-form" id="orderForm" onsubmit="submitOrder(event)">
+                <input type="text" id="orderName" placeholder="Full Name" required />
+                <input type="tel" id="orderPhone" placeholder="Phone Number" required />
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
+                    <button type="button" class="order-type-btn active" id="dineinBtn" onclick="selectOrderType('dinein')">🍽️ Dine-In</button>
+                    <button type="button" class="order-type-btn" id="carServiceBtn" onclick="selectOrderType('carService')">🚗 Car</button>
+                    <button type="button" class="order-type-btn" id="takeawayBtn" onclick="selectOrderType('takeaway')">🏪 Takeaway</button>
+                    <button type="button" class="order-type-btn" id="deliveryBtn" onclick="selectOrderType('delivery')">🚚 Delivery</button>
+                    <button type="button" class="order-type-btn" id="thirdpartyBtn" onclick="selectOrderType('thirdparty')">📦 Third</button>
+                </div>
+                
+                <select id="paymentMethod" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
+                    <option value="cash">💵 Cash</option>
+                    <option value="easypaisa">📱 Easypaisa</option>
+                    <option value="jazzcash">📱 JazzCash</option>
+                    <option value="card">💳 Credit Card</option>
+                </select>
+                
+                <div id="dineinFields" style="display:block;">
+                    <input type="text" id="orderTable" placeholder="Table Number (e.g., 2)" />
+                </div>
+                <div id="carServiceFields" style="display:none;">
+                    <input type="text" id="carNumber" placeholder="Car Number (e.g., LEA-1234)" />
+                    <input type="text" id="carServiceAddress" placeholder="Service Address" />
+                </div>
+                <div id="deliveryFields" style="display:none;">
+                    <input type="text" id="orderAddress" placeholder="Delivery Address" />
+                    <input type="text" id="orderCity" placeholder="City" />
+                </div>
+                <div id="thirdpartyFields" style="display:none;">
+                    <input type="text" id="thirdpartyName" placeholder="Platform Name (e.g., FoodPanda)" />
+                    <input type="text" id="thirdpartyOrderId" placeholder="Platform Order ID" />
+                </div>
+                <div id="layerContainer"></div>
+                <input type="hidden" id="orderItems" />
+                <input type="hidden" id="orderTotal" />
+                <input type="hidden" id="orderType" value="dinein" />
+                <button type="submit" class="order-submit-btn">✅ Confirm Order</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="cartPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeCartPopup()">✕</button>
+            <div class="popup-title">🛒 Your Cart</div>
+            <div class="popup-subtitle">Review your items before ordering</div>
+            <div class="cart-items-list" id="cartItemsList"></div>
+            <div style="text-align:center; padding:10px; font-size:1.2em; font-weight:700; color:#e74c3c; border-top:2px solid #eee; margin-top:10px;">
+                Total: <span id="cartTotalPrice">Rs 0.00</span>
+            </div>
+            <button class="order-submit-btn" onclick="checkoutCart()" style="margin-top:10px;">✅ Checkout</button>
+            <button style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeCartPopup()">Continue Shopping</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="loginRequiredPopup">
+        <div class="popup-content" style="text-align:center;">
+            <button class="popup-close" onclick="closeLoginRequired()">✕</button>
+            <div style="font-size:3em; margin-bottom:10px;">🔐</div>
+            <div class="popup-title">Login Required</div>
+            <div class="popup-subtitle">Please login to continue</div>
+            <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:25px; text-decoration:none; font-weight:600; margin-top:10px;">
+                Sign in with Google
+            </a>
+            <br>
+            <button onclick="closeLoginRequired()" style="margin-top:10px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Close</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="locationPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeLocationPopup()">✕</button>
+            <div class="popup-title">📍 Share Your Location</div>
+            <div class="popup-subtitle">For faster delivery, please share your location</div>
+            <div style="text-align:center; margin:15px 0;">
+                <div id="locationStatus" style="padding:15px; background:#f8f9fa; border-radius:10px; color:#636e72; margin-bottom:10px;">
+                    ⏳ Please allow location access
+                </div>
+                <div id="locationMap">
+                    <iframe id="locationIframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                </div>
+                <button class="order-submit-btn" onclick="getLocationForOrder()" style="margin-top:10px;">
+                    📍 Get My Location
+                </button>
+                <button class="order-submit-btn" onclick="skipLocation()" style="margin-top:10px; background:#b2bec3;">
+                    Skip (Use Address)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="feedbackPopup">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeFeedback()">✕</button>
+            <div class="popup-title">⭐ Rate Us</div>
+            <div class="popup-subtitle">How was your experience?</div>
+            <div style="display: flex; gap: 8px; justify-content: center; margin: 15px 0;">
+                <button class="star-btn" data-star="1" onclick="selectStar(1)">⭐</button>
+                <button class="star-btn" data-star="2" onclick="selectStar(2)">⭐</button>
+                <button class="star-btn" data-star="3" onclick="selectStar(3)">⭐</button>
+                <button class="star-btn" data-star="4" onclick="selectStar(4)">⭐</button>
+                <button class="star-btn" data-star="5" onclick="selectStar(5)">⭐</button>
+            </div>
+            <div style="text-align: center; margin: 5px 0 15px 0; font-size: 0.9em; color: #636e72;" id="starLabel">Select a rating</div>
+            <textarea id="feedbackComment" placeholder="Share your feedback (optional)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em; margin-bottom:10px; resize:vertical; min-height:60px;"></textarea>
+            <button class="order-submit-btn" onclick="submitFeedback()">💬 Submit Feedback</button>
+            <button style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="closeFeedback()">Maybe Later</button>
+        </div>
+    </div>
+
+    <div class="receipt-popup" id="receiptPopup">
+        <div class="receipt-content">
+            <button class="receipt-close" onclick="closeReceipt()">✕</button>
+            <div id="receiptPrint"></div>
+            <div class="receipt-actions">
+                <button class="btn-print-receipt" onclick="printReceipt()">🖨️ Print Receipt</button>
+                <button class="btn-close-receipt" onclick="closeReceipt()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // RESTAURANT ID
+        function getRestaurantId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('restaurant');
+            if (!id) id = localStorage.getItem('dineflow_restaurant');
+            if (!id) id = sessionStorage.getItem('dineflow_restaurant');
+            if (!id) id = 'restaurant-1';
+            
+            localStorage.setItem('dineflow_restaurant', id);
+            sessionStorage.setItem('dineflow_restaurant', id);
+            
+            if (!urlParams.get('restaurant')) {
+                try {
+                    const newUrl = window.location.pathname + '?restaurant=' + id + window.location.hash;
+                    window.history.replaceState({}, '', newUrl);
+                } catch(e) {}
+            }
+            return id;
+        }
+
+        const RESTAURANT_ID = getRestaurantId();
+        console.log('✅ Customer Restaurant ID:', RESTAURANT_ID);
+
+        function apiUrl(endpoint) {
+            const separator = endpoint.includes('?') ? '&' : '?';
+            return endpoint + separator + 'restaurant=' + RESTAURANT_ID;
+        }
+
+        // RESTAURANT CONFIG
+        let restaurantConfig = {
+            name: 'The Heaven Slice',
+            est: '2022',
+            address: 'Gojra Road Near Ali Marriage Hall',
+            phone: '0300-0310275',
+            whatsapp: '923001234567',
+            currency: 'Rs',
+            discountAmount: 330,
+            discountThreshold: 2000,
+            openingTime: '09:00',
+            closingTime: '23:00',
+            isOpen: true,
+            cancellationTimeLimit: 5,
+            allowCancellation: true
+        };
+
+        function loadRestaurantConfig() {
+            fetch('/api/restaurant-config')
+                .then(r => r.json())
+                .then(data => {
+                    restaurantConfig = data;
+                    currencySymbol = data.currency || 'Rs';
+                    updateRestaurantNameDisplay();
+                    
+                    if (data.discountAmount !== undefined) {
+                        receiptSettings.discountAmount = data.discountAmount;
+                    }
+                    if (data.discountThreshold !== undefined) {
+                        receiptSettings.discountThreshold = data.discountThreshold;
+                    }
+                    if (data.address) {
+                        receiptSettings.address = data.address;
+                    }
+                    if (data.phone) {
+                        receiptSettings.phone = data.phone;
+                    }
+                    if (data.est) {
+                        receiptSettings.established = data.est;
+                    }
+                    if (data.openingTime) {
+                        restaurantConfig.openingTime = data.openingTime;
+                    }
+                    if (data.closingTime) {
+                        restaurantConfig.closingTime = data.closingTime;
+                    }
+                    if (data.isOpen !== undefined) {
+                        restaurantConfig.isOpen = data.isOpen;
+                    }
+                    if (data.cancellationTimeLimit !== undefined) {
+                        restaurantConfig.cancellationTimeLimit = data.cancellationTimeLimit;
+                    }
+                    if (data.allowCancellation !== undefined) {
+                        restaurantConfig.allowCancellation = data.allowCancellation;
+                    }
+                    
+                    updateRestaurantStatusBanner();
+                })
+                .catch(() => {});
+        }
+
+        function updateRestaurantStatusBanner() {
+            const banner = document.getElementById('restaurantStatusBanner');
+            if (!banner) return;
+            
+            if (restaurantConfig.isOpen) {
+                banner.className = 'restaurant-status-banner open';
+                banner.textContent = '🟢 Restaurant is OPEN - Order Now!';
+            } else {
+                banner.className = 'restaurant-status-banner closed';
+                banner.textContent = '🔴 Restaurant is CLOSED - Opens at ' + (restaurantConfig.openingTime || '09:00');
+            }
+        }
+
+        function checkRestaurantStatus() {
+            return fetch('/api/restaurant-status?restaurant=' + RESTAURANT_ID)
+                .then(r => r.json())
+                .then(data => {
+                    restaurantConfig.isOpen = data.isOpen;
+                    restaurantConfig.openingTime = data.openingTime;
+                    restaurantConfig.closingTime = data.closingTime;
+                    updateRestaurantStatusBanner();
+                    
+                    if (!data.isOpen) {
+                        showToast('🔴 Restaurant is currently closed. Opens at ' + data.openingTime);
+                        return false;
+                    }
+                    return true;
+                })
+                .catch(() => true);
+        }
+
+        function cancelOrder(orderId) {
+            if (!restaurantConfig.allowCancellation) {
+                showToast('❌ Order cancellation is disabled by the restaurant');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            
+            fetch('/api/orders/' + orderId + '/cancel?restaurant=' + RESTAURANT_ID, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isCustomer: true })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Order #' + orderId + ' cancelled successfully!');
+                    loadOrders();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to cancel order'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        // DATA
+        let categories = [
+            { id: 'all', name: 'All', icon: '🍽️' },
+            { id: 'burgers', name: 'Burgers', icon: '🍔' },
+            { id: 'pizza', name: 'Pizza', icon: '🍕' },
+            { id: 'sandwiches', name: 'Sandwiches', icon: '🥪' },
+            { id: 'sides', name: 'Sides', icon: '🍟' },
+            { id: 'drinks', name: 'Drinks', icon: '🥤' },
+            { id: 'salads', name: 'Salads', icon: '🥗' },
+            { id: 'appetizers', name: 'Appetizers', icon: '🍤' },
+            { id: 'desserts', name: 'Desserts', icon: '🍰' }
+        ];
+        let menuItems = [];
+        let deals = [];
+        let orders = [];
+        let cart = [];
+        let isLoggedIn = false;
+        let user = null;
+        let currentCategory = 'all';
+        let pendingOrder = null;
+        let restaurantName = 'The Heaven Slice';
+        let currentPanel = 'menu';
+        let selectedLayers = [];
+        let selectedOrderType = 'dinein';
+        let orderLocation = { lat: null, lng: null, address: '' };
+        let pendingOrderData = null;
+        let currencySymbol = 'Rs';
+        let whatsappNumber = '923001234567';
+        let orderCounter = 1;
+        let receiptSettings = { logoIcon: '👨‍🍳', logoUrl: '', tagline: 'PIZZA • BURGER • FAST FOOD' };
+        let aboutData = {};
+        let lobbyDeals = [];
+        let currentLobbyDeal = null;
+        let lobbyDealShown = false;
+
+        const sidebar = document.getElementById('categorySidebar');
+        const menuArea = document.getElementById('menuArea');
+        const dealsPopup = document.getElementById('dealsPopup');
+        const dealsList = document.getElementById('dealsList');
+        const orderPopup = document.getElementById('orderPopup');
+        const loginRequiredPopup = document.getElementById('loginRequiredPopup');
+        const locationPopup = document.getElementById('locationPopup');
+        const cartBadge = document.getElementById('cartCount');
+        const restaurantNameEl = document.getElementById('restaurantName');
+        const splashNameEl = document.getElementById('splashName');
+
+        const iconAnimations = ['bounce', 'float', 'pulse', 'rotate', 'wiggle'];
+        function getIconAnimation(index) {
+            return iconAnimations[index % iconAnimations.length];
+        }
+
+        // ⭐ LOAD ABOUT DATA ⭐
+        function loadAboutData() {
+            fetch('/api/about-restaurant')
+                .then(r => r.json())
+                .then(data => {
+                    aboutData = data;
+                })
+                .catch(() => {});
+        }
+
+        // ⭐ LOAD LOBBY DEALS ⭐
+        function loadLobbyDeals() {
+            fetch('/api/lobby-deals/active')
+                .then(r => r.json())
+                .then(data => {
+                    lobbyDeals = data || [];
+                    if (lobbyDeals.length > 0 && !lobbyDealShown) {
+                        showLobbyDeal(lobbyDeals[0]);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // ⭐ SHOW LOBBY DEAL POPUP - PROFESSIONAL ⭐
+        function showLobbyDeal(deal) {
+            currentLobbyDeal = deal;
+            const popup = document.getElementById('lobbyDealPopup');
+            const image = document.getElementById('lobbyDealImage');
+            const title = document.getElementById('lobbyDealTitle');
+            const desc = document.getElementById('lobbyDealDesc');
+            const original = document.getElementById('lobbyDealOriginal');
+            const price = document.getElementById('lobbyDealPrice');
+            const discountBadge = document.getElementById('lobbyDealDiscountBadge');
+            const expiry = document.getElementById('lobbyDealExpiry');
+
+            // Set image
+            if (deal.image) {
+                image.src = deal.image;
+                image.style.display = 'block';
+                document.querySelector('.lobby-image-container').style.background = 'linear-gradient(135deg, #1a1a2e, #2d2d44)';
+            } else {
+                image.style.display = 'none';
+                document.querySelector('.lobby-image-container').style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                // Add a fallback icon
+                const container = document.querySelector('.lobby-image-container');
+                const fallback = document.createElement('div');
+                fallback.style.cssText = 'font-size:4em; display:flex; align-items:center; justify-content:center; height:100%; color:white;';
+                fallback.textContent = '🍔';
+                // Remove existing fallback if any
+                const existing = container.querySelector('.fallback-icon');
+                if (existing) existing.remove();
+                fallback.className = 'fallback-icon';
+                container.appendChild(fallback);
+            }
+
+            // Set title and description
+            title.textContent = deal.title || 'Special Deal';
+            desc.textContent = deal.description || 'Limited time offer!';
+
+            // Set prices
+            const originalPrice = deal.originalPrice || deal.price * 1.5;
+            original.textContent = restaurantConfig.currency + ' ' + originalPrice.toFixed(2);
+            price.textContent = restaurantConfig.currency + ' ' + deal.price.toFixed(2);
+
+            // Set discount badge
+            const discountPercent = Math.round((originalPrice - deal.price) / originalPrice * 100);
+            discountBadge.textContent = discountPercent + '% OFF';
+
+            // Set expiry
+            if (deal.expiryDays) {
+                expiry.textContent = '⏱️ Offer expires in ' + deal.expiryDays + ' days';
+                expiry.style.display = 'block';
+            } else if (deal.expiryDate) {
+                const expiryDate = new Date(deal.expiryDate);
+                const now = new Date();
+                const diffDays = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                if (diffDays > 0) {
+                    expiry.textContent = '⏱️ Offer expires in ' + diffDays + ' days';
+                    expiry.style.display = 'block';
+                } else {
+                    expiry.textContent = '⏱️ Offer expires today!';
+                    expiry.style.display = 'block';
+                }
+            } else {
+                expiry.style.display = 'none';
+            }
+
+            popup.classList.add('show');
+            lobbyDealShown = true;
+        }
+
+        function closeLobbyDeal() {
+            document.getElementById('lobbyDealPopup').classList.remove('show');
+            
+            // Show notification that deal is available in deals section
+            showToast('🔥 Deal available in "Deals" section!');
+            
+            // Add a badge on the deals button
+            const dealsBtn = document.querySelector('.deals-btn');
+            if (dealsBtn) {
+                const existingBadge = dealsBtn.querySelector('.deal-notification-badge');
+                if (existingBadge) existingBadge.remove();
+                
+                const badge = document.createElement('span');
+                badge.className = 'deal-notification-badge';
+                badge.textContent = '1';
+                dealsBtn.appendChild(badge);
+                
+                // Remove badge after 8 seconds
+                setTimeout(() => {
+                    if (badge) badge.remove();
+                }, 8000);
+            }
+        }
+
+        function buyLobbyDeal() {
+            if (!currentLobbyDeal) return;
+            if (!isLoggedIn) {
+                closeLobbyDeal();
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                closeLobbyDeal();
+                pendingOrder = {
+                    items: [{ name: currentLobbyDeal.title, price: currentLobbyDeal.price, qty: 1, isDeal: true }],
+                    total: currentLobbyDeal.price
+                };
+                openOrderForm();
+            });
+        }
+
+        // ⭐ OPEN ABOUT POPUP ⭐
+        function openAboutPopup() {
+            const popup = document.getElementById('aboutPopup');
+            const title = document.getElementById('aboutPopupTitle');
+            const desc = document.getElementById('aboutDescriptionText');
+            const photoGrid = document.getElementById('aboutPhotoGrid');
+            const est = document.getElementById('aboutEstablishedText');
+            const owner = document.getElementById('aboutOwnerText');
+            const hours = document.getElementById('aboutHoursText');
+            const address = document.getElementById('aboutAddressText');
+            const phone = document.getElementById('aboutPhoneText');
+
+            // Load fresh data
+            fetch('/api/about-restaurant')
+                .then(r => r.json())
+                .then(data => {
+                    aboutData = data;
+                    title.textContent = data.aboutTitle || '🏪 About ' + restaurantConfig.name;
+                    desc.textContent = data.description || 'Welcome to The Heaven Slice!';
+                    est.textContent = data.established || '2022';
+                    owner.textContent = data.ownerName || 'Chef Ali';
+                    hours.textContent = data.workingHours || 'Mon-Sun: 9:00 AM - 11:00 PM';
+                    address.textContent = restaurantConfig.address || 'Gojra Road Near Ali Marriage Hall';
+                    phone.textContent = restaurantConfig.phone || '0300-0310275';
+
+                    // Load photos
+                    photoGrid.innerHTML = '';
+                    if (data.photos && data.photos.length > 0) {
+                        data.photos.forEach(photoUrl => {
+                            if (photoUrl && photoUrl.trim()) {
+                                const img = document.createElement('img');
+                                img.src = photoUrl.trim();
+                                img.alt = 'Restaurant Photo';
+                                img.onerror = function() { this.style.display = 'none'; };
+                                photoGrid.appendChild(img);
+                            }
+                        });
+                        photoGrid.style.display = 'grid';
+                    } else {
+                        photoGrid.innerHTML = `
+                            <div style="background:#f1f2f6; border-radius:10px; padding:20px; text-align:center; color:#b2bec3; grid-column:1/-1;">
+                                📸 No photos uploaded yet
+                            </div>
+                        `;
+                        photoGrid.style.display = 'grid';
+                    }
+
+                    popup.classList.add('show');
+                })
+                .catch(() => {
+                    // Use cached data or defaults
+                    popup.classList.add('show');
+                });
+        }
+
+        function closeAboutPopup() {
+            document.getElementById('aboutPopup').classList.remove('show');
+        }
+
+        // ⭐ OPEN DEALS WITH LOBBY DEALS ⭐
+        function openDeals() {
+            fetch(apiUrl('/api/deals?t=' + Date.now()))
+                .then(r => r.json())
+                .then(data => {
+                    deals = data;
+                    dealsPopup.classList.add('show');
+                    renderDealsWithLobby();
+                })
+                .catch(() => {
+                    dealsPopup.classList.add('show');
+                    renderDealsWithLobby();
+                });
+        }
+
+        function renderDealsWithLobby() {
+            dealsList.innerHTML = '';
+            
+            // Show regular deals
+            if (deals && deals.length > 0) {
+                deals.forEach(deal => {
+                    const icons = deal.icons ? deal.icons.join(' ') : (deal.icon || '🔥');
+                    const div = document.createElement('div');
+                    div.className = 'deal-item';
+                    div.innerHTML = `
+                        <div class="deal-info">
+                            <div class="deal-icons">${icons}</div>
+                            <div class="deal-name">${deal.name}</div>
+                            <div class="deal-desc">${deal.desc || ''}</div>
+                            <div style="font-size:0.75em; color:#b2bec3;">
+                                ${deal.original ? `<del>${currencySymbol} ${deal.original.toFixed(2)}</del>` : ''}
+                                <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <button class="deal-buy-btn" onclick="buyDeal(${deal.id})">Buy</button>
+                    `;
+                    dealsList.appendChild(div);
+                });
+            }
+            
+            // Show active lobby deals
+            fetch('/api/lobby-deals/active')
+                .then(r => r.json())
+                .then(activeLobbyDeals => {
+                    if (activeLobbyDeals && activeLobbyDeals.length > 0) {
+                        // Add a separator
+                        const separator = document.createElement('div');
+                        separator.style.cssText = 'border-top: 2px dashed #e74c3c; margin: 10px 0; padding-top: 10px; text-align:center; font-weight:700; color:#e74c3c;';
+                        separator.textContent = '🔥 LIMITED TIME LOBBY DEALS 🔥';
+                        dealsList.appendChild(separator);
+                        
+                        activeLobbyDeals.forEach(deal => {
+                            const div = document.createElement('div');
+                            div.className = 'deal-item';
+                            div.style.cssText = 'background: #fdf2f2; border-radius: 8px; padding: 12px; margin: 6px 0;';
+                            div.innerHTML = `
+                                <div class="deal-info">
+                                    ${deal.image ? `<img src="${deal.image}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; margin-bottom:6px;" />` : ''}
+                                    <div class="deal-name" style="font-size:1.1em;">${deal.title}</div>
+                                    <div class="deal-desc">${deal.description || ''}</div>
+                                    <div style="font-size:0.75em; color:#b2bec3;">
+                                        ${deal.originalPrice ? `<del>${currencySymbol} ${deal.originalPrice.toFixed(2)}</del>` : ''}
+                                        <span style="color:#e74c3c; font-weight:700;"> ${currencySymbol} ${deal.price.toFixed(2)}</span>
+                                    </div>
+                                    ${deal.expiryDays ? `<div style="font-size:0.7em; color:#f39c12;">⏱️ ${deal.expiryDays} days left</div>` : ''}
+                                </div>
+                                <button class="deal-buy-btn" onclick="buyLobbyDealFromDeals(${deal.id})">Buy</button>
+                            `;
+                            dealsList.appendChild(div);
+                        });
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function buyLobbyDealFromDeals(dealId) {
+            const deal = lobbyDeals.find(d => d.id === dealId);
+            if (!deal) return;
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                closeDeals();
+                pendingOrder = {
+                    items: [{ name: deal.title, price: deal.price, qty: 1, isDeal: true }],
+                    total: deal.price
+                };
+                openOrderForm();
+            });
+        }
+
+        function closeDeals() {
+            dealsPopup.classList.remove('show');
+        }
+
+        function checkPersistentLogin() {
+            const savedUser = localStorage.getItem('dineflow_user');
+            const savedSession = localStorage.getItem('dineflow_session');
+            if (savedUser && savedSession) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    const sessionData = JSON.parse(savedSession);
+                    const now = new Date().getTime();
+                    if (now - sessionData.timestamp < 24 * 60 * 60 * 1000) {
+                        isLoggedIn = true;
+                        user = userData;
+                        fetch(apiUrl('/api/user/profile'))
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.user) {
+                                    isLoggedIn = true;
+                                    user = data.user;
+                                    localStorage.setItem('dineflow_user', JSON.stringify(user));
+                                    localStorage.setItem('dineflow_session', JSON.stringify({ timestamp: new Date().getTime() }));
+                                } else {
+                                    localStorage.removeItem('dineflow_user');
+                                    localStorage.removeItem('dineflow_session');
+                                    isLoggedIn = false;
+                                    user = null;
+                                }
+                            })
+                            .catch(() => {});
+                    } else {
+                        localStorage.removeItem('dineflow_user');
+                        localStorage.removeItem('dineflow_session');
+                        isLoggedIn = false;
+                        user = null;
+                    }
+                } catch (e) {
+                    localStorage.removeItem('dineflow_user');
+                    localStorage.removeItem('dineflow_session');
+                    isLoggedIn = false;
+                    user = null;
+                }
+            }
+        }
+
+        function handleGoogleLogin() {
+            localStorage.setItem('dineflow_restaurant', RESTAURANT_ID);
+            window.location.href = '/auth/google?restaurant=' + RESTAURANT_ID;
+        }
+
+        function loginUser(userData) {
+            isLoggedIn = true;
+            user = userData;
+            localStorage.setItem('dineflow_user', JSON.stringify(userData));
+            localStorage.setItem('dineflow_session', JSON.stringify({ timestamp: new Date().getTime() }));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRestaurantConfig();
+            checkPersistentLogin();
+            loadAboutData();
+            
+            checkRestaurantStatus();
+
+            fetch(apiUrl('/api/receipt-settings'))
+                .then(r => r.json())
+                .then(data => {
+                    receiptSettings = data;
+                })
+                .catch(() => {});
+
+            fetch(apiUrl('/api/restaurant-name?t=' + Date.now()))
+                .then(r => r.json())
+                .then(data => {
+                    restaurantName = data.name || 'The Heaven Slice';
+                    updateRestaurantNameDisplay();
+                    updateSplashName();
+                })
+                .catch(() => {});
+
+            fetch(apiUrl('/api/whatsapp-number'))
+                .then(r => r.json())
+                .then(data => { 
+                    whatsappNumber = data.number || '923001234567';
+                    restaurantConfig.whatsapp = whatsappNumber;
+                })
+                .catch(() => {});
+
+            fetch(apiUrl('/api/check-restaurant'))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.exists) {
+                        console.log('✅ Restaurant found:', data.restaurant.name);
+                    }
+                })
+                .catch(() => {});
+
+            setTimeout(function() {
+                document.getElementById('splashScreen').classList.add('hide');
+                setTimeout(function() {
+                    document.getElementById('splashScreen').style.display = 'none';
+                    // Show lobby deal after splash screen
+                    loadLobbyDeals();
+                }, 600);
+            }, 2500);
+
+            loadAllData();
+            showPanel('menu');
+        });
+
+        function loadAllData() {
+            loadRestaurantName();
+            loadMenu();
+            loadDeals();
+            loadOrders();
+            loadAuthStatus();
+        }
+
+        function loadRestaurantName() {
+            fetch(apiUrl('/api/restaurant-name?t=' + Date.now()))
+                .then(r => r.json())
+                .then(data => {
+                    restaurantName = data.name || 'The Heaven Slice';
+                    updateRestaurantNameDisplay();
+                    updateSplashName();
+                })
+                .catch(() => {});
+        }
+
+        function updateRestaurantNameDisplay() {
+            if (restaurantNameEl) {
+                const parts = restaurantName.split(' ');
+                if (parts.length > 1) {
+                    restaurantNameEl.innerHTML = `${parts[0]} <span>${parts.slice(1).join(' ')}</span>`;
+                } else {
+                    restaurantNameEl.textContent = restaurantName;
+                }
+            }
+        }
+
+        function updateSplashName() {
+            if (splashNameEl) {
+                splashNameEl.textContent = restaurantName;
+            }
+        }
+
+        function loadMenu() {
+            fetch(apiUrl('/api/menu?t=' + Date.now()))
+                .then(r => r.json())
+                .then(data => {
+                    menuItems = data;
+                    if (currentPanel === 'menu') {
+                        renderCategories();
+                        renderMenu();
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function loadDeals() {
+            fetch(apiUrl('/api/deals?t=' + Date.now()))
+                .then(r => r.json())
+                .then(data => {
+                    deals = data;
+                })
+                .catch(() => {});
+        }
+
+        function loadOrders() {
+            fetch(apiUrl('/api/orders/myorders'))
+                .then(r => r.json())
+                .then(data => {
+                    orders = data;
+                    updateOrderBadge();
+                    if (currentPanel === 'orders') {
+                        renderOrders();
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function loadAuthStatus() {
+            fetch(apiUrl('/api/user/profile'))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.user) {
+                        isLoggedIn = true;
+                        user = data.user;
+                        loginUser(data.user);
+                    } else {
+                        isLoggedIn = false;
+                        user = null;
+                        localStorage.removeItem('dineflow_user');
+                        localStorage.removeItem('dineflow_session');
+                    }
+                })
+                .catch(() => {
+                    const savedUser = localStorage.getItem('dineflow_user');
+                    if (savedUser) {
+                        try {
+                            const userData = JSON.parse(savedUser);
+                            isLoggedIn = true;
+                            user = userData;
+                        } catch(e) {}
+                    }
+                });
+        }
+
+        function renderCategories() {
+            sidebar.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `category-item${cat.id === currentCategory ? ' active' : ''}`;
+                btn.innerHTML = `
+                    <span class="cat-icon">${cat.icon}</span>
+                    <span class="cat-name">${cat.name}</span>
+                `;
+                btn.onclick = () => {
+                    currentCategory = cat.id;
+                    renderCategories();
+                    renderMenu();
+                };
+                sidebar.appendChild(btn);
+            });
+        }
+
+        function renderMenu() {
+            let filtered = menuItems;
+            if (currentCategory !== 'all') {
+                filtered = menuItems.filter(item => item.category === currentCategory);
+            }
+
+            if (!filtered || filtered.length === 0) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
+                        <div style="font-size:4em; margin-bottom:15px;">🍽️</div>
+                        <h3 style="color:#2d3436;">No items in this category</h3>
+                        <p style="color:#b2bec3;">Select another category or add items from admin panel.</p>
+                        <button onclick="loadMenu()" style="margin-top:15px; background:#e74c3c; color:white; border:none; padding:10px 30px; border-radius:25px; cursor:pointer; font-weight:600;">🔄 Refresh</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="section-title">${categories.find(c => c.id === currentCategory)?.icon || '🍽️'} ${categories.find(c => c.id === currentCategory)?.name || 'All'}</div>
+                <div class="menu-grid">
+            `;
+
+            filtered.forEach((item, index) => {
+                const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
+                const hasLayers = item.layers && item.layers.length > 0;
+                const animClass = getIconAnimation(index);
+                const inCart = cart.find(c => c.id === item.id);
+                const qty = inCart ? inCart.qty : 0;
+
+                html += `
+                    <div class="menu-item-card" onclick="quickBuy(${item.id})">
+                        ${qty > 0 ? `<span class="qty-badge">${qty}</span>` : ''}
+                        <span class="item-icons ${animClass}">${icons}</span>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-category">${categories.find(c => c.id === item.category)?.name || ''}</div>
+                        <div class="item-price">${currencySymbol} ${item.price.toFixed(2)}</div>
+                        ${hasLayers ? `<div class="customizable-badge">🧅 Customizable</div>` : ''}
+                        <div class="item-actions" onclick="event.stopPropagation();">
+                            <button class="btn-quick" onclick="quickBuy(${item.id})">⚡ Buy</button>
+                            <button class="btn-cart" onclick="addToCart(${item.id})">+ Add</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            menuArea.innerHTML = html;
+        }
+
+        function addToCart(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+            const existing = cart.find(i => i.id === itemId);
+            if (existing) {
+                existing.qty = (existing.qty || 1) + 1;
+            } else {
+                cart.push({ ...item, qty: 1 });
+            }
+            updateCartBadge();
+            renderMenu();
+            showToast(`✅ ${item.name} added to cart!`);
+        }
+
+        function removeFromCart(itemId) {
+            const index = cart.findIndex(i => i.id === itemId);
+            if (index !== -1) {
+                if (cart[index].qty > 1) {
+                    cart[index].qty--;
+                } else {
+                    cart.splice(index, 1);
+                }
+                updateCartBadge();
+                renderCartPopup();
+                renderMenu();
+                showToast('🛒 Cart updated');
+            }
+        }
+
+        function getCartTotal() {
+            return cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+        }
+
+        function getCartItemCount() {
+            return cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+        }
+
+        function updateCartBadge() {
+            const total = getCartItemCount();
+            cartBadge.textContent = total;
+        }
+
+        function renderCartPopup() {
+            const container = document.getElementById('cartItemsList');
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:30px 20px; color:#b2bec3;">
+                        <div style="font-size:3em; margin-bottom:10px;">🛒</div>
+                        <p>Your cart is empty</p>
+                        <button onclick="closeCartPopup()" style="margin-top:10px; background:#e74c3c; color:white; border:none; padding:8px 20px; border-radius:20px; cursor:pointer;">Browse Menu</button>
+                    </div>
+                `;
+                document.getElementById('cartTotalPrice').textContent = `${currencySymbol} 0.00`;
+                return;
+            }
+
+            let html = '';
+            cart.forEach(item => {
+                const qty = item.qty || 1;
+                const total = item.price * qty;
+                const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
+                html += `
+                    <div class="cart-item">
+                        <div class="item-info">
+                            <span class="item-icon">${icons}</span>
+                            <div class="item-details">
+                                <div class="item-name">${item.name}</div>
+                                <div class="item-qty-price">${currencySymbol} ${item.price.toFixed(2)} x ${qty}</div>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="qty-btn minus" onclick="removeFromCart(${item.id})">−</button>
+                            <span class="qty-text">${qty}</span>
+                            <button class="qty-btn plus" onclick="addToCart(${item.id})">+</button>
+                            <span class="item-total">${currencySymbol} ${total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.getElementById('cartTotalPrice').textContent = `${currencySymbol} ${getCartTotal().toFixed(2)}`;
+        }
+
+        function openCartPopup() {
+            renderCartPopup();
+            document.getElementById('cartPopup').classList.add('show');
+        }
+
+        function closeCartPopup() {
+            document.getElementById('cartPopup').classList.remove('show');
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) {
+                showToast('⚠️ Your cart is empty');
+                return;
+            }
+            if (!isLoggedIn) {
+                closeCartPopup();
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                const items = cart.map(item => ({ ...item, qty: item.qty || 1 }));
+                const total = getCartTotal();
+                pendingOrder = { items: items, total: total };
+                closeCartPopup();
+                openOrderForm();
+            });
+        }
+
+        function quickBuy(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                pendingOrder = { items: [{ ...item, qty: 1, id: itemId }], total: item.price };
+                openOrderForm();
+            });
+        }
+
+        function selectOrderType(type) {
+            selectedOrderType = type;
+            const dineinBtn = document.getElementById('dineinBtn');
+            const carServiceBtn = document.getElementById('carServiceBtn');
+            const takeawayBtn = document.getElementById('takeawayBtn');
+            const deliveryBtn = document.getElementById('deliveryBtn');
+            const thirdpartyBtn = document.getElementById('thirdpartyBtn');
+            const dineinFields = document.getElementById('dineinFields');
+            const carServiceFields = document.getElementById('carServiceFields');
+            const deliveryFields = document.getElementById('deliveryFields');
+            const thirdpartyFields = document.getElementById('thirdpartyFields');
+
+            [dineinBtn, carServiceBtn, takeawayBtn, deliveryBtn, thirdpartyBtn].forEach(b => {
+                if (b) {
+                    b.classList.remove('active');
+                    b.style.background = 'white';
+                    b.style.color = '#2d3436';
+                    b.style.borderColor = '#dfe6e9';
+                }
+            });
+
+            if (dineinFields) dineinFields.style.display = 'none';
+            if (carServiceFields) carServiceFields.style.display = 'none';
+            if (deliveryFields) deliveryFields.style.display = 'none';
+            if (thirdpartyFields) thirdpartyFields.style.display = 'none';
+
+            if (type === 'dinein') {
+                dineinBtn.classList.add('active');
+                dineinBtn.style.background = '#e74c3c';
+                dineinBtn.style.color = 'white';
+                dineinBtn.style.borderColor = '#e74c3c';
+                if (dineinFields) dineinFields.style.display = 'block';
+                document.getElementById('orderType').value = 'dinein';
+            } else if (type === 'carService') {
+                carServiceBtn.classList.add('active');
+                carServiceBtn.style.background = '#e74c3c';
+                carServiceBtn.style.color = 'white';
+                carServiceBtn.style.borderColor = '#e74c3c';
+                if (carServiceFields) carServiceFields.style.display = 'block';
+                document.getElementById('orderType').value = 'carService';
+            } else if (type === 'takeaway') {
+                takeawayBtn.classList.add('active');
+                takeawayBtn.style.background = '#e74c3c';
+                takeawayBtn.style.color = 'white';
+                takeawayBtn.style.borderColor = '#e74c3c';
+                document.getElementById('orderType').value = 'takeaway';
+            } else if (type === 'delivery') {
+                deliveryBtn.classList.add('active');
+                deliveryBtn.style.background = '#e74c3c';
+                deliveryBtn.style.color = 'white';
+                deliveryBtn.style.borderColor = '#e74c3c';
+                if (deliveryFields) deliveryFields.style.display = 'block';
+                document.getElementById('orderType').value = 'delivery';
+            } else if (type === 'thirdparty') {
+                thirdpartyBtn.classList.add('active');
+                thirdpartyBtn.style.background = '#e74c3c';
+                thirdpartyBtn.style.color = 'white';
+                thirdpartyBtn.style.borderColor = '#e74c3c';
+                if (thirdpartyFields) thirdpartyFields.style.display = 'block';
+                document.getElementById('orderType').value = 'thirdparty';
+            }
+        }
+
+        function openOrderForm() {
+            if (!pendingOrder) return;
+            selectOrderType('dinein');
+            
+            let hasLayers = false;
+            let layersHtml = '';
+            pendingOrder.items.forEach(orderItem => {
+                const menuItem = menuItems.find(i => i.id === orderItem.id);
+                if (menuItem && menuItem.layers && menuItem.layers.length > 0) {
+                    hasLayers = true;
+                    layersHtml += `
+                        <div style="margin-bottom:10px; padding:10px; background:#f8f9fa; border-radius:8px;">
+                            <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Layers for ${menuItem.name}:</label>
+                            <div class="layer-options" data-item="${menuItem.id}">
+                                ${menuItem.layers.map(layer => `
+                                    <span class="layer-option" data-layer="${layer}" onclick="toggleLayer(this, ${menuItem.id})">${layer}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            selectedLayers = [];
+            orderLocation = { lat: null, lng: null, address: '' };
+            
+            const total = pendingOrder.total || getCartTotal();
+            document.getElementById('orderTotalDisplay').textContent = `Total: ${currencySymbol} ${total.toFixed(2)}`;
+            document.getElementById('orderItems').value = JSON.stringify(pendingOrder.items);
+            document.getElementById('orderTotal').value = total;
+            
+            const existingLayerContainer = document.getElementById('layerContainer');
+            if (existingLayerContainer) {
+                existingLayerContainer.innerHTML = layersHtml;
+            }
+            
+            document.getElementById('orderForm').reset();
+            orderPopup.classList.add('show');
+        }
+
+        function toggleLayer(element, itemId) {
+            element.classList.toggle('selected');
+            const selected = document.querySelectorAll(`#layerContainer .layer-options[data-item="${itemId}"] .layer-option.selected`);
+            const layers = Array.from(selected).map(el => el.dataset.layer);
+            if (!window.selectedLayersMap) window.selectedLayersMap = {};
+            window.selectedLayersMap[itemId] = layers;
+        }
+
+        function closeOrderPopup() {
+            orderPopup.classList.remove('show');
+            pendingOrder = null;
+            window.selectedLayersMap = {};
+        }
+
+        const locationCache = {};
+
+        function getMapEmbedUrl(lat, lng) {
+            return `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01}%2C${lat-0.01}%2C${lng+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lng}`;
+        }
+
+        function showLocationPopup(orderData) {
+            pendingOrderData = orderData;
+            document.getElementById('locationPopup').classList.add('show');
+            document.getElementById('locationStatus').innerHTML = '📍 Please allow location access<br><small>Tap "Get My Location" to share</small>';
+            document.getElementById('locationMap').style.display = 'none';
+        }
+
+        function closeLocationPopup() {
+            document.getElementById('locationPopup').classList.remove('show');
+            pendingOrderData = null;
+        }
+
+        function getLocationForOrder() {
+            const status = document.getElementById('locationStatus');
+            const map = document.getElementById('locationMap');
+            
+            if (!navigator.geolocation) {
+                status.innerHTML = '❌ Geolocation is not supported. Please enter address manually.';
+                showToast('⚠️ Please enter your address manually');
+                return;
+            }
+            
+            status.innerHTML = '⏳ Getting your location...<br><small>Please wait...</small>';
+            showToast('📍 Getting your location...');
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    orderLocation.lat = lat;
+                    orderLocation.lng = lng;
+                    
+                    status.innerHTML = `✅ Location found!<br><small>(${lat.toFixed(6)}, ${lng.toFixed(6)})</small>`;
+                    showToast('✅ Location found!');
+                    
+                    map.style.display = 'block';
+                    document.getElementById('locationIframe').src = getMapEmbedUrl(lat, lng);
+                    
+                    const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+                    if (locationCache[cacheKey]) {
+                        orderLocation.address = locationCache[cacheKey];
+                        status.innerHTML = `📍 ${orderLocation.address.substring(0, 80)}...`;
+                        setTimeout(() => submitOrderWithLocation(), 1000);
+                        return;
+                    }
+                    
+                    fetch(`/api/location/reverse?lat=${lat}&lng=${lng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                orderLocation.address = data.display_name;
+                                locationCache[cacheKey] = data.display_name;
+                                status.innerHTML = `📍 ${data.display_name.substring(0, 80)}...`;
+                            }
+                        })
+                        .catch(() => {
+                            status.innerHTML = `✅ Location found!<br><small>(${lat.toFixed(6)}, ${lng.toFixed(6)})</small>`;
+                        })
+                        .finally(() => {
+                            setTimeout(() => submitOrderWithLocation(), 1000);
+                        });
+                },
+                function(error) {
+                    console.error('Location error:', error);
+                    let errorMsg = '❌ Error getting location.';
+                    switch(error.code) {
+                        case 1:
+                            errorMsg = '❌ Location permission denied. Please enable GPS.';
+                            break;
+                        case 2:
+                            errorMsg = '❌ Location unavailable. Please check GPS.';
+                            break;
+                        case 3:
+                            errorMsg = '❌ Location request timed out. Please try again.';
+                            break;
+                        default:
+                            errorMsg = '❌ Error: ' + error.message;
+                    }
+                    status.innerHTML = errorMsg + '<br><small>Please enter address manually.</small>';
+                    showToast('⚠️ ' + errorMsg);
+                },
+                options
+            );
+        }
+
+        function skipLocation() {
+            const address = document.getElementById('orderAddress').value;
+            const city = document.getElementById('orderCity').value;
+            if (address && city) {
+                orderLocation.address = address + ', ' + city;
+            }
+            closeLocationPopup();
+            submitOrderWithLocation();
+        }
+
+        function submitOrderWithLocation() {
+            if (!pendingOrderData) return;
+            const { name, phone, items, total, layers, orderType, paymentMethod, fullAddress } = pendingOrderData;
+            
+            const now = new Date();
+            const deviceTime = now.toLocaleString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour12: true 
+            });
+            
+            const orderData = {
+                items: items,
+                total: total,
+                name: name,
+                phone: phone,
+                address: fullAddress || 'In-store pickup',
+                layers: layers || [],
+                orderType: orderType || 'dinein',
+                paymentMethod: paymentMethod || 'cash',
+                lat: orderLocation.lat || null,
+                lng: orderLocation.lng || null,
+                table: pendingOrderData.table || null,
+                orderNumber: orderCounter++,
+                restaurantId: RESTAURANT_ID,
+                deviceTime: deviceTime,
+                deviceTimestamp: now.toISOString()
+            };
+
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            function trySubmit() {
+                attempts++;
+                fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.message || data.order) {
+                        closeLocationPopup();
+                        closeOrderPopup();
+                        showToast('✅ Order placed successfully!');
+                        
+                        const orderObj = data.order || { 
+                            ...orderData, 
+                            id: data.order?.id || orderCounter - 1, 
+                            status: 'pending', 
+                            date: deviceTime,
+                            deviceTime: deviceTime
+                        };
+                        
+                        showReceipt(orderObj);
+                        cart = [];
+                        updateCartBadge();
+                        loadOrders();
+                        showPanel('orders');
+                        
+                        tryListenForOrderConfirmation(orderObj.id);
+                    } else {
+                        if (attempts < maxAttempts) {
+                            showToast('⏳ Retrying... (' + attempts + '/' + maxAttempts + ')');
+                            setTimeout(trySubmit, 2000);
+                        } else {
+                            showToast('❌ ' + (data.error || 'Order failed after retries'));
+                        }
+                    }
+                })
+                .catch(() => {
+                    if (attempts < maxAttempts) {
+                        showToast('⏳ Retrying... (' + attempts + '/' + maxAttempts + ')');
+                        setTimeout(trySubmit, 2000);
+                    } else {
+                        showToast('❌ Network error after retries');
+                    }
+                });
+            }
+            
+            trySubmit();
+            pendingOrderData = null;
+        }
+
+        function tryListenForOrderConfirmation(orderId) {
+            try {
+                const customerSSE = new EventSource('/api/orders/stream?restaurant=' + RESTAURANT_ID);
+                
+                customerSSE.onmessage = function(e) {
+                    try {
+                        const data = JSON.parse(e.data);
+                        if (data.type === 'order_update' && data.order.id === orderId) {
+                            if (data.order.status === 'confirmed' || data.order.status === 'preparing') {
+                                showToast('✅ Your order #' + orderId + ' is being prepared!');
+                                customerSSE.close();
+                            }
+                        }
+                    } catch(err) {}
+                };
+                
+                setTimeout(() => { 
+                    customerSSE.close(); 
+                }, 120000);
+            } catch(e) {
+                console.log('SSE not supported, using polling');
+                checkOrderStatusPolling(orderId);
+            }
+        }
+
+        function checkOrderStatusPolling(orderId) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                fetch(apiUrl('/api/orders/myorders'))
+                    .then(r => r.json())
+                    .then(orders => {
+                        const order = orders.find(o => o.id === orderId);
+                        if (order && (order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready')) {
+                            showToast('✅ Your order #' + orderId + ' is now ' + order.status + '!');
+                            clearInterval(interval);
+                        }
+                        if (attempts >= 60) clearInterval(interval);
+                    })
+                    .catch(() => {});
+            }, 5000);
+        }
+
+        function submitOrder(event) {
+            event.preventDefault();
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                const name = document.getElementById('orderName').value;
+                const phone = document.getElementById('orderPhone').value;
+                const table = document.getElementById('orderTable')?.value || '';
+                const carNumber = document.getElementById('carNumber')?.value || '';
+                const carServiceAddress = document.getElementById('carServiceAddress')?.value || '';
+                const address = document.getElementById('orderAddress')?.value || '';
+                const city = document.getElementById('orderCity')?.value || '';
+                const thirdpartyName = document.getElementById('thirdpartyName')?.value || '';
+                const thirdpartyOrderId = document.getElementById('thirdpartyOrderId')?.value || '';
+                const items = JSON.parse(document.getElementById('orderItems').value);
+                const total = parseFloat(document.getElementById('orderTotal').value);
+                
+                const layers = [];
+                if (window.selectedLayersMap) {
+                    Object.keys(window.selectedLayersMap).forEach(itemId => {
+                        if (window.selectedLayersMap[itemId].length > 0) {
+                            layers.push(...window.selectedLayersMap[itemId]);
+                        }
+                    });
+                }
+                
+                const orderType = document.getElementById('orderType').value;
+
+                if (!name || !phone) {
+                    showToast('⚠️ Please fill name and phone');
+                    return;
+                }
+
+                let fullAddress = '';
+                if (orderType === 'dinein') {
+                    fullAddress = 'Dine-In - Table ' + table;
+                } else if (orderType === 'carService') {
+                    fullAddress = 'Car Service - ' + carNumber + ' - ' + carServiceAddress;
+                } else if (orderType === 'takeaway') {
+                    fullAddress = 'Takeaway - ' + name;
+                } else if (orderType === 'delivery') {
+                    fullAddress = address + ', ' + city;
+                } else if (orderType === 'thirdparty') {
+                    fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
+                }
+
+                const orderData = { 
+                    name, phone, items, total, layers, 
+                    table, carNumber, carServiceAddress, address, city, 
+                    thirdpartyName, thirdpartyOrderId, 
+                    fullAddress: fullAddress,
+                    orderType: orderType,
+                    restaurantId: RESTAURANT_ID
+                };
+                closeOrderPopup();
+
+                if (orderType === 'delivery') {
+                    showLocationPopup(orderData);
+                } else {
+                    pendingOrderData = orderData;
+                    orderLocation = { lat: null, lng: null, address: '' };
+                    submitOrderWithLocation();
+                }
+            });
+        }
+
+        function showReceipt(order) {
+            const now = new Date();
+            const orderTime = order.deviceTime || now.toLocaleString();
+            const orderType = order.orderType || 'Delivery';
+            const orderTypeLabel = orderType === 'takeaway' ? 'Takeaway' : orderType === 'dinein' ? 'Dine-In Customer' : 'Delivery Customer';
+            const orderId = order.id || '#' + String(order.orderNumber || Math.floor(Math.random() * 1000)).padStart(3, '0');
+            const tableInfo = order.table ? `Table: ${order.table}` : '';
+
+            const config = restaurantConfig;
+            
+            let logoHtml = '';
+            if (receiptSettings && receiptSettings.logoUrl) {
+                logoHtml = `
+                    <div style="text-align:center; margin-bottom:5px;">
+                        <img src="${receiptSettings.logoUrl}" alt="${config.name}" style="max-width:120px; height:auto; border-radius:4px;" />
+                        <div style="font-size:9px; color:#555; letter-spacing:1px; font-weight:600; margin-top:2px;">${receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD'}</div>
+                    </div>
+                `;
+            } else {
+                const logoIcon = receiptSettings.logoIcon || '👨‍🍳';
+                logoHtml = `
+                    <div style="text-align:center; font-size:3em; margin-bottom:2px;">${logoIcon}</div>
+                    <div style="text-align:center; font-size:9px; color:#555; letter-spacing:1px; font-weight:600; margin-bottom:3px;">${receiptSettings.tagline || 'PIZZA • BURGER • FAST FOOD'}</div>
+                `;
+            }
+
+            let subtotal = 0;
+            let itemRows = '';
+            let totalItems = 0;
+            
+            order.items.forEach(item => {
+                const qty = item.qty || 1;
+                const price = item.price || 0;
+                const amount = qty * price;
+                subtotal += amount;
+                totalItems += qty;
+                const itemName = item.name || 'Item';
+                
+                itemRows += `
+                    <div class="receipt-row">
+                        <span class="item-name">${itemName}</span>
+                        <span class="item-qty">${qty}</span>
+                        <span class="item-price">${config.currency} ${price.toFixed(2)}</span>
+                        <span class="item-amount">${config.currency} ${amount.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            let discount = 0;
+            if (subtotal > config.discountThreshold) {
+                discount = config.discountAmount;
+            }
+            const grandTotal = subtotal - discount;
+
+            let cancellationInfo = '';
+            if (config.allowCancellation && config.cancellationTimeLimit > 0) {
+                const deadline = new Date(now.getTime() + (config.cancellationTimeLimit * 60000));
+                const deadlineStr = deadline.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                cancellationInfo = `
+                    <div class="receipt-customer" style="font-weight:normal; font-size:9px; color:#f39c12;">
+                        ⏱️ You can cancel this order until ${deadlineStr} (within ${config.cancellationTimeLimit} minutes)
+                    </div>
+                `;
+            }
+
+            const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fdineflow-restaurant-eq0b.onrender.com%2Fdownload';
+
+            const html = `
+                <div id="receiptPrint">
+                    <div class="receipt-style">
+                        <div class="receipt-header">
+                            ${logoHtml}
+                            <div class="restaurant-name">${config.name.toUpperCase()}</div>
+                            <div class="est">Est. ${config.est}</div>
+                            <div class="address">📍 ${config.address}</div>
+                            <div class="phone">📞 ${config.phone}</div>
+                            <div class="receipt-divider"></div>
+                            <div class="receipt-title">BILL</div>
+                            <div class="receipt-order-info">
+                                <span class="order-left">Order #: ${orderId}</span>
+                                <span class="order-right">${tableInfo}</span>
+                            </div>
+                            <div class="receipt-order-info">
+                                <span class="order-left">${orderTime}</span>
+                                <span class="order-right">${now.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
+                            </div>
+                            <div class="receipt-divider"></div>
+                            <div class="receipt-customer">Customer: ${orderTypeLabel}</div>
+                            ${order.userName && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">Name: ${order.userName}</div>` : ''}
+                            ${order.phone ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📞 ${order.phone}</div>` : ''}
+                            ${order.address && orderType !== 'dinein' ? `<div class="receipt-customer" style="font-weight:normal; font-size:10px;">📍 ${order.address}</div>` : ''}
+                            ${cancellationInfo}
+                        </div>
+                        
+                        <div class="receipt-table-header">
+                            <span>Item</span>
+                            <span class="col-qty">Qty</span>
+                            <span class="col-price">Price</span>
+                            <span class="col-amount">Amount</span>
+                        </div>
+                        ${itemRows}
+                        
+                        <div class="receipt-divider"></div>
+                        
+                        <div class="receipt-totals">
+                            <div class="total-row">
+                                <span class="label">Total Items:</span>
+                                <span class="value">${totalItems}</span>
+                            </div>
+                            <div class="total-row">
+                                <span class="label">Subtotal:</span>
+                                <span class="value">${config.currency} ${subtotal.toFixed(2)}</span>
+                            </div>
+                            ${discount > 0 ? `
+                            <div class="total-row discount">
+                                <span class="label">Discount (Fixed):</span>
+                                <span class="value">-${config.currency} ${discount.toFixed(2)}</span>
+                            </div>` : ''}
+                        </div>
+                        
+                        <div class="receipt-grand-total">
+                            <span>Bill Total:</span>
+                            <span>${config.currency} ${grandTotal.toFixed(2)}</span>
+                        </div>
+                        
+<div class="receipt-footer">
+    <div class="qr-section">
+        <img src="${qrUrl}" alt="QR Code" style="max-width:80px; height:auto;" />
+        <div class="qr-text">Scan QR Code To Download App</div>
+    </div>
+
+    <div class="receipt-divider"></div>
+
+    <div class="thank-you">
+        <span class="heart">❤️</span>
+        ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}
+    </div>
+
+    <div class="great-day">
+        ${receiptSettings.footerMessage || 'Have a Great Day!'}
+    </div>
+
+    <div style="font-size:8px; color:#aaa; margin-top:4px;">
+        Printed: ${now.toLocaleString()}
+    </div>
+
+    <div style="
+        font-size:9px;
+        color:#333;
+        text-align:center;
+        margin-top:8px;
+        padding-top:5px;
+        border-top:1px dashed #aaa;
+        line-height:1.6;
+    ">
+        <div>Developed by <strong>Pixelpulse.ltd</strong></div>
+        <div>Contact: <strong>03480140014</strong></div>
+    </div>
+</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('receiptPrint').innerHTML = html;
+            document.getElementById('receiptPopup').classList.add('show');
+        }
+
+        function closeReceipt() { document.getElementById('receiptPopup').classList.remove('show'); }
+        function printReceipt() { window.print(); }
+
+        function buyDeal(dealId) {
+            if (!isLoggedIn) {
+                closeDeals();
+                openLoginRequired();
+                return;
+            }
+            
+            checkRestaurantStatus().then(isOpen => {
+                if (!isOpen) {
+                    showToast('🔴 Restaurant is closed! Opens at ' + (restaurantConfig.openingTime || '09:00'));
+                    return;
+                }
+                
+                const deal = deals.find(d => d.id === dealId);
+                if (!deal) return;
+                pendingOrder = {
+                    items: [{ name: deal.name, price: deal.price, qty: 1, isDeal: true }],
+                    total: deal.price
+                };
+                closeDeals();
+                openOrderForm();
+            });
+        }
+
+        function showPanel(panel) {
+            currentPanel = panel;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navItem = document.querySelector(`.nav-item[data-panel="${panel}"]`);
+            if (navItem) navItem.classList.add('active');
+            
+            if (panel === 'menu') {
+                renderCategories();
+                renderMenu();
+            } else if (panel === 'orders') {
+                loadOrders();
+                renderOrders();
+            } else if (panel === 'account') {
+                renderAccount();
+            } else if (panel === 'feedback') {
+                renderFeedbackSection();
+            } else if (panel === 'support') {
+                renderSupportSection();
+            } else if (panel === 'location') {
+                renderLocationSection();
+            } else if (panel === 'settings') {
+                renderSettings();
+            }
+        }
+
+        function renderOrders() {
+            if (!orders || orders.length === 0) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
+                        <div style="font-size:4em; margin-bottom:15px;">📦</div>
+                        <h3 style="color:#2d3436;">No Orders Yet</h3>
+                        <p>Your orders will appear here</p>
+                        <button onclick="showPanel('menu')" style="display:inline-block; margin-top:15px; color:#e74c3c; background:none; border:none; font-weight:600; cursor:pointer; font-size:1em;">Browse Menu →</button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `<div class="section-title">📦 My Orders</div>`;
+            orders.slice().reverse().forEach(order => {
+                const statusClass = `status-${order.status}`;
+                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
+                const canCancel = order.status === 'pending' && restaurantConfig.allowCancellation;
+                
+                html += `
+                    <div style="background:white; border-radius:12px; padding:12px 15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                            <div style="font-weight:700;">Order #${order.id} ${orderTypeIcon} ${order.orderType || 'Delivery'}</div>
+                            <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">${currencySymbol} ${order.total.toFixed(2)}</div>
+                        </div>
+                        <div style="font-size:0.75em; color:#636e72;">🕐 ${order.deviceTime || order.date || 'Today'}</div>
+                        ${order.layers && order.layers.length ? `<div style="font-size:0.7em; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}
+                        <span class="order-status-badge ${statusClass}" style="font-size:0.7em; font-weight:600; padding:2px 12px; border-radius:12px; display:inline-block; margin-top:4px;">${order.status.toUpperCase()}</span>
+                        <div style="font-size:0.75em; color:#636e72; margin-top:4px;">
+                            ${order.items.map(i => `${i.name} x${i.qty || 1}`).join(', ')}
+                        </div>
+                        ${order.address ? `<div style="font-size:0.7em; color:#b2bec3;">📍 ${order.address}</div>` : ''}
+                        ${order.phone ? `<div style="font-size:0.7em; color:#b2bec3;">📞 ${order.phone}</div>` : ''}
+                        <div style="font-size:0.7em; color:#b2bec3;">💳 ${order.paymentMethod || 'Cash'}</div>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                            <button onclick="showReceiptForOrder(${order.id})" style="padding:4px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">🖨️ Receipt</button>
+                            ${canCancel ? `<button onclick="cancelOrder(${order.id})" style="padding:4px 12px; border:none; border-radius:12px; background:#e74c3c; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">❌ Cancel</button>` : ''}
+                        </div>
+                        ${order.status === 'cancelled' ? `<div style="font-size:0.7em; color:#e74c3c; margin-top:4px;">⚠️ This order was cancelled</div>` : ''}
+                    </div>
+                `;
+            });
+            menuArea.innerHTML = html;
+        }
+
+        function showReceiptForOrder(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                showReceipt(order);
+            }
+        }
+
+        function updateOrderBadge() {
+            const badge = document.getElementById('orderBadge');
+            const count = orders ? orders.filter(o => o.status === 'pending').length : 0;
+            if (count > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = count;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function renderAccount() {
+            loadAuthStatus();
+            let html = `
+                <div style="text-align:center; padding:30px 20px;">
+                    <div style="font-size:4em; margin-bottom:10px;">${isLoggedIn ? '👤' : '👋'}</div>
+                    <div style="font-size:1.2em; font-weight:700; color:#2d3436;">${isLoggedIn ? user?.displayName || 'User' : 'Guest User'}</div>
+                    <div style="color:#636e72; font-size:0.9em;">${isLoggedIn ? user?.email || '' : 'Not signed in'}</div>
+                    <div style="margin: 20px 0;">
+            `;
+            if (isLoggedIn) {
+                html += `
+                        <button onclick="logoutUser()" style="background:#e74c3c; color:white; border:none; padding:10px 30px; border-radius:30px; font-weight:600; cursor:pointer; font-size:1em;">
+                            🚪 Logout
+                        </button>
+                        <div style="margin-top:10px; padding:10px; background:#e8f8f0; border-radius:10px; color:#27ae60;">✅ Logged in with Google</div>
+                    `;
+            } else {
+                html += `
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:10px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                            Sign in with Google
+                        </a>
+                        <div style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:10px; color:#636e72;">Sign in to place orders</div>
+                    `;
+            }
+            html += `
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('dineflow_user');
+            localStorage.removeItem('dineflow_session');
+            window.location.href = '/logout?restaurant=' + RESTAURANT_ID;
+        }
+
+        let customerSelectedRating = 0;
+        function renderFeedbackSection() {
+            if (!isLoggedIn) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="font-size:4em; margin-bottom:15px;">🔐</div>
+                        <h3 style="color:#2d3436;">Login Required</h3>
+                        <p style="color:#b2bec3; margin-bottom:20px;">Please login to submit feedback</p>
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                            Sign in with Google
+                        </a>
+                        <br>
+                        <button onclick="showPanel('menu')" style="margin-top:15px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Back to Menu</button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">⭐ Rate & Review</div>
+                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <p style="color:#636e72; margin-bottom:15px;">Share your experience with us!</p>
+                        <div style="display: flex; gap: 12px; justify-content: center; margin: 20px 0;">
+                            <button class="star-btn" data-star="1" onclick="selectStarCustomer(1)">⭐</button>
+                            <button class="star-btn" data-star="2" onclick="selectStarCustomer(2)">⭐</button>
+                            <button class="star-btn" data-star="3" onclick="selectStarCustomer(3)">⭐</button>
+                            <button class="star-btn" data-star="4" onclick="selectStarCustomer(4)">⭐</button>
+                            <button class="star-btn" data-star="5" onclick="selectStarCustomer(5)">⭐</button>
+                        </div>
+                        <div style="text-align: center; margin: 5px 0 15px 0; font-size: 0.9em; color: #636e72;" id="customerStarLabel">Select a rating</div>
+                        <textarea id="customerFeedbackComment" placeholder="Share your feedback (optional)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em; margin-bottom:10px; resize:vertical; min-height:80px;"></textarea>
+                        <button class="order-submit-btn" onclick="submitCustomerFeedback()">💬 Submit Feedback</button>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+            customerSelectedRating = 0;
+        }
+        function selectStarCustomer(rating) {
+            customerSelectedRating = rating;
+            document.querySelectorAll('.star-btn').forEach((b, i) => {
+                b.classList.toggle('active', i < rating);
+            });
+            const labels = ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Excellent'];
+            document.getElementById('customerStarLabel').textContent = labels[rating] || 'Select a rating';
+        }
+        function submitCustomerFeedback() {
+            if (!customerSelectedRating) {
+                showToast('⚠️ Please select a rating');
+                return;
+            }
+            const comment = document.getElementById('customerFeedbackComment').value;
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    rating: customerSelectedRating, 
+                    comment: comment, 
+                    restaurantId: RESTAURANT_ID 
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('⭐ Thank you for your feedback!');
+                    customerSelectedRating = 0;
+                    document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('active'));
+                    document.getElementById('customerFeedbackComment').value = '';
+                    document.getElementById('customerStarLabel').textContent = 'Select a rating';
+                    showPanel('menu');
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function renderSupportSection() {
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">🎫 Customer Support</div>
+                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <p style="color:#636e72; margin-bottom:15px;">How can we help you?</p>
+                        <div class="support-options">
+                            <div class="support-card" onclick="openSupportPopup()">
+                                <div class="support-icon">📧</div>
+                                <div class="support-label">Email Support</div>
+                                <div class="support-desc">Send us a message</div>
+                            </div>
+                            <div class="support-card" onclick="window.location.href='tel:${whatsappNumber}'">
+                                <div class="support-icon">📞</div>
+                                <div class="support-label">Call Us</div>
+                                <div class="support-desc">${whatsappNumber}</div>
+                            </div>
+                            <div class="support-card" onclick="window.location.href='https://wa.me/${whatsappNumber}'">
+                                <div class="support-icon">💬</div>
+                                <div class="support-label">WhatsApp</div>
+                                <div class="support-desc">Chat with us</div>
+                            </div>
+                            <div class="support-card" onclick="openSupportPopup()">
+                                <div class="support-icon">❓</div>
+                                <div class="support-label">FAQ</div>
+                                <div class="support-desc">Common questions</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
+                            <p style="font-size:0.8em; color:#b2bec3;">Response time: <span style="color:#27ae60;">Usually within 1 hour</span></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+        }
+
+        function openSupportPopup() {
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            const supportPopup = document.createElement('div');
+            supportPopup.className = 'popup-overlay show';
+            supportPopup.id = 'supportPopup';
+            supportPopup.innerHTML = `
+                <div class="popup-content">
+                    <button class="popup-close" onclick="this.closest('.popup-overlay').remove()">✕</button>
+                    <div class="popup-title">📧 Send Message</div>
+                    <div class="popup-subtitle">We'll get back to you soon!</div>
+                    <form onsubmit="submitSupportForm(event)">
+                        <select id="supportPriority" style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;">
+                            <option value="low">🟢 Low Priority</option>
+                            <option value="normal" selected>🟡 Normal Priority</option>
+                            <option value="high">🔴 High Priority</option>
+                        </select>
+                        <input type="text" id="supportSubject" placeholder="Subject" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; font-size:0.9em;" />
+                        <textarea id="supportMessage" placeholder="Describe your issue..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #dfe6e9; margin-bottom:10px; min-height:100px; resize:vertical; font-size:0.9em;"></textarea>
+                        <button type="submit" class="order-submit-btn">📤 Submit Ticket</button>
+                        <button type="button" style="width:100%; padding:10px; background:#f1f2f6; color:#2d3436; border:none; border-radius:12px; font-size:0.9em; font-weight:600; cursor:pointer; margin-top:8px;" onclick="this.closest('.popup-overlay').remove()">Cancel</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(supportPopup);
+        }
+
+        function submitSupportForm(event) {
+            event.preventDefault();
+            const subject = document.getElementById('supportSubject').value;
+            const message = document.getElementById('supportMessage').value;
+            const priority = document.getElementById('supportPriority').value;
+            if (!subject || !message) {
+                showToast('⚠️ Please fill all fields');
+                return;
+            }
+            fetch('/api/support', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    subject, message, priority, 
+                    restaurantId: RESTAURANT_ID 
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Support ticket submitted! We\'ll get back to you.');
+                    const popup = document.getElementById('supportPopup');
+                    if (popup) popup.remove();
+                    showPanel('support');
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        let currentLat = null;
+        let currentLng = null;
+        let currentAddress = '';
+
+        function renderLocationSection() {
+            if (!isLoggedIn) {
+                menuArea.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="font-size:4em; margin-bottom:15px;">🔐</div>
+                        <h3 style="color:#2d3436;">Login Required</h3>
+                        <p style="color:#b2bec3; margin-bottom:20px;">Please login to share your location</p>
+                        <a href="#" onclick="handleGoogleLogin()" style="display:inline-block; padding:12px 30px; background:#4285f4; color:white; border-radius:30px; text-decoration:none; font-weight:600;">
+                            Sign in with Google
+                        </a>
+                        <br>
+                        <button onclick="showPanel('menu')" style="margin-top:15px; background:none; border:none; color:#b2bec3; cursor:pointer; font-size:0.85em;">Back to Menu</button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">📍 Share Your Location</div>
+                    <div style="background:white; border-radius:12px; padding:20px; margin-top:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <p style="color:#636e72; margin-bottom:15px;">Share your location for faster delivery!</p>
+                        <div style="text-align:center; margin:15px 0;">
+                            <div id="locationStatus2" style="padding:15px; background:#f8f9fa; border-radius:10px; color:#636e72;">
+                                ⏳ Click "Get Location" to share
+                            </div>
+                            <div id="locationMap2" style="width:100%; height:300px; border-radius:10px; margin-top:10px; background:#f1f2f6; display:none; overflow:hidden;">
+                                <iframe id="locationIframe2" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                            </div>
+                            <button class="order-submit-btn" onclick="getCurrentLocation()" style="margin-top:15px; background:#3498db;">
+                                📍 Get My Location
+                            </button>
+                            <button class="order-submit-btn" onclick="shareLocation()" style="margin-top:10px;" id="shareLocationBtn" disabled>
+                                📤 Share Location with Restaurant
+                            </button>
+                        </div>
+                        <div style="margin-top:15px; padding-top:15px; border-top:1px solid #f1f2f6; text-align:center;">
+                            <p style="font-size:0.8em; color:#b2bec3;">Your location helps us deliver faster and more accurately.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+        }
+
+        function getCurrentLocation() {
+            const status = document.getElementById('locationStatus2');
+            const map = document.getElementById('locationMap2');
+            const shareBtn = document.getElementById('shareLocationBtn');
+            
+            if (!navigator.geolocation) {
+                status.innerHTML = '❌ Geolocation is not supported by your browser';
+                showToast('❌ Geolocation not supported');
+                return;
+            }
+            
+            status.innerHTML = '⏳ Getting your location...';
+            showToast('📍 Getting your location...');
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+                    
+                    status.innerHTML = `✅ Location found! (${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})`;
+                    showToast('✅ Location found!');
+                    
+                    map.style.display = 'block';
+                    document.getElementById('locationIframe2').src = getMapEmbedUrl(currentLat, currentLng);
+                    
+                    shareBtn.disabled = false;
+                    shareBtn.style.opacity = '1';
+                    
+                    const cacheKey = `${currentLat.toFixed(4)},${currentLng.toFixed(4)}`;
+                    if (locationCache[cacheKey]) {
+                        currentAddress = locationCache[cacheKey];
+                        status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
+                        return;
+                    }
+                    
+                    fetch(`/api/location/reverse?lat=${currentLat}&lng=${currentLng}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.display_name) {
+                                currentAddress = data.display_name;
+                                locationCache[cacheKey] = data.display_name;
+                                status.innerHTML = `📍 ${currentAddress.substring(0, 100)}...`;
+                            }
+                        })
+                        .catch(() => {
+                            status.innerHTML = `✅ Location found!<br><small>(${currentLat.toFixed(6)}, ${currentLng.toFixed(6)})</small>`;
+                        });
+                },
+                function(error) {
+                    console.error('Location error:', error);
+                    let errorMsg = '❌ Error getting location.';
+                    switch(error.code) {
+                        case 1:
+                            errorMsg = '❌ Location permission denied. Please enable GPS.';
+                            break;
+                        case 2:
+                            errorMsg = '❌ Location unavailable. Check GPS.';
+                            break;
+                        case 3:
+                            errorMsg = '❌ Request timed out. Try again.';
+                            break;
+                        default:
+                            errorMsg = '❌ Error: ' + error.message;
+                    }
+                    status.innerHTML = errorMsg;
+                    showToast('⚠️ ' + errorMsg);
+                },
+                options
+            );
+        }
+
+        function shareLocation() {
+            if (!currentLat || !currentLng) {
+                showToast('⚠️ Please get your location first');
+                return;
+            }
+            if (!isLoggedIn) {
+                openLoginRequired();
+                return;
+            }
+            fetch('/api/location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat: currentLat,
+                    lng: currentLng,
+                    address: currentAddress,
+                    restaurantId: RESTAURANT_ID
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✅ Location shared successfully!');
+                    document.getElementById('locationStatus2').innerHTML = '✅ Location shared with restaurant!';
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to share location'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function renderSettings() {
+            const theme = localStorage.getItem('theme') || 'light';
+            let html = `
+                <div style="padding:10px 5px;">
+                    <div class="section-title">⚙️ Settings</div>
+                    <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">🎨 Theme</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f2f6;">
+                            <div>
+                                <div style="font-weight:600;">Dark Mode</div>
+                                <div style="font-size:0.75em; color:#b2bec3;">Switch between light and dark theme</div>
+                            </div>
+                            <div class="toggle-switch ${theme === 'dark' ? 'active' : ''}" onclick="toggleTheme()" style="width:50px; height:28px; background:${theme === 'dark' ? '#27ae60' : '#dfe6e9'}; border-radius:14px; position:relative; cursor:pointer; transition:all 0.3s; flex-shrink:0;">
+                                <div class="toggle-dot" style="width:22px; height:22px; background:white; border-radius:50%; position:absolute; top:3px; left:${theme === 'dark' ? '25px' : '3px'}; transition:all 0.3s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">🔔 Notifications</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f2f6;">
+                            <div>
+                                <div style="font-weight:600;">Order Updates</div>
+                                <div style="font-size:0.75em; color:#b2bec3;">Get notified about order status</div>
+                            </div>
+                            <div class="toggle-switch active" onclick="this.classList.toggle('active'); this.style.background=this.classList.contains('active') ? '#27ae60' : '#dfe6e9';" style="width:50px; height:28px; background:#27ae60; border-radius:14px; position:relative; cursor:pointer; transition:all 0.3s; flex-shrink:0;">
+                                <div class="toggle-dot" style="width:22px; height:22px; background:white; border-radius:50%; position:absolute; top:3px; left:25px; transition:all 0.3s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"></div>
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+                            <div>
+                                <div style="font-weight:600;">Deals & Offers</div>
+                                <div style="font-size:0.75em; color:#b2bec3;">Get notified about new deals</div>
+                            </div>
+                            <div class="toggle-switch" onclick="this.classList.toggle('active'); this.style.background=this.classList.contains('active') ? '#27ae60' : '#dfe6e9';" style="width:50px; height:28px; background:#dfe6e9; border-radius:14px; position:relative; cursor:pointer; transition:all 0.3s; flex-shrink:0;">
+                                <div class="toggle-dot" style="width:22px; height:22px; background:white; border-radius:50%; position:absolute; top:3px; left:3px; transition:all 0.3s; box-shadow:0 2px 5px rgba(0,0,0,0.2);"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">🌐 Language</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+                            <div>
+                                <div style="font-weight:600;">App Language</div>
+                                <div style="font-size:0.75em; color:#b2bec3;">Choose your preferred language</div>
+                            </div>
+                            <select style="padding:6px 12px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em; background:white;">
+                                <option>English</option>
+                                <option>Urdu</option>
+                                <option>Arabic</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">💳 Payment</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+                            <div>
+                                <div style="font-weight:600;">Default Payment Method</div>
+                                <div style="font-size:0.75em; color:#b2bec3;">Choose your preferred payment</div>
+                            </div>
+                            <select style="padding:6px 12px; border-radius:8px; border:1px solid #dfe6e9; font-size:0.9em; background:white;">
+                                <option>Cash on Delivery</option>
+                                <option>Easypaisa</option>
+                                <option>JazzCash</option>
+                                <option>Credit Card</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size:0.95em; color:#636e72; margin-bottom:10px;">📱 About</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+                            <div>
+                                <div style="font-weight:600;">App Version</div>
+                                <div style="font-size:0.75em; color:#b2bec3;">DineFlow v2.0.0</div>
+                            </div>
+                            <span style="color:#27ae60;">✅ Up to date</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menuArea.innerHTML = html;
+        }
+
+        function toggleTheme() {
+            const toggle = document.querySelector('.toggle-switch');
+            toggle.classList.toggle('active');
+            const isDark = toggle.classList.contains('active');
+            if (isDark) {
+                document.body.style.background = '#1a1a2e';
+                document.body.style.color = '#ffffff';
+                document.querySelector('.top-header').style.background = '#16213e';
+                document.querySelector('.top-header').style.color = '#ffffff';
+                document.querySelector('.sidebar').style.background = '#16213e';
+                document.querySelector('.sidebar').style.borderRight = '1px solid #2d2d44';
+                document.querySelector('.bottom-nav').style.background = '#16213e';
+                document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
+                document.querySelector('.restaurant-name span').style.color = '#ffffff';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.style.background = '#f8f9fa';
+                document.body.style.color = '#2d3436';
+                document.querySelector('.top-header').style.background = 'white';
+                document.querySelector('.top-header').style.color = '#2d3436';
+                document.querySelector('.sidebar').style.background = 'white';
+                document.querySelector('.sidebar').style.borderRight = '1px solid #eee';
+                document.querySelector('.bottom-nav').style.background = 'white';
+                document.querySelector('.bottom-nav').style.borderTop = '1px solid #eee';
+                document.querySelector('.restaurant-name span').style.color = '#2d3436';
+                localStorage.setItem('theme', 'light');
+            }
+            const activeNav = document.querySelector('.nav-item.active');
+            if (activeNav) {
+                const panel = activeNav.dataset.panel;
+                showPanel(panel);
+            }
+        }
+
+        let selectedRating = 0;
+        function showFeedbackPopup() {
+            selectedRating = 0;
+            document.getElementById('feedbackComment').value = '';
+            document.querySelectorAll('#feedbackPopup .star-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('starLabel').textContent = 'Select a rating';
+            setTimeout(() => {
+                document.getElementById('feedbackPopup').classList.add('show');
+            }, 1500);
+        }
+        function closeFeedback() {
+            document.getElementById('feedbackPopup').classList.remove('show');
+        }
+        function selectStar(rating) {
+            selectedRating = rating;
+            document.querySelectorAll('#feedbackPopup .star-btn').forEach((b, i) => {
+                b.classList.toggle('active', i < rating);
+            });
+            const labels = ['', 'Terrible', 'Bad', 'Okay', 'Good', 'Excellent'];
+            document.getElementById('starLabel').textContent = labels[rating] || 'Select a rating';
+        }
+        function submitFeedback() {
+            if (!selectedRating) {
+                showToast('⚠️ Please select a rating');
+                return;
+            }
+            const comment = document.getElementById('feedbackComment').value;
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    rating: selectedRating, 
+                    comment: comment, 
+                    restaurantId: RESTAURANT_ID 
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('⭐ Thank you for your feedback!');
+                    closeFeedback();
+                } else {
+                    showToast('❌ ' + (data.error || 'Failed to submit'));
+                }
+            })
+            .catch(() => showToast('❌ Network error'));
+        }
+
+        function openLoginRequired() {
+            document.getElementById('loginRequiredPopup').classList.add('show');
+        }
+
+        function closeLoginRequired() {
+            document.getElementById('loginRequiredPopup').classList.remove('show');
+        }
+
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        setInterval(function() {
+            loadMenu();
+            loadDeals();
+            loadRestaurantName();
+            loadOrders();
+            checkRestaurantStatus();
+        }, 10000);
+
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            document.body.style.background = '#1a1a2e';
+            document.body.style.color = '#ffffff';
+            document.querySelector('.top-header').style.background = '#16213e';
+            document.querySelector('.top-header').style.color = '#ffffff';
+            document.querySelector('.sidebar').style.background = '#16213e';
+            document.querySelector('.sidebar').style.borderRight = '1px solid #2d2d44';
+            document.querySelector('.bottom-nav').style.background = '#16213e';
+            document.querySelector('.bottom-nav').style.borderTop = '1px solid #2d2d44';
+            document.querySelector('.restaurant-name span').style.color = '#ffffff';
+        }
+    </script>
+</body>
+</html>
