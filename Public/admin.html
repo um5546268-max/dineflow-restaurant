@@ -3895,9 +3895,24 @@ const html = `
     Scan QR Code To Download App
 </div>
                             </div>
-                            <div class="receipt-divider"></div>
-                            <div class="thank-you"><span class="heart">❤️</span> ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}</div>
-                            <div class="great-day">${receiptSettings.footerMessage || 'Have a Great Day!'}</div>
+<div class="receipt-divider"></div>
+
+<div class="thank-you">
+    <span class="heart">❤️</span>
+    ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}
+</div>
+
+<div class="great-day">
+    ${receiptSettings.footerMessage || 'Have a Great Day!'}
+</div>
+
+<div style="margin-top:8px; padding-top:5px;
+            border-top:1px dashed #999;
+            text-align:center; font-size:9px;
+            line-height:1.5; color:#333;">
+    <div>Developed by <strong>Pixelpulse.ltd</strong></div>
+    <div>Contact: <strong>03480140014</strong></div>
+</div>
                         </div>
                     </div>
                 </div>
