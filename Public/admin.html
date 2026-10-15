@@ -1325,6 +1325,7 @@ font-weight: 500;
             <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
             <a class="admin-nav-item" data-admin="backup" onclick="showAdminSection('backup')">💾 Backup</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
+            <a class="admin-nav-item" data-admin="developer" onclick="showAdminSection('developer')">💻 Developer</a>
         </div>
 
         <div class="admin-content">
@@ -1446,7 +1447,7 @@ font-weight: 500;
                 <h3 style="margin-bottom:15px;">🏪 About Restaurant</h3>
                 <div class="settings-card">
                     <h4>Restaurant Information</h4>
-                    <div class="settings-option">
+                    <div class="settings-option"><a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
                         <div>
                             <div class="option-label">About Title</div>
                             <div class="option-desc">Title shown in about popup</div>
@@ -1985,6 +1986,80 @@ font-weight: 500;
                 <button class="btn-close-receipt" onclick="closeReceipt()">Close</button>
             </div>
         </div>
+        <!-- Developer Profile -->
+<div class="admin-section" id="adminDeveloper">
+    <div style="
+        max-width:650px;
+        margin:20px auto;
+        padding:30px 20px;
+        background:linear-gradient(145deg,#090909,#211b0b);
+        color:#fff;
+        border:1px solid #c9a227;
+        border-radius:22px;
+        text-align:center;
+        box-shadow:0 8px 28px rgba(0,0,0,0.25);
+    ">
+        <div style="
+            width:85px;height:85px;border-radius:50%;
+            margin:0 auto 15px;
+            display:flex;align-items:center;
+            justify-content:center;
+            background:linear-gradient(145deg,#f4d675,#c9a227);
+            font-size:40px;
+        ">💻</div>
+
+        <div style="color:#e8c75a;font-size:12px;letter-spacing:3px;font-weight:bold;">
+            DEVELOPER PROFILE
+        </div>
+
+        <h2 style="font-size:30px;margin:12px 0 6px;">Saad</h2>
+
+        <p style="color:#e8c75a;font-weight:bold;">
+            Software Engineer &amp; Developer
+        </p>
+
+        <div style="
+            display:inline-block;padding:8px 18px;
+            border:1px solid #c9a227;border-radius:20px;
+            color:#f5d76e;font-weight:bold;
+        ">Pixelpulse.ltd</div>
+
+        <p style="color:#ddd;line-height:1.8;margin:22px 0;">
+            Building useful digital solutions for businesses.
+            Our services include software development,
+            website development and custom business applications.
+        </p>
+
+        <div style="
+            background:#171717;border:1px solid #6d591c;
+            border-radius:12px;padding:15px;margin-bottom:18px;
+            text-align:left;
+        ">
+            <div style="color:#e8c75a;font-size:12px;font-weight:bold;margin-bottom:7px;">
+                CONTACT NUMBER
+            </div>
+            <div style="font-size:19px;font-weight:bold;">03480140014</div>
+        </div>
+
+        <a href="tel:+923480140014" style="
+            display:block;padding:14px;margin-bottom:12px;
+            border-radius:12px;
+            background:linear-gradient(90deg,#f4d675,#c9a227);
+            color:#111;font-weight:bold;text-decoration:none;
+        ">📞 Call Developer</a>
+
+        <a href="https://wa.me/923480140014"
+           target="_blank" rel="noopener noreferrer" style="
+            display:block;padding:14px;border-radius:12px;
+            background:#171717;border:1px solid #c9a227;
+            color:#f5d76e;font-weight:bold;text-decoration:none;
+        ">💬 WhatsApp Developer</a>
+
+        <div style="margin-top:22px;color:#a69c80;font-size:11px;letter-spacing:1px;">
+            POWERED BY PIXELPULSE.LTD
+        </div>
+    </div>
+</div>
     </div>
 
     <script>
@@ -4973,7 +5048,8 @@ ${whatsappUrl
                 delivery: 'adminDelivery',
                 calculator: 'adminCalculator',
                 backup: 'adminBackup',
-                settings: 'adminSettings'
+                settings: 'adminSettings',
+                developer: 'adminDeveloper'
             };
             const target = document.getElementById(sectionMap[section]);
             if (target) target.classList.add('active');
