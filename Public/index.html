@@ -1256,21 +1256,22 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
 
-        
 .developer-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 9px 12px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
     border: 1px solid #c9a227;
     border-radius: 8px;
     background: linear-gradient(135deg, #171717, #29210b);
     color: #f5d76e;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 19px;
     text-decoration: none;
     cursor: pointer;
-    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
     transition: all 0.2s ease;
 }
 
