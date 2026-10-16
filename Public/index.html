@@ -1709,40 +1709,45 @@
             .catch(() => showToast('❌ Network error'));
         }
 
-        // DATA
-        let categories = [
-            { id: 'all', name: 'All', icon: '🍽️' },
-            { id: 'burgers', name: 'Burgers', icon: '🍔' },
-            { id: 'pizza', name: 'Pizza', icon: '🍕' },
-            { id: 'sandwiches', name: 'Sandwiches', icon: '🥪' },
-            { id: 'sides', name: 'Sides', icon: '🍟' },
-            { id: 'drinks', name: 'Drinks', icon: '🥤' },
-            { id: 'salads', name: 'Salads', icon: '🥗' },
-            { id: 'appetizers', name: 'Appetizers', icon: '🍤' },
-            { id: 'desserts', name: 'Desserts', icon: '🍰' }
-        ];
-        let menuItems = [];
-        let deals = [];
-        let orders = [];
-        let cart = [];
-        let isLoggedIn = false;
-        let user = null;
-        let currentCategory = 'all';
-        let pendingOrder = null;
-        let restaurantName = 'The Heaven Slice';
-        let currentPanel = 'menu';
-        let selectedLayers = [];
-        let selectedOrderType = 'dinein';
-        let orderLocation = { lat: null, lng: null, address: '' };
-        let pendingOrderData = null;
-        let currencySymbol = 'Rs';
-        let whatsappNumber = '923001234567';
-        let orderCounter = 1;
-        let receiptSettings = { logoIcon: '👨‍🍳', logoUrl: '', tagline: 'PIZZA • BURGER • FAST FOOD' };
-        let aboutData = {};
-        let lobbyDeals = [];
-        let currentLobbyDeal = null;
-        let lobbyDealShown = false;
+       // DATA
+let categories = [
+    { id: 'all', name: 'All', icon: '🍽️' },
+    { id: 'pizza', name: 'Pizza', icon: '🍕' },
+    { id: 'burgers', name: 'Burgers', icon: '🍔' },
+    { id: 'fries_sides', name: 'Fries & Sides', icon: '🍟' },
+    { id: 'pasta', name: 'Pasta', icon: '🍝' },
+    { id: 'wings_nuggets', name: 'Wings & Nuggets', icon: '🍗' },
+    { id: 'rolls', name: 'Rolls', icon: '🌯' },
+    { id: 'shawarma', name: 'Shawarma', icon: '🥙' },
+    { id: 'paratha_rolls', name: 'Paratha Rolls', icon: '🌯' },
+    { id: 'platters', name: 'Platters', icon: '🍱' },
+    { id: 'deals', name: 'Deals', icon: '🎁' },
+    { id: 'drinks', name: 'Drinks', icon: '🥤' },
+    { id: 'sauces', name: 'Sauces', icon: '🥫' }
+];
+
+let menuItems = [];
+let deals = [];
+let orders = [];
+let cart = [];
+let isLoggedIn = false;
+let user = null;
+let currentCategory = 'all';
+let pendingOrder = null;
+let restaurantName = 'Sangat Cafe';
+let currentPanel = 'menu';
+let selectedLayers = [];
+let selectedOrderType = 'dinein';
+let orderLocation = { lat: null, lng: null, address: '' };
+let pendingOrderData = null;
+let currencySymbol = 'Rs';
+let whatsappNumber = '923001234567';
+let orderCounter = 1;
+let receiptSettings = { logoIcon: '👨‍🍳', logoUrl: '', tagline: 'PIZZA • BURGER • FAST FOOD' };
+let aboutData = {};
+let lobbyDeals = [];
+let currentLobbyDeal = null;
+let lobbyDealShown = false;
 
         const sidebar = document.getElementById('categorySidebar');
         const menuArea = document.getElementById('menuArea');
