@@ -2249,6 +2249,14 @@ let restaurantConfig = {
                                 playNotificationSound();
                             }
 
+                            console.log('REAL-TIME ORDER TOTAL CHECK:', {
+    id: data.order.id,
+    subtotal: data.order.subtotal,
+    layerExtraCharge: data.order.layerExtraCharge,
+    total: data.order.total,
+    layers: data.order.layers
+});
+
                             const exists = orders.some(o => o.id === data.order.id);
                             if (!exists) {
                                 orders.push(data.order);
