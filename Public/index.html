@@ -3220,8 +3220,8 @@ ${layerExtraCharge > 0 ? `
                 html += `
                     <div style="background:white; border-radius:12px; padding:12px 15px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                            <div style="font-weight:700;">Order #${order.id} ${orderTypeIcon} ${order.orderType || 'Delivery'}</div>
-                            <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">${currencySymbol} ${order.total.toFixed(2)}</div>
+                            <div style="font-weight:700;">Order #${order.id} ${orderTypeIcon} ${order.orderType || 'Delivery'}</div>                          
+                           <div style="font-weight:700; color:#e74c3c; font-size:1.1em;">${currencySymbol} ${Number(order.total || 0).toFixed(2)}</div>
                         </div>
                         <div style="font-size:0.75em; color:#636e72;">🕐 ${order.deviceTime || order.date || 'Today'}</div>
                         ${order.layers && order.layers.length ? `<div style="font-size:0.7em; color:#f39c12;">🧅 ${order.layers.join(', ')}</div>` : ''}

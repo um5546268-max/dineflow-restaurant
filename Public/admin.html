@@ -3079,22 +3079,31 @@ let restaurantConfig = {
         // LOAD ORDERS
         // ============================================================
         function loadOrders() {
-            fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => {
-                    orders = data || [];
-                    lastOrderCount = orders.length;
-                    if (orders.length > 0) {
-                        lastOrderId = Math.max(...orders.map(o => o.id));
-                    }
-                    renderAdminDashboard();
-                    renderAdminOrders();
-                })
-                .catch(err => {
-                    console.error('Error loading orders:', err);
-                });
-        }
+    fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
+        .then(r => r.json())
+        .then(data => {
+            orders = data || [];
 
+            console.log('ADMIN ORDERS DEBUG:', orders.map(o => ({
+                id: o.id,
+                subtotal: o.subtotal,
+                layerExtraCharge: o.layerExtraCharge,
+                total: o.total,
+                layers: o.layers
+            })));
+
+            lastOrderCount = orders.length;
+            if (orders.length > 0) {
+                lastOrderId = Math.max(...orders.map(o => o.id));
+            }
+
+            renderAdminDashboard();
+            renderAdminOrders();
+        })
+        .catch(err => {
+            console.error('Error loading orders:', err);
+        });
+}
         // ============================================================
         // ⭐ BACKUP & RECOVERY FUNCTIONS ⭐
         // ============================================================
