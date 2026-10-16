@@ -4089,11 +4089,19 @@ const html = `
                     `;
                 });
 
-                let discount = 0;
-                if (subtotal > config.discountThreshold) {
-                    discount = config.discountAmount;
-                }
-                const grandTotal = subtotal - discount;
+                
+let discount = 0;
+if (subtotal > config.discountThreshold) {
+    discount = config.discountAmount;
+}
+
+// Include the extra layer charge exactly once.
+const layerExtraCharge = Number(
+    order.layerExtraCharge ??
+    (Array.isArray(order.layers) ? order.layers.length * 100 : 0)
+);
+
+const grandTotal = subtotal + layerExtraCharge - discount;
 
                 const locationHtml = order.lat && order.lng ?
                     `<div style="display:flex; flex-direction:column; gap:3px;">
@@ -4171,6 +4179,11 @@ const whatsappUrl = customerWhatsAppNumber
                                 <span class="label">Subtotal:</span>
                                 <span class="value">${config.currency} ${subtotal.toFixed(2)}</span>
                             </div>
+${layerExtraCharge > 0 ? `
+<div class="total-row">
+    <span class="label">Extra Layers:</span>
+    <span class="value">${config.currency} ${layerExtraCharge.toFixed(2)}</span>
+</div>` : ''}
                             ${discount > 0 ? `
                             <div class="total-row discount">
                                 <span class="label">Discount (Fixed):</span>
