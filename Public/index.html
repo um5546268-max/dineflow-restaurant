@@ -2545,7 +2545,9 @@
                             <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Layers for ${menuItem.name}:</label>
                             <div class="layer-options" data-item="${menuItem.id}">
                                 ${menuItem.layers.map(layer => `
-                                    <span class="layer-option" data-layer="${layer}" onclick="toggleLayer(this, ${menuItem.id})">${layer}</span>
+                                    
+                                    <span class="layer-option" data-layer="${layer}" onclick="toggleLayer(this, ${menuItem.id})">${layer} (+ Rs 100)</span>
+
                                 `).join('')}
                             </div>
                         </div>
@@ -2992,11 +2994,20 @@ document.getElementById('orderTotalDisplay').textContent =
                 `;
             });
 
-            let discount = 0;
-            if (subtotal > config.discountThreshold) {
-                discount = config.discountAmount;
-            }
-            const grandTotal = subtotal - discount;
+           
+let discount = 0;
+if (subtotal > config.discountThreshold) {
+    discount = Number(config.discountAmount) || 0;
+}
+
+// Rs 100 for each selected layer
+const layerExtraCharge = Number(
+    order.layerExtraCharge ??
+    (Array.isArray(order.layers) ? order.layers.length * 100 : 0)
+);
+
+const grandTotal = subtotal + layerExtraCharge - discount;
+
 
             let cancellationInfo = '';
             if (config.allowCancellation && config.cancellationTimeLimit > 0) {
@@ -3061,6 +3072,13 @@ document.getElementById('orderTotalDisplay').textContent =
                                 <span class="label">Subtotal:</span>
                                 <span class="value">${config.currency} ${subtotal.toFixed(2)}</span>
                             </div>
+                            
+${layerExtraCharge > 0 ? `
+<div class="total-row">
+    <span class="label">Layer Charges (${Array.isArray(order.layers) ? order.layers.length : 0} × Rs 100):</span>
+    <span class="value">${config.currency} ${layerExtraCharge.toFixed(2)}</span>
+</div>
+` : ''}
                             ${discount > 0 ? `
                             <div class="total-row discount">
                                 <span class="label">Discount (Fixed):</span>
