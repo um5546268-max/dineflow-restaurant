@@ -3017,7 +3017,7 @@ const layerExtraCharge = Number(
     (Array.isArray(order.layers) ? order.layers.length * 100 : 0)
 );
 
-const grandTotal = subtotal + layerExtraCharge - discount;
+const grandTotal = Number(order.total);
 
 
             let cancellationInfo = '';
