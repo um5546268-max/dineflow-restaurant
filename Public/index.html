@@ -2570,13 +2570,36 @@
             orderPopup.classList.add('show');
         }
 
-        function toggleLayer(element, itemId) {
-            element.classList.toggle('selected');
-            const selected = document.querySelectorAll(`#layerContainer .layer-options[data-item="${itemId}"] .layer-option.selected`);
-            const layers = Array.from(selected).map(el => el.dataset.layer);
-            if (!window.selectedLayersMap) window.selectedLayersMap = {};
-            window.selectedLayersMap[itemId] = layers;
-        }
+        
+function toggleLayer(element, itemId) {
+    element.classList.toggle('selected');
+
+    const selected = document.querySelectorAll(
+        `#layerContainer .layer-options[data-item="${itemId}"] .layer-option.selected`
+    );
+
+    const layers = Array.from(selected).map(el => el.dataset.layer);
+
+    if (!window.selectedLayersMap) {
+        window.selectedLayersMap = {};
+    }
+
+    window.selectedLayersMap[itemId] = layers;
+
+    // Rs 100 for every selected layer
+    const extraCharge = Object.values(window.selectedLayersMap)
+        .reduce((total, itemLayers) => total + itemLayers.length * 100, 0);
+
+    window.layerExtraCharge = extraCharge;
+
+    // Update the displayed order total
+    const baseTotal = Number(
+        document.getElementById('orderTotal')?.value || 0
+    );
+
+    document.getElementById('orderTotalDisplay').textContent =
+        `Total: Rs ${(baseTotal + extraCharge).toFixed(2)}`;
+}
 
         function closeOrderPopup() {
             orderPopup.classList.remove('show');
@@ -2872,14 +2895,43 @@
                     fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
                 }
 
-                const orderData = { 
-                    name, phone, items, total, layers, 
-                    table, carNumber, carServiceAddress, address, city, 
-                    thirdpartyName, thirdpartyOrderId, 
-                    fullAddress: fullAddress,
-                    orderType: orderType,
-                    restaurantId: RESTAURANT_ID
-                };
+                
+const selectedLayersMap = window.selectedLayersMap || {};
+
+const selectedLayerCount = Object.values(selectedLayersMap)
+    .reduce((count, selectedLayers) => {
+        return count + (Array.isArray(selectedLayers) ? selectedLayers.length : 0);
+    }, 0);
+
+const layerExtraCharge = selectedLayerCount * 100;
+const finalTotal = Number(total || 0) + layerExtraCharge;
+
+const selectedLayerNames = Object.values(selectedLayersMap).flat();
+
+const orderData = {
+    name,
+    phone,
+    items,
+    subtotal: Number(total || 0),
+    total: finalTotal,
+    layers: selectedLayerNames,
+    layerExtraCharge,
+    selectedLayerCount,
+    table,
+    carNumber,
+    carServiceAddress,
+    address,
+    city,
+    thirdpartyName,
+    thirdpartyOrderId,
+    fullAddress: fullAddress,
+    orderType: orderType,
+    restaurantId: RESTAURANT_ID
+};
+
+document.getElementById('orderTotalDisplay').textContent =
+    `Total: Rs ${finalTotal.toFixed(2)}`;
+
                 closeOrderPopup();
 
                 if (orderType === 'delivery') {

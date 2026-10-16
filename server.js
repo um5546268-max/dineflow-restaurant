@@ -1542,10 +1542,30 @@ app.post('/api/orders', (req, res) => {
         });
     }
     
-    const { items, total, name, phone, address, layers, orderType, paymentMethod, lat, lng, table, deviceTime, deviceTimestamp } = req.body;
-    if (!items || !items.length || !total) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
+    
+const {
+    items, total, subtotal, name, phone, address, layers,
+    orderType, paymentMethod, lat, lng, table,
+    deviceTime, deviceTimestamp
+} = req.body;
+
+if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Missing required fields' });
+}
+
+// Count the selected layers and calculate the fee on the server.
+const selectedLayers = Array.isArray(layers) ? layers : [];
+const selectedLayerCount = selectedLayers.length;
+const layerExtraCharge = selectedLayerCount * 100;
+
+// Use the original subtotal when supplied, preventing double-charging.
+const baseTotal = Number(subtotal ?? total);
+
+if (!Number.isFinite(baseTotal) || baseTotal <= 0) {
+    return res.status(400).json({ error: 'Invalid order total' });
+}
+
+const finalTotal = baseTotal + layerExtraCharge;
     
     const newOrder = {
         id: restaurant.orders.length + 1,
@@ -1554,8 +1574,11 @@ app.post('/api/orders', (req, res) => {
         phone: phone || '',
         address: address || 'In-store pickup',
         items: items,
-        layers: layers || [],
-        total: parseFloat(total),
+layers: selectedLayers,
+subtotal: baseTotal,
+layerExtraCharge: layerExtraCharge,
+selectedLayerCount: selectedLayerCount,
+total: finalTotal,
         status: 'pending',
         orderType: orderType || 'delivery',
         paymentMethod: paymentMethod || 'cash',
