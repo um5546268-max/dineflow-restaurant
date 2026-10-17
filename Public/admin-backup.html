@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     
-    <title>The Heaven Slice - Admin Panel</title>
+    <title>Sangat Cafe - Admin Panel</title>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1302,7 +1302,7 @@ font-weight: 500;
 <body>
 
     <header class="admin-header">
-        <h2>👑 The Heaven Slice - Admin</h2>
+        <h2>👑 Sangat Cafe - Admin</h2>
         <div class="admin-header-actions">
             <span id="connectionStatus" class="connection-status disconnected">🔴 Connecting...</span>
             <a href="/" class="view-site-btn">📱 View Site</a>
@@ -1325,6 +1325,7 @@ font-weight: 500;
             <a class="admin-nav-item" data-admin="calculator" onclick="showAdminSection('calculator')">🧮 Calculator</a>
             <a class="admin-nav-item" data-admin="backup" onclick="showAdminSection('backup')">💾 Backup</a>
             <a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
+            <a class="admin-nav-item" data-admin="developer" onclick="showAdminSection('developer')">💻 Developer</a>
         </div>
 
         <div class="admin-content">
@@ -1368,6 +1369,80 @@ font-weight: 500;
                     <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
                 </div>
             </div>
+            <!-- Developer Profile -->
+<div class="admin-section" id="adminDeveloper">
+    <div style="
+        max-width:650px;
+        margin:20px auto;
+        padding:30px 20px;
+        background:linear-gradient(145deg,#090909,#211b0b);
+        color:#fff;
+        border:1px solid #c9a227;
+        border-radius:22px;
+        text-align:center;
+        box-shadow:0 8px 28px rgba(0,0,0,0.25);
+    ">
+        <div style="
+            width:85px;height:85px;border-radius:50%;
+            margin:0 auto 15px;
+            display:flex;align-items:center;
+            justify-content:center;
+            background:linear-gradient(145deg,#f4d675,#c9a227);
+            font-size:40px;
+        ">💻</div>
+
+        <div style="color:#e8c75a;font-size:12px;letter-spacing:3px;font-weight:bold;">
+            DEVELOPER PROFILE
+        </div>
+
+        <h2 style="font-size:30px;margin:12px 0 6px;">Saad</h2>
+
+        <p style="color:#e8c75a;font-weight:bold;">
+            Software Engineer &amp; Developer
+        </p>
+
+        <div style="
+            display:inline-block;padding:8px 18px;
+            border:1px solid #c9a227;border-radius:20px;
+            color:#f5d76e;font-weight:bold;
+        ">Pixelpulse.ltd</div>
+
+        <p style="color:#ddd;line-height:1.8;margin:22px 0;">
+            Building useful digital solutions for businesses.
+            Our services include software development,
+            website development and custom business applications.
+        </p>
+
+        <div style="
+            background:#171717;border:1px solid #6d591c;
+            border-radius:12px;padding:15px;margin-bottom:18px;
+            text-align:left;
+        ">
+            <div style="color:#e8c75a;font-size:12px;font-weight:bold;margin-bottom:7px;">
+                CONTACT NUMBER
+            </div>
+            <div style="font-size:19px;font-weight:bold;">03480140014</div>
+        </div>
+
+        <a href="tel:+923480140014" style="
+            display:block;padding:14px;margin-bottom:12px;
+            border-radius:12px;
+            background:linear-gradient(90deg,#f4d675,#c9a227);
+            color:#111;font-weight:bold;text-decoration:none;
+        ">📞 Call Developer</a>
+
+        <a href="https://wa.me/923480140014"
+           target="_blank" rel="noopener noreferrer" style="
+            display:block;padding:14px;border-radius:12px;
+            background:#171717;border:1px solid #c9a227;
+            color:#f5d76e;font-weight:bold;text-decoration:none;
+        ">💬 WhatsApp Developer</a>
+
+        <div style="margin-top:22px;color:#a69c80;font-size:11px;letter-spacing:1px;">
+            POWERED BY PIXELPULSE.LTD
+        </div>
+    </div>
+</div>
 
             <!-- Orders -->
             <div class="admin-section" id="adminOrders">
@@ -1389,14 +1464,18 @@ font-weight: 500;
                     </div>
                     <div class="form-row-admin">
                         <select id="adminItemCategory">
-                            <option value="burgers">Burgers</option>
                             <option value="pizza">Pizza</option>
-                            <option value="sandwiches">Sandwiches</option>
-                            <option value="sides">Sides</option>
-                            <option value="drinks">Drinks</option>
-                            <option value="salads">Salads</option>
-                            <option value="appetizers">Appetizers</option>
-                            <option value="desserts">Desserts</option>
+<option value="burgers">Burgers</option>
+<option value="fries_sides">Fries &amp; Sides</option>
+<option value="pasta">Pasta</option>
+<option value="wings_nuggets">Wings &amp; Nuggets</option>
+<option value="rolls">Rolls</option>
+<option value="shawarma">Shawarma</option>
+<option value="paratha_rolls">Paratha Rolls</option>
+<option value="platters">Platters</option>
+<option value="deals">Deals</option>
+<option value="drinks">Drinks</option>
+<option value="sauces">Sauces</option>
                         </select>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <button class="icon-picker-btn" onclick="openIconPicker('menu')">🎨 Add Icon</button>
@@ -1446,7 +1525,7 @@ font-weight: 500;
                 <h3 style="margin-bottom:15px;">🏪 About Restaurant</h3>
                 <div class="settings-card">
                     <h4>Restaurant Information</h4>
-                    <div class="settings-option">
+                    <div class="settings-option"><a class="admin-nav-item" data-admin="settings" onclick="showAdminSection('settings')">⚙️ Settings</a>
                         <div>
                             <div class="option-label">About Title</div>
                             <div class="option-desc">Title shown in about popup</div>
@@ -1985,7 +2064,7 @@ font-weight: 500;
                 <button class="btn-close-receipt" onclick="closeReceipt()">Close</button>
             </div>
         </div>
-    </div>
+</div>
 
     <script>
         // ============================================================
@@ -2032,22 +2111,21 @@ font-weight: 500;
         let currencySymbol = 'Rs';
         let whatsappNumber = '923051322275';
         let allLocations = [];
-        let restaurantConfig = {
-            name: 'Sangat Cafe',
-            est: '2022',
-            address: 'Chak 275 jb Painsra front of Haier Plaze',
-            phone: '0305-13322275',
-            whatsapp: '923051322275',
-            currency: 'Rs',
-            discountAmount: 0,
-            discountThreshold: 0,
-            openingTime: '09:00',
-            closingTime: '23:00',
-            isOpen: true,
-            cancellationTimeLimit: 5,
-            allowCancellation: true
-        };
-
+let restaurantConfig = {
+    name: 'Sangat Cafe',
+    est: '2022',
+    address: 'Chak no 275 j Pensra FSD road near Haier Plaza',
+    phone: '03001060275',
+    whatsapp: '923001060275',
+    currency: 'Rs',
+    discountAmount: 0,
+    discountThreshold: 0,
+    openingTime: '09:00',
+    closingTime: '23:00',
+    isOpen: true,
+    cancellationTimeLimit: 5,
+    allowCancellation: true
+};
         let selectedIcons = { menu: [], deal: [] };
         let selectedAddLayers = [];
         let aboutData = {};
@@ -2174,6 +2252,17 @@ font-weight: 500;
                                 showToast('🆕 New Order #' + data.order.id + ' received!');
                                 playNotificationSound();
                             }
+
+                           console.log(
+    'REAL-TIME ORDER VALUES:',
+    JSON.stringify({
+        id: data.order.id,
+        subtotal: data.order.subtotal,
+        layerExtraCharge: data.order.layerExtraCharge,
+        total: data.order.total,
+        layers: data.order.layers
+    }, null, 2)
+);
 
                             const exists = orders.some(o => o.id === data.order.id);
                             if (!exists) {
@@ -3005,22 +3094,31 @@ font-weight: 500;
         // LOAD ORDERS
         // ============================================================
         function loadOrders() {
-            fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
-                .then(r => r.json())
-                .then(data => {
-                    orders = data || [];
-                    lastOrderCount = orders.length;
-                    if (orders.length > 0) {
-                        lastOrderId = Math.max(...orders.map(o => o.id));
-                    }
-                    renderAdminDashboard();
-                    renderAdminOrders();
-                })
-                .catch(err => {
-                    console.error('Error loading orders:', err);
-                });
-        }
+    fetch('/api/orders/all?restaurant=' + RESTAURANT_ID)
+        .then(r => r.json())
+        .then(data => {
+            orders = data || [];
 
+            console.log('ADMIN ORDERS DEBUG:', orders.map(o => ({
+                id: o.id,
+                subtotal: o.subtotal,
+                layerExtraCharge: o.layerExtraCharge,
+                total: o.total,
+                layers: o.layers
+            })));
+
+            lastOrderCount = orders.length;
+            if (orders.length > 0) {
+                lastOrderId = Math.max(...orders.map(o => o.id));
+            }
+
+            renderAdminDashboard();
+            renderAdminOrders();
+        })
+        .catch(err => {
+            console.error('Error loading orders:', err);
+        });
+}
         // ============================================================
         // ⭐ BACKUP & RECOVERY FUNCTIONS ⭐
         // ============================================================
@@ -3367,7 +3465,7 @@ font-weight: 500;
                 .then(data => {
                     restaurantConfig = data;
                     currencySymbol = data.currency || 'Rs';
-                    whatsappNumber = data.whatsapp || '923001234567';
+                    whatsappNumber = '923001060275';
                     const header = document.querySelector('.admin-header h2');
                     if (header) header.textContent = `👑 ${data.name} - Admin`;
                     const display = document.getElementById('whatsappNumberDisplay');
@@ -3383,7 +3481,7 @@ font-weight: 500;
             fetch('/api/whatsapp-number')
                 .then(r => r.json())
                 .then(data => {
-                    whatsappNumber = data.number || '923001234567';
+                    whatsappNumber = data.number || '923001060275';
                     const display = document.getElementById('whatsappNumberDisplay');
                     if (display) display.textContent = whatsappNumber;
                 })
@@ -3437,7 +3535,7 @@ font-weight: 500;
             fetch('/api/restaurant-name?restaurant=' + RESTAURANT_ID)
                 .then(r => r.json())
                 .then(data => {
-                    document.getElementById('adminRestaurantName').value = data.name || 'The Heaven Slice';
+                    document.getElementById('adminRestaurantName').value = data.name || 'Sangat Cafe';
                 })
                 .catch(() => {});
 
@@ -3632,29 +3730,49 @@ font-weight: 500;
             });
         }
 
-        // ============================================================
-        // WHATSAPP FUNCTIONS
-        // ============================================================
-        function openWhatsApp() {
-            const number = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
-            window.open('https://wa.me/' + number, '_blank');
-        }
+// ============================================================
+// WHATSAPP FUNCTIONS
+// ============================================================
+function openWhatsApp() {
+    const number = String(
+        restaurantConfig.whatsapp || '923001060275'
+    ).replace(/\D/g, '');
 
-        function copyCoordinatesToWhatsApp(lat, lng, orderId, customerName, phone, address) {
-            const whatsappNumber = document.getElementById('whatsappNumberDisplay').textContent || '923001234567';
-            const message = `📍 *Customer Location Details*%0A%0A` +
-                `🧑 *Customer:* ${customerName || 'Guest'}%0A` +
-                `📞 *Phone:* ${phone || 'N/A'}%0A` +
-                `📍 *Address:* ${address || 'N/A'}%0A` +
-                `📦 *Order #:* ${orderId || 'N/A'}%0A%0A` +
-                `🗺️ *Coordinates:*%0A` +
-                `Latitude: ${lat}%0A` +
-                `Longitude: ${lng}%0A%0A` +
-                `🔗 *Google Maps:*%0A` +
-                `https://www.google.com/maps?q=${lat},${lng}`;
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
-            window.open(whatsappUrl, '_blank');
-        }
+    window.open(
+        'https://wa.me/' + number,
+        '_blank',
+        'noopener,noreferrer'
+    );
+}
+
+function copyCoordinatesToWhatsApp(
+    lat, lng, orderId, customerName, phone, address
+) {
+    const whatsappNumber = String(
+        restaurantConfig.whatsapp || '923001060275'
+    ).replace(/\D/g, '');
+
+    const message =
+        `📍 *Customer Location Details*\n\n` +
+        `🧑 *Customer:* ${customerName || 'Guest'}\n` +
+        `📞 *Phone:* ${phone || 'N/A'}\n` +
+        `📍 *Address:* ${address || 'N/A'}\n` +
+        `📦 *Order #:* ${orderId || 'N/A'}\n\n` +
+        `🗺️ *Coordinates:*\n` +
+        `Latitude: ${lat}\n` +
+        `Longitude: ${lng}\n\n` +
+        `🔗 *Google Maps:*\n` +
+        `https://www.google.com/maps?q=${lat},${lng}`;
+
+    const whatsappUrl =
+        `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+    window.open(
+        whatsappUrl,
+        '_blank',
+        'noopener,noreferrer'
+    );
+}
 
         function copyMapLink(lat, lng) {
             const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
@@ -3876,9 +3994,24 @@ const html = `
     Scan QR Code To Download App
 </div>
                             </div>
-                            <div class="receipt-divider"></div>
-                            <div class="thank-you"><span class="heart">❤️</span> ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}</div>
-                            <div class="great-day">${receiptSettings.footerMessage || 'Have a Great Day!'}</div>
+<div class="receipt-divider"></div>
+
+<div class="thank-you">
+    <span class="heart">❤️</span>
+    ${receiptSettings.thankYouMessage || 'Thank You for Your Order!'}
+</div>
+
+<div class="great-day">
+    ${receiptSettings.footerMessage || 'Have a Great Day!'}
+</div>
+
+<div style="margin-top:8px; padding-top:5px;
+            border-top:1px dashed #999;
+            text-align:center; font-size:9px;
+            line-height:1.5; color:#333;">
+    <div>Developed by <strong>Pixelpulse.ltd</strong></div>
+    <div>Contact: <strong>03480140014</strong></div>
+</div>
                         </div>
                     </div>
                 </div>
@@ -3960,11 +4093,19 @@ const html = `
                     `;
                 });
 
-                let discount = 0;
-                if (subtotal > config.discountThreshold) {
-                    discount = config.discountAmount;
-                }
-                const grandTotal = subtotal - discount;
+                
+let discount = 0;
+if (subtotal > config.discountThreshold) {
+    discount = config.discountAmount;
+}
+
+// Include the extra layer charge exactly once.
+const layerExtraCharge = Number(
+    order.layerExtraCharge ??
+    (Array.isArray(order.layers) ? order.layers.length * 100 : 0)
+);
+
+const grandTotal = subtotal + layerExtraCharge - discount;
 
                 const locationHtml = order.lat && order.lng ?
                     `<div style="display:flex; flex-direction:column; gap:3px;">
@@ -3973,8 +4114,27 @@ const html = `
                         <button onclick="copyCoordinatesToWhatsApp(${order.lat}, ${order.lng}, '${order.id}', '${order.userName}', '${order.phone}', '${order.address}')" class="btn-whatsapp" style="padding:2px 8px; border:none; border-radius:12px; font-size:0.65em; font-weight:600; cursor:pointer; background:#25D366; color:white;">💬 WhatsApp</button>
                     </div>` : '<span style="color:#b2bec3; font-size:0.7em;">Not shared</span>';
 
-                const whatsappMsg = `Order #${order.id}%0A📦 ${orderTypeLabel}%0A👤 ${order.userName || 'Guest'}%0A📞 ${order.phone || 'N/A'}%0A📍 ${order.address || 'N/A'}%0A💰 Total: ${config.currency} ${grandTotal.toFixed(2)}`;
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMsg}`;
+const customerWhatsAppNumber = String(order.phone || '')
+    .replace(/\D/g, '')
+    .replace(/^0/, '92');
+
+const whatsappMsg =
+    `🍔 *SANGAT CAFE*\n` +
+    `━━━━━━━━━━━━━━━━\n\n` +
+    `Hello *${order.userName || 'Valued Customer'}*! 👋\n\n` +
+    `Thank you for choosing Sangat Cafe! ❤️\n\n` +
+    `✅ Your order has been received successfully.\n\n` +
+    `🧾 *Order:* #${order.id}\n` +
+    `🍽️ *Order Type:* ${orderTypeLabel}\n` +
+    `💰 *Total Amount:* ${config.currency} ${grandTotal.toFixed(2)}\n\n` +
+    `We're getting your delicious meal ready! 😋\n\n` +
+    `Thank you for being our valued customer. ` +
+    `We look forward to serving you again!\n\n` +
+    `*— Team Sangat Cafe* ❤️`;
+
+const whatsappUrl = customerWhatsAppNumber
+    ? `https://wa.me/${customerWhatsAppNumber}?text=${encodeURIComponent(whatsappMsg)}`
+    : '';
 
                 html += `
                     <div class="order-receipt-card" id="order-card-${order.id}">
@@ -4023,6 +4183,11 @@ const html = `
                                 <span class="label">Subtotal:</span>
                                 <span class="value">${config.currency} ${subtotal.toFixed(2)}</span>
                             </div>
+${layerExtraCharge > 0 ? `
+<div class="total-row">
+    <span class="label">Extra Layers:</span>
+    <span class="value">${config.currency} ${layerExtraCharge.toFixed(2)}</span>
+</div>` : ''}
                             ${discount > 0 ? `
                             <div class="total-row discount">
                                 <span class="label">Discount (Fixed):</span>
@@ -4036,9 +4201,25 @@ const html = `
                         </div>
 
                         <div class="receipt-footer">
-                            <div class="thank-you"><span class="heart">❤️</span> Thank You for Your Order!</div>
-                            <div class="great-day">Have a Great Day!</div>
-                        </div>
+    <div class="thank-you">
+        <span class="heart">❤️</span> Thank You for Your Order!
+    </div>
+
+    <div class="great-day">Have a Great Day!</div>
+
+    <div style="
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px dashed #999;
+        text-align: center;
+        font-size: 9px;
+        line-height: 1.5;
+        color: #333;
+    ">
+        <div>Developed by <strong>Pixelpulse.ltd</strong></div>
+        <div>Contact: <strong>03480140014</strong></div>
+    </div>
+</div>
 
                         <div class="receipt-actions">
                             <select class="btn-status" onchange="updateOrderStatus(${order.id}, this.value)">
@@ -4050,7 +4231,19 @@ const html = `
                                 <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                             </select>
                             <button class="btn-print" onclick="showReceiptForOrder(${order.id})">🖨️ Print</button>
-                            <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">💬 WhatsApp</a>
+${whatsappUrl
+    ? `<button type="button"
+        onclick="generateOrderCard(${order.id})"
+        class="btn-whatsapp"
+        style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">
+        🧾 Generate Order Card
+       </button>`
+    : `<button type="button" disabled
+        title="Customer phone number unavailable"
+        style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; background:#999; color:white;">
+        📵 No Customer Number
+       </button>`
+}
                             ${order.lat && order.lng ? `<a href="https://www.google.com/maps?q=${order.lat},${order.lng}" target="_blank" class="btn-map" style="text-decoration:none; padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; display:inline-block;">🗺️ Map</a>` : ''}
                             ${locationHtml}
                             <button class="btn-delete" onclick="deleteOrderPermanently(${order.id})" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:600; cursor:pointer; background:#e74c3c; color:white;">🗑️ Delete</button>
@@ -4892,7 +5085,8 @@ const html = `
                 delivery: 'adminDelivery',
                 calculator: 'adminCalculator',
                 backup: 'adminBackup',
-                settings: 'adminSettings'
+                settings: 'adminSettings',
+                developer: 'adminDeveloper'
             };
             const target = document.getElementById(sectionMap[section]);
             if (target) target.classList.add('active');
@@ -4994,6 +5188,314 @@ const html = `
                 });
             }
         });
+        
+
+async function generateOrderCard(orderId) {
+    let cardUrl = null;
+
+    try {
+        const order = orders.find(
+            o => String(o.id) === String(orderId)
+        );
+
+        if (!order) {
+            showToast('❌ Order not found. Refresh the admin panel.');
+            return;
+        }
+
+        const customerName = order.userName || 'Valued Customer';
+        const orderType =
+            order.orderType ||
+            order.type ||
+            order.deliveryType ||
+            'Order';
+
+        const total = Number(order.total || 0).toFixed(2);
+
+        // Normalize the Pakistani customer phone number.
+        let phone = String(order.phone || '').replace(/\D/g, '');
+
+        if (phone.startsWith('0')) {
+            phone = '92' + phone.substring(1);
+        } else if (phone.startsWith('3')) {
+            phone = '92' + phone;
+        }
+
+        // Load the blank card background.
+        const background = new Image();
+        background.src = '/sangat-cafe-card.png';
+
+        await new Promise((resolve, reject) => {
+            background.onload = resolve;
+            background.onerror = reject;
+        });
+
+        
+        // Generate the personalized order card.
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1080;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(background, 0, 0, 1080, 1080);
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.85)';
+        ctx.shadowBlur = 4;
+
+        // Customer greeting — no extra cafe heading.
+        ctx.font = 'bold 34px Arial';
+        ctx.fillText(`Hello ${customerName}!`, 540, 275, 940);
+
+        ctx.font = '27px Arial';
+        ctx.fillText(
+            'Thank you for your order!',
+            540, 320, 940
+        );
+
+        // Order number and type.
+        ctx.font = 'bold 32px Arial';
+        ctx.fillText(`ORDER #${order.id}`, 540, 390, 940);
+
+        ctx.font = '27px Arial';
+        ctx.fillText(`Order Type: ${orderType}`, 540, 435, 940);
+
+        // Actual products and quantities.
+        const orderItems = Array.isArray(order.items)
+            ? order.items
+            : [];
+
+        const maxVisibleItems = 6;
+        const visibleItems = orderItems.slice(0, maxVisibleItems);
+        const startY = 505;
+        const lineHeight = 42;
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 25px Arial';
+
+        visibleItems.forEach((item, index) => {
+            const name = String(item.name || 'Item');
+            const qty = Number(item.qty || 1);
+            const y = startY + index * lineHeight;
+
+            ctx.fillText(
+                `${name}  x${qty}`,
+                115,
+                y,
+                850
+            );
+        });
+
+        if (orderItems.length > maxVisibleItems) {
+            ctx.font = '22px Arial';
+            ctx.fillText(
+                `+ ${orderItems.length - maxVisibleItems} more items`,
+                115,
+                startY + maxVisibleItems * lineHeight,
+                850
+            );
+        }
+
+        // Total bill.
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 38px Arial';
+        ctx.fillText(
+            `TOTAL BILL: Rs ${total}`,
+            540, 825, 950
+        );
+
+        ctx.font = '25px Arial';
+        ctx.fillText(
+            'Your order is being prepared!',
+            540, 885, 950
+        );
+
+        ctx.shadowBlur = 0;
+
+        // Convert card to PNG.
+        const blob = await new Promise(resolve =>
+            canvas.toBlob(resolve, 'image/png')
+        );
+
+        if (!blob) {
+            throw new Error('Could not create card image.');
+        }
+
+        const fileName = `Sangat-Cafe-Order-${order.id}.png`;
+        cardUrl = URL.createObjectURL(blob);
+
+        const message =
+            `Hello ${customerName}! Thank you for ordering from Sangat Cafe. ` +
+            `Your order #${order.id} has been received. ` +
+            `Total: Rs ${total}. ❤️`;
+
+        // Remove an older preview if one is already open.
+        const oldModal = document.getElementById('sangatOrderCardModal');
+
+        if (oldModal) {
+            if (oldModal.dataset.cardUrl) {
+                URL.revokeObjectURL(oldModal.dataset.cardUrl);
+            }
+            oldModal.remove();
+        }
+
+        // Create the preview popup.
+        const modal = document.createElement('div');
+        modal.id = 'sangatOrderCardModal';
+        modal.dataset.cardUrl = cardUrl;
+
+        modal.style.cssText = `
+            position:fixed;
+            inset:0;
+            z-index:999999;
+            background:rgba(0,0,0,0.82);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:16px;
+            box-sizing:border-box;
+            overflow-y:auto;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                width:100%;
+                max-width:520px;
+                max-height:95vh;
+                overflow-y:auto;
+                background:#171717;
+                color:#fff;
+                border:1px solid #383838;
+                border-radius:18px;
+                padding:20px;
+                box-sizing:border-box;
+                box-shadow:0 20px 70px rgba(0,0,0,.5);
+                font-family:Arial,sans-serif;
+            ">
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:10px;
+                    margin-bottom:15px;
+                ">
+                    <div>
+                        <div style="font-size:20px;font-weight:bold;">
+                            Sangat Cafe
+                        </div>
+                        <div style="color:#aaa;font-size:13px;margin-top:4px;">
+                            Order #${String(order.id).replace(/[&<>"']/g, '')}
+                        </div>
+                    </div>
+                    <button id="sangatCardClose" type="button"
+                        style="background:#333;color:white;border:0;
+                        border-radius:9px;padding:9px 12px;cursor:pointer;">
+                        ✕ Close
+                    </button>
+                </div>
+
+                <img id="sangatCardPreview"
+                    alt="Personalized Sangat Cafe order card"
+                    style="display:block;width:100%;height:auto;
+                    border-radius:12px;background:#222;">
+
+                <div style="
+                    margin:14px 0;
+                    padding:12px;
+                    border-radius:10px;
+                    background:#242424;
+                    color:#ccc;
+                    font-size:13px;
+                    line-height:1.6;
+                ">
+                    <div>Customer: <strong id="sangatCardCustomer"></strong></div>
+                    <div>Phone: <strong id="sangatCardPhone"></strong></div>
+                    <div style="margin-top:5px;">
+                        WhatsApp will open with your message ready.
+                        Attach the card before sending.
+                    </div>
+                </div>
+
+                <button id="sangatCardSend" type="button"
+                    style="width:100%;padding:14px;border:0;
+                    border-radius:10px;background:#168744;color:white;
+                    font-size:16px;font-weight:bold;cursor:pointer;">
+                    💬 Send to WhatsApp
+                </button>
+
+                <button id="sangatCardDownload" type="button"
+                    style="width:100%;margin-top:9px;padding:12px;
+                    border:1px solid #555;border-radius:10px;
+                    background:#292929;color:white;cursor:pointer;">
+                    ⬇ Download Order Card
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector('#sangatCardPreview').src = cardUrl;
+        modal.querySelector('#sangatCardCustomer').textContent = customerName;
+        modal.querySelector('#sangatCardPhone').textContent =
+            phone ? '+' + phone : 'Not available';
+
+        function downloadCard() {
+            const link = document.createElement('a');
+            link.href = cardUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function closeModal() {
+            if (modal.isConnected) {
+                modal.remove();
+                URL.revokeObjectURL(cardUrl);
+            }
+        }
+
+        modal.querySelector('#sangatCardDownload')
+            .addEventListener('click', downloadCard);
+
+        modal.querySelector('#sangatCardClose')
+            .addEventListener('click', closeModal);
+
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeModal();
+        });
+
+        modal.querySelector('#sangatCardSend')
+            .addEventListener('click', () => {
+                if (!phone) {
+                    showToast('❌ Customer phone number is missing.');
+                    return;
+                }
+
+                // Save the card first, then open the customer's chat.
+                downloadCard();
+
+                const whatsappUrl =
+                    `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+                window.open(whatsappUrl, '_blank');
+
+                showToast(
+                    '✅ Card saved! Attach the downloaded PNG in WhatsApp, then press Send.'
+                );
+            });
+
+    } catch (error) {
+        if (cardUrl) URL.revokeObjectURL(cardUrl);
+
+        console.error('Order card error:', error);
+        showToast(
+            '❌ Could not generate the card. Check the browser console.'
+        );
+    }
+}
     </script>
 </body>
 </html>

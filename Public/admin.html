@@ -1452,73 +1452,115 @@ font-weight: 500;
                 </div>
             </div>
 
-            <!-- Menu -->
-            <div class="admin-section" id="adminMenu">
-                <h3 style="margin-bottom:10px;">🍽️ Menu Management</h3>
-                <button class="admin-add-btn" onclick="toggleAdminForm('menuForm')">➕ Add New Item</button>
-                <div class="admin-form" id="menuForm">
-                    <h4>Add Menu Item</h4>
-                    <div class="form-row-admin">
-                        <input type="text" id="adminItemName" placeholder="Item Name" />
-                        <input type="number" id="adminItemPrice" placeholder="Price (Rs)" step="0.01" />
-                    </div>
-                    <div class="form-row-admin">
-                        <select id="adminItemCategory">
-                            <option value="pizza">Pizza</option>
-<option value="burgers">Burgers</option>
-<option value="fries_sides">Fries &amp; Sides</option>
-<option value="pasta">Pasta</option>
-<option value="wings_nuggets">Wings &amp; Nuggets</option>
-<option value="rolls">Rolls</option>
-<option value="shawarma">Shawarma</option>
-<option value="paratha_rolls">Paratha Rolls</option>
-<option value="platters">Platters</option>
-<option value="deals">Deals</option>
-<option value="drinks">Drinks</option>
-<option value="sauces">Sauces</option>
-                        </select>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <button class="icon-picker-btn" onclick="openIconPicker('menu')">🎨 Add Icon</button>
-                            <span id="menuSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
-                        </div>
-                    </div>
-                    <div id="menuAddLayersContainer" style="margin-bottom:10px;">
-                        <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">🧅 Available Layers:</label>
-                        <div style="display:flex; flex-wrap:wrap; gap:6px;" id="menuAddLayersList">
-                            <span style="color:#b2bec3; font-size:0.85em;">Loading layers...</span>
-                        </div>
-                    </div>
-                    <button class="admin-submit-btn" onclick="adminAddItem()">Add Item</button>
-                    <button class="admin-cancel-btn" onclick="toggleAdminForm('menuForm')">Cancel</button>
-                </div>
-                <div class="admin-table" id="adminMenuTable">
-                    <p style="color:#b2bec3; padding:15px;">Loading menu...</p>
-                </div>
-            </div>
+            
+<!-- Menu -->
+<div class="admin-section" id="adminMenu">
+    <h3 style="margin-bottom:10px;">🍽️ Menu Management</h3>
 
-            <!-- Deals -->
-            <div class="admin-section" id="adminDeals">
-                <h3 style="margin-bottom:10px;">🔥 Deal Management</h3>
-                <button class="admin-add-btn" onclick="toggleAdminForm('dealForm')">➕ Add New Deal</button>
-                <div class="admin-form" id="dealForm">
-                    <h4>Add Deal</h4>
-                    <input type="text" id="adminDealName" placeholder="Deal Name" />
-                    <input type="text" id="adminDealDesc" placeholder="Description" />
-                    <div class="form-row-admin">
-                        <input type="number" id="adminDealPrice" placeholder="Deal Price (Rs)" step="0.01" />
-                        <input type="number" id="adminDealOriginal" placeholder="Original Price (Rs)" step="0.01" />
-                    </div>
-                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                        <button class="icon-picker-btn" onclick="openIconPicker('deal')">🎨 Add Icon</button>
-                        <span id="dealSelectedIcons" style="font-size: 1.5em; display: flex; gap: 4px; flex-wrap: wrap;"></span>
-                    </div>
-                    <button class="admin-submit-btn" onclick="adminAddDeal()">Add Deal</button>
-                    <button class="admin-cancel-btn" onclick="toggleAdminForm('dealForm')">Cancel</button>
-                </div>
-                <div class="admin-table" id="adminDealsTable">
-                    <p style="color:#b2bec3; padding:15px;">Loading deals...</p>
-                </div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <button class="admin-add-btn" onclick="toggleAdminForm('menuForm')">
+            ➕ Add New Item
+        </button>
+
+        <button class="admin-add-btn" type="button"
+            onclick="runSangatMenuImporter()">
+            📥 Bulk Import Menu
+        </button>
+    </div>
+
+    <div class="admin-form" id="menuForm">
+        <h4>Add Menu Item</h4>
+
+        <div class="form-row-admin">
+            <input type="text" id="adminItemName" placeholder="Item Name" />
+            <input type="number" id="adminItemPrice" placeholder="Price (Rs)" step="0.01" />
+        </div>
+
+        <div class="form-row-admin">
+            <select id="adminItemCategory">
+                <option value="pizza">Pizza</option>
+                <option value="burgers">Burgers</option>
+                <option value="fries_sides">Fries &amp; Sides</option>
+                <option value="pasta">Pasta</option>
+                <option value="wings_nuggets">Wings &amp; Nuggets</option>
+                <option value="rolls">Rolls</option>
+                <option value="shawarma">Shawarma</option>
+                <option value="paratha_rolls">Paratha Rolls</option>
+                <option value="platters">Platters</option>
+                <option value="deals">Deals</option>
+                <option value="drinks">Drinks</option>
+                <option value="sauces">Sauces</option>
+            </select>
+
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="icon-picker-btn" onclick="openIconPicker('menu')">
+                    🎨 Add Icon
+                </button>
+                <span id="menuSelectedIcons"
+                    style="font-size:1.5em; display:flex; gap:4px; flex-wrap:wrap;"></span>
             </div>
+        </div>
+
+        <div id="menuAddLayersContainer" style="margin-bottom:10px;">
+            <label style="font-weight:600; font-size:0.85em; display:block; margin-bottom:5px;">
+                🧅 Available Layers:
+            </label>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;" id="menuAddLayersList">
+                <span style="color:#b2bec3; font-size:0.85em;">Loading layers...</span>
+            </div>
+        </div>
+
+        <button class="admin-submit-btn" onclick="adminAddItem()">Add Item</button>
+        <button class="admin-cancel-btn" onclick="toggleAdminForm('menuForm')">Cancel</button>
+    </div>
+
+    <div class="admin-table" id="adminMenuTable">
+        <p style="color:#b2bec3; padding:15px;">Loading menu...</p>
+    </div>
+</div>
+
+<!-- Deals -->
+<div class="admin-section" id="adminDeals">
+    <h3 style="margin-bottom:10px;">🔥 Deal Management</h3>
+
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <button class="admin-add-btn" onclick="toggleAdminForm('dealForm')">
+            ➕ Add New Deal
+        </button>
+
+        <button class="admin-add-btn" type="button"
+            onclick="runSangatDealsImporter()">
+            📥 Bulk Import Deals
+        </button>
+    </div>
+
+    <div class="admin-form" id="dealForm">
+        <h4>Add Deal</h4>
+
+        <input type="text" id="adminDealName" placeholder="Deal Name" />
+        <input type="text" id="adminDealDesc" placeholder="Description" />
+
+        <div class="form-row-admin">
+            <input type="number" id="adminDealPrice" placeholder="Deal Price (Rs)" step="0.01" />
+            <input type="number" id="adminDealOriginal" placeholder="Original Price (Rs)" step="0.01" />
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <button class="icon-picker-btn" onclick="openIconPicker('deal')">
+                🎨 Add Icon
+            </button>
+            <span id="dealSelectedIcons"
+                style="font-size:1.5em; display:flex; gap:4px; flex-wrap:wrap;"></span>
+        </div>
+
+        <button class="admin-submit-btn" onclick="adminAddDeal()">Add Deal</button>
+        <button class="admin-cancel-btn" onclick="toggleAdminForm('dealForm')">Cancel</button>
+    </div>
+
+    <div class="admin-table" id="adminDealsTable">
+        <p style="color:#b2bec3; padding:15px;">Loading deals...</p>
+    </div>
+</div>
 
             <!-- ⭐ ABOUT RESTAURANT ⭐ -->
             <div class="admin-section" id="adminAbout">
