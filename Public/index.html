@@ -2211,12 +2211,15 @@ let lobbyDealShown = false;
             fetch(apiUrl('/api/menu?t=' + Date.now()))
                 .then(r => r.json())
                 .then(data => {
-                    menuItems = data;
-                    if (currentPanel === 'menu') {
-                        renderCategories();
-                        renderMenu();
-                    }
-                })
+    menuItems = data;
+
+    console.table(data.map(item => ({
+        name: item.name,
+        savedCategory: item.category
+    })));
+
+    renderMenu();
+})
                 .catch(() => {});
         }
 
@@ -2287,69 +2290,133 @@ let lobbyDealShown = false;
             });
         }
 
-        function renderMenu() {
-            let filtered = menuItems;
-            if (currentCategory !== 'all') {
-                filtered = menuItems.filter(item => item.category === currentCategory);
-            }
+        
+function renderMenu() {
+    function normalizeMenuCategory(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[_\s]+/g, '-');
+    }
 
-            if (!filtered || filtered.length === 0) {
-                menuArea.innerHTML = `
-                    <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
-                        <div style="font-size:4em; margin-bottom:15px;">🍽️</div>
-                        <h3 style="color:#2d3436;">No items in this category</h3>
-                        <p style="color:#b2bec3;">Select another category or add items from admin panel.</p>
-                        <button onclick="loadMenu()" style="margin-top:15px; background:#e74c3c; color:white; border:none; padding:10px 30px; border-radius:25px; cursor:pointer; font-weight:600;">🔄 Refresh</button>
-                    </div>
-                `;
-                return;
-            }
+    // Correct old category names using the food item's name.
+    function getCorrectCategory(item) {
+        const name = String(item.name || '').toLowerCase();
+        const saved = normalizeMenuCategory(item.category);
 
-            let html = `
-                <div class="section-title">${categories.find(c => c.id === currentCategory)?.icon || '🍽️'} ${categories.find(c => c.id === currentCategory)?.name || 'All'}</div>
-                <div class="menu-grid">
-            `;
+        if (saved === 'pizza' || name.includes('pizza')) return 'pizza';
 
-            filtered.forEach((item, index) => {
-                const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
-                const hasLayers = item.layers && item.layers.length > 0;
-                const animClass = getIconAnimation(index);
-                const inCart = cart.find(c => c.id === item.id);
-                const qty = inCart ? inCart.qty : 0;
+        if (
+            saved === 'burgers' ||
+            saved === 'burger' ||
+            name.includes('burger')
+        ) return 'burgers';
 
-                html += `
-                    <div class="menu-item-card" onclick="quickBuy(${item.id})">
-                        ${qty > 0 ? `<span class="qty-badge">${qty}</span>` : ''}
-                        <span class="item-icons ${animClass}">${icons}</span>
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-category">${categories.find(c => c.id === item.category)?.name || ''}</div>
-                        <div class="item-price">${currencySymbol} ${item.price.toFixed(2)}</div>
-                        ${hasLayers ? `<div class="customizable-badge">🧅 Customizable</div>` : ''}
-                        <div class="item-actions" onclick="event.stopPropagation();">
-                            <button class="btn-quick" onclick="quickBuy(${item.id})">⚡ Buy</button>
-                            <button class="btn-cart" onclick="addToCart(${item.id})">+ Add</button>
-                        </div>
-                    </div>
-                `;
-            });
+        if (
+            name.includes('fries') ||
+            name.includes('french fries') ||
+            name.includes('chips')
+        ) return 'fries_sides';
 
-            html += `</div>`;
-            menuArea.innerHTML = html;
-        }
+        if (
+            name.includes('pasta') ||
+            name.includes('lazania') ||
+            name.includes('lasagna')
+        ) return 'pasta';
 
-        function addToCart(itemId) {
-            const item = menuItems.find(i => i.id === itemId);
-            if (!item) return;
-            const existing = cart.find(i => i.id === itemId);
-            if (existing) {
-                existing.qty = (existing.qty || 1) + 1;
-            } else {
-                cart.push({ ...item, qty: 1 });
-            }
-            updateCartBadge();
-            renderMenu();
-            showToast(`✅ ${item.name} added to cart!`);
-        }
+        if (
+            name.includes('wings') ||
+            name.includes('nuggets') ||
+            name.includes('nugget')
+        ) return 'wings_nuggets';
+
+        if (name.includes('shawarma')) return 'shawarma';
+
+        if (
+            name.includes('paratha roll') ||
+            name.includes('paratha-roll')
+        ) return 'paratha_rolls';
+
+        if (
+            name.includes('roll') ||
+            name.includes('spin roll')
+        ) return 'rolls';
+
+        if (
+            name.includes('platter') ||
+            name.includes('platters')
+        ) return 'platters';
+
+        if (
+            name.includes('dip') ||
+            name.includes('sauce') ||
+            name.includes('ketchup') ||
+            name.includes('mayonnaise')
+        ) return 'sauces';
+
+        // Keep other items in their existing category if no rule matches.
+        return saved.replace(/-/g, '_');
+    }
+
+    let filtered = menuItems;
+
+    if (currentCategory !== 'all') {
+        filtered = menuItems.filter(item => {
+            const category = getCorrectCategory(item);
+            return category === currentCategory;
+        });
+    }
+
+    if (!filtered || filtered.length === 0) {
+        menuArea.innerHTML = `
+            <div style="text-align:center; padding:60px 20px; color:#b2bec3;">
+                <div style="font-size:4em; margin-bottom:15px;">🍽️</div>
+                <h3 style="color:#2d3436;">No items in this category</h3>
+                <p style="color:#b2bec3;">Select another category or add items from admin panel.</p>
+                <button onclick="loadMenu()" style="margin-top:15px; background:#e74c3c; color:white; border:none; padding:10px 30px; border-radius:25px; cursor:pointer; font-weight:600;">🔄 Refresh</button>
+            </div>
+        `;
+        return;
+    }
+
+    const selected = categories.find(c => c.id === currentCategory);
+
+    let html = `
+        <div class="section-title">${selected?.icon || '🍽️'} ${selected?.name || 'All'}</div>
+        <div class="menu-grid">
+    `;
+
+    filtered.forEach((item, index) => {
+        const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
+        const hasLayers = item.layers && item.layers.length > 0;
+        const animClass = getIconAnimation(index);
+        const inCart = cart.find(c => c.id === item.id);
+        const qty = inCart ? inCart.qty : 0;
+        const correctCategory = getCorrectCategory(item);
+        const categoryName =
+            categories.find(c => c.id === correctCategory)?.name ||
+            categories.find(c => c.id === item.category)?.name ||
+            '';
+
+        html += `
+            <div class="menu-item-card" onclick="quickBuy(${item.id})">
+                ${qty > 0 ? `<span class="qty-badge">${qty}</span>` : ''}
+                <span class="item-icons ${animClass}">${icons}</span>
+                <div class="item-name">${item.name}</div>
+                <div class="item-category">${categoryName}</div>
+                <div class="item-price">${currencySymbol} ${Number(item.price || 0).toFixed(2)}</div>
+                ${hasLayers ? `<div class="customizable-badge">🧅 Customizable</div>` : ''}
+                <div class="item-actions" onclick="event.stopPropagation();">
+                    <button class="btn-quick" onclick="quickBuy(${item.id})">⚡ Buy</button>
+                    <button class="btn-cart" onclick="addToCart(${item.id})">+ Add</button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    menuArea.innerHTML = html;
+}
 
         function removeFromCart(itemId) {
             const index = cart.findIndex(i => i.id === itemId);

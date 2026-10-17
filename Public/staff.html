@@ -707,6 +707,7 @@
         let staffOrderType = 'dinein';
         let currencySymbol = 'Rs';
         let restaurantName = 'The Heaven Slice';
+        let staffDeals = [];
 
         const categories = [
     { id: 'all', name: 'All', icon: '🍽️' },
@@ -747,23 +748,47 @@
                     }
                 });
 
-            // Load menu
+           
+        // Load menu and deals
+        Promise.all([
             fetch(apiUrl('/api/menu?t=' + Date.now()))
-                .then(r => r.json())
-                .then(data => {
-                    menuItems = data;
-                    renderCategories();
-                    renderMenu();
+                .then(r => {
+                    if (!r.ok) throw new Error('Menu loading failed');
+                    return r.json();
+                }),
+
+            fetch(apiUrl('/api/deals?t=' + Date.now()))
+                .then(r => {
+                    if (!r.ok) throw new Error('Deals loading failed');
+                    return r.json();
                 })
-                .catch(() => {
-                    menuArea.innerHTML = `
-                        <div class="staff-empty-state">
-                            <div class="empty-icon">🍽️</div>
-                            <h3>No Menu Items</h3>
-                            <p style="color:#b2bec3;">Please ask admin to add menu items.</p>
-                        </div>
-                    `;
-                });
+                .catch(error => {
+                    console.error('Staff deals loading failed:', error);
+                    return [];
+                })
+        ])
+            .then(([menuData, dealsData]) => {
+                menuItems = Array.isArray(menuData) ? menuData : [];
+                staffDeals = Array.isArray(dealsData)
+                    ? dealsData
+                    : (Array.isArray(dealsData.deals) ? dealsData.deals : []);
+
+                console.log('Staff menu loaded:', menuItems.length);
+                console.log('Staff deals loaded:', staffDeals.length);
+
+                renderCategories();
+                renderMenu();
+            })
+            .catch(error => {
+                console.error('Staff menu loading failed:', error);
+                menuArea.innerHTML = `
+                    <div class="staff-empty-state">
+                        <div class="empty-icon">🍽️</div>
+                        <h3>Unable to Load Menu</h3>
+                        <p style="color:#b2bec3;">Please refresh or ask admin to check the menu.</p>
+                    </div>
+                `;
+            });
 
             // Load restaurant config for currency
             fetch('/api/restaurant-config')
@@ -809,52 +834,160 @@
         // ============================================================
         // RENDER MENU
         // ============================================================
-        function renderMenu() {
-            let filtered = menuItems;
-            if (currentCategory !== 'all') {
-                filtered = menuItems.filter(item => item.category === currentCategory);
-            }
+        
 
-            if (!filtered || filtered.length === 0) {
-                menuArea.innerHTML = `
-                    <div class="staff-empty-state">
-                        <div class="empty-icon">📭</div>
-                        <h3>No Items in this Category</h3>
-                        <p style="color:#b2bec3;">Select another category or ask admin to add items.</p>
-                    </div>
-                `;
-                return;
-            }
+function renderMenu() {
+    // Show deals when the Deals category is selected
+    if (currentCategory === 'deals') {
+        const deals = Array.isArray(staffDeals) ? staffDeals : [];
 
-            let html = `
-                <div class="staff-section-title">${categories.find(c => c.id === currentCategory)?.icon || '🍽️'} ${categories.find(c => c.id === currentCategory)?.name || 'All'}</div>
-                <div class="staff-menu-grid">
+        if (deals.length === 0) {
+            menuArea.innerHTML = `
+                <div class="staff-empty-state">
+                    <div class="empty-icon">🎁</div>
+                    <h3>No Deals Available</h3>
+                    <p style="color:#b2bec3;">No deals were returned by the server.</p>
+                </div>
             `;
-
-            filtered.forEach(item => {
-                const icons = item.icons ? item.icons.join('') : (item.icon || '🍽️');
-                const hasLayers = item.layers && item.layers.length > 0;
-                const inCart = staffCart.find(c => c.id === item.id);
-                const qty = inCart ? inCart.qty : 0;
-
-                html += `
-                    <div class="staff-menu-item">
-                        ${qty > 0 ? `<span class="qty-badge">${qty}</span>` : ''}
-                        <span class="item-icons">${icons}</span>
-                        <div class="item-name">${item.name}</div>
-                        <div class="item-category">${categories.find(c => c.id === item.category)?.name || ''}</div>
-                        <div class="item-price">${currencySymbol} ${item.price.toFixed(2)}</div>
-                        ${hasLayers ? `<div class="layer-badge">🧅 Customizable</div>` : ''}
-                        <button class="btn-add-order" onclick="staffAddToCart(${item.id})">
-                            ${qty > 0 ? `+ Add More` : '➕ Add'}
-                        </button>
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            menuArea.innerHTML = html;
+            return;
         }
+
+        const selectedCategory = categories.find(c => c.id === 'deals');
+
+        let html = `
+            <div class="staff-section-title">
+                ${selectedCategory?.icon || '🎁'} ${selectedCategory?.name || 'Deals'}
+            </div>
+            <div class="staff-menu-grid">
+        `;
+
+        deals.forEach((deal, index) => {
+            const name = deal.name || deal.title || `Deal ${index + 1}`;
+            const price = Number(deal.price ?? deal.discountedPrice ?? 0);
+            const description = deal.desc || deal.description || '';
+            const icon = deal.icon || '🎁';
+
+            html += `
+                <div class="staff-menu-item">
+                    <span class="item-icons">${icon}</span>
+                    <div class="item-name">${name}</div>
+                    <div class="item-category">Special Deal</div>
+                    ${description ? `<div class="item-category">${description}</div>` : ''}
+                    <div class="item-price">${currencySymbol} ${price.toFixed(2)}</div>
+                    <button class="btn-add-order"
+    onclick="staffAddDealToCart(${Number(deal.id)})">
+    ➕ Add Deal
+</button>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        menuArea.innerHTML = html;
+        return;
+    }
+
+    function getCorrectCategory(item) {
+        const name = String(item.name || '').toLowerCase();
+        const saved = String(item.category || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[_\s]+/g, '-');
+
+        if (saved === 'pizza' || name.includes('pizza')) return 'pizza';
+
+        if (saved === 'burgers' || saved === 'burger' || name.includes('burger')) {
+            return 'burgers';
+        }
+
+        if (name.includes('fries') || name.includes('chips')) return 'fries_sides';
+
+        if (name.includes('pasta') || name.includes('lazania') || name.includes('lasagna')) {
+            return 'pasta';
+        }
+
+        if (name.includes('wings') || name.includes('nuggets') || name.includes('nugget')) {
+            return 'wings_nuggets';
+        }
+
+        if (name.includes('shawarma')) return 'shawarma';
+        if (name.includes('paratha roll')) return 'paratha_rolls';
+        if (name.includes('roll')) return 'rolls';
+        if (name.includes('platter')) return 'platters';
+
+        if (
+            name.includes('dip') ||
+            name.includes('sauce') ||
+            name.includes('ketchup') ||
+            name.includes('mayonnaise')
+        ) {
+            return 'sauces';
+        }
+
+        return saved.replace(/-/g, '_');
+    }
+
+    let filtered = menuItems || [];
+
+    if (currentCategory !== 'all') {
+        filtered = filtered.filter(item =>
+            getCorrectCategory(item) === currentCategory
+        );
+    }
+
+    if (filtered.length === 0) {
+        menuArea.innerHTML = `
+            <div class="staff-empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>No Items in this Category</h3>
+                <p style="color:#b2bec3;">Select another category or ask admin to add items.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const selectedCategory = categories.find(c => c.id === currentCategory);
+
+    let html = `
+        <div class="staff-section-title">
+            ${selectedCategory?.icon || '🍽️'} ${selectedCategory?.name || 'All'}
+        </div>
+        <div class="staff-menu-grid">
+    `;
+
+    filtered.forEach(item => {
+        const icons = item.icons
+            ? item.icons.join('')
+            : (item.icon || '🍽️');
+
+        const hasLayers = item.layers && item.layers.length > 0;
+        const inCart = staffCart.find(c => c.id === item.id);
+        const qty = inCart ? inCart.qty : 0;
+
+        const correctCategory = getCorrectCategory(item);
+        const categoryName =
+            categories.find(c => c.id === correctCategory)?.name ||
+            categories.find(c => c.id === item.category)?.name ||
+            '';
+
+        html += `
+            <div class="staff-menu-item">
+                ${qty > 0 ? `<span class="qty-badge">${qty}</span>` : ''}
+                <span class="item-icons">${icons}</span>
+                <div class="item-name">${item.name}</div>
+                <div class="item-category">${categoryName}</div>
+                <div class="item-price">${currencySymbol} ${Number(item.price || 0).toFixed(2)}</div>
+                ${hasLayers ? `<div class="layer-badge">🧅 Customizable</div>` : ''}
+                <button class="btn-add-order" onclick="staffAddToCart(${item.id})">
+                    ${qty > 0 ? '+ Add More' : '➕ Add'}
+                </button>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    menuArea.innerHTML = html;
+}
 
         // ============================================================
         // STAFF CART FUNCTIONS
@@ -1070,6 +1203,41 @@
         function closeStaffCartPopup() {
             document.getElementById('staffCartPopup').classList.remove('show');
         }
+
+        
+function staffAddDealToCart(dealId) {
+    const deal = (staffDeals || []).find(
+        d => String(d.id) === String(dealId)
+    );
+
+    if (!deal) {
+        showToast('❌ Deal not found!');
+        return;
+    }
+
+    const cartId = `deal_${deal.id}`;
+    const existing = staffCart.find(item => item.cartId === cartId);
+
+    if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+    } else {
+        staffCart.push({
+            ...deal,
+            id: cartId,
+            cartId: cartId,
+            name: deal.name || deal.title || 'Special Deal',
+            price: Number(deal.price || 0),
+            description: deal.desc || deal.description || '',
+            isDeal: true,
+            qty: 1,
+            selectedLayers: []
+        });
+    }
+
+    updateStaffCartUI();
+    renderMenu();
+    showToast(`🎁 ${deal.name} added to order!`);
+}
 
         // ============================================================
         // STAFF CHECKOUT

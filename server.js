@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -5,13 +6,30 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const path = require('path');
 const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============================================
-// ⭐ RESTAURANT CONFIGURATION ⭐
+// SUPABASE DATABASE CONNECTION
+// ============================================
+if (!process.env.SUPABASE_URL ||
+    !process.env.SUPABASE_SECRET_KEY) {
+    throw new Error(
+        'Missing SUPABASE_URL or SUPABASE_SECRET_KEY environment variable'
+    );
+}
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY
+);
+
+// ============================================
+// RESTAURANT CONFIGURATION
 // ============================================
 let RESTAURANT_CONFIG = {
     name: 'Sangat Cafe',
@@ -86,85 +104,171 @@ let data = {
     backupHistory: []
 };
 
-function loadData() {
+
+
+async function loadData() {
     try {
-        if (fs.existsSync(DATA_FILE)) {
+        const { data: cloudRow, error } = await supabase
+            .from('restaurant_data')
+            .select('id, data, updated_at')
+            .eq('id', 'main')
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (cloudRow && cloudRow.data) {
+            const cloudData = cloudRow.data;
+
+            if (!Array.isArray(cloudData.restaurants)) {
+                throw new Error(
+                    'Supabase data is missing the restaurants array. Check the database before continuing.'
+                );
+            }
+
+            data = { ...data, ...cloudData };
+            console.log('✅ Data loaded from Supabase');
+        } else {
+            if (!fs.existsSync(DATA_FILE)) {
+                throw new Error(
+                    'No Supabase data or local data.json found. Cannot safely initialize.'
+                );
+            }
+
             const fileContent = fs.readFileSync(DATA_FILE, 'utf8');
-            const loadedData = JSON.parse(fileContent);
-            data = { ...data, ...loadedData };
-            
-            if (data.restaurantConfig) {
-                RESTAURANT_CONFIG = data.restaurantConfig;
+            const localData = JSON.parse(fileContent);
+
+            if (!Array.isArray(localData.restaurants)) {
+                throw new Error(
+                    'Local data.json is missing the restaurants array.'
+                );
             }
-            if (data.receiptSettings) {
-                data.receiptSettings = { ...data.receiptSettings };
+
+            const mainRestaurant = localData.restaurants.find(
+                r => r.restaurantId === 'restaurant-1'
+            );
+
+            if (
+                !mainRestaurant ||
+                !Array.isArray(mainRestaurant.menu) ||
+                !Array.isArray(mainRestaurant.deals) ||
+                mainRestaurant.menu.length === 0
+            ) {
+                throw new Error(
+                    'Local data.json does not contain a valid restaurant-1 menu and deals. Migration stopped to protect your data.'
+                );
             }
-            if (data.restaurantStatus) {
-                RESTAURANT_CONFIG.isOpen = data.restaurantStatus.isOpen;
-                RESTAURANT_CONFIG.openingTime = data.restaurantStatus.openingTime;
-                RESTAURANT_CONFIG.closingTime = data.restaurantStatus.closingTime;
-            }
-            if (!data.aboutRestaurant) {
-                data.aboutRestaurant = {
-                    description: 'Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. Our ingredients are always fresh and our service is top-notch. Visit us for an unforgettable dining experience!',
-                    photos: [],
-                    established: '2022',
-                    ownerName: 'Chef Ali',
-                    aboutTitle: 'About The Heaven Slice',
-                    workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
-                };
-            }
-            if (!data.lobbyDeals) {
-                data.lobbyDeals = [];
-            }
-            if (!data.deletedOrders) {
-                data.deletedOrders = [];
-            }
-            if (!data.backupHistory) {
-                data.backupHistory = [];
-            }
-            
-            console.log('✅ Data loaded from file');
-            console.log(`📊 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
-            console.log(`🕐 Restaurant: ${RESTAURANT_CONFIG.isOpen ? 'OPEN' : 'CLOSED'} (${RESTAURANT_CONFIG.openingTime} - ${RESTAURANT_CONFIG.closingTime})`);
-            console.log(`🗑️ Deleted Orders: ${data.deletedOrders.length}`);
-            return true;
+
+            data = { ...data, ...localData };
+
+            const { error: migrationError } = await supabase
+                .from('restaurant_data')
+                .upsert(
+                    {
+                        id: 'main',
+                        data: data,
+                        updated_at: new Date().toISOString()
+                    },
+                    { onConflict: 'id' }
+                );
+
+            if (migrationError) throw migrationError;
+
+            console.log('✅ Local data migrated to Supabase');
+            console.log(`🍽️ Menu items found: ${mainRestaurant.menu.length}`);
+            console.log(`🎁 Deals found: ${mainRestaurant.deals.length}`);
         }
-        return false;
+
+        if (data.restaurantConfig) {
+            RESTAURANT_CONFIG = data.restaurantConfig;
+        }
+
+        data.receiptSettings = { ...(data.receiptSettings || {}) };
+
+        if (data.restaurantStatus) {
+            RESTAURANT_CONFIG.isOpen = data.restaurantStatus.isOpen;
+            RESTAURANT_CONFIG.openingTime =
+                data.restaurantStatus.openingTime;
+            RESTAURANT_CONFIG.closingTime =
+                data.restaurantStatus.closingTime;
+        }
+
+        data.aboutRestaurant = data.aboutRestaurant || {
+            description: 'Welcome to Sangat Cafe!',
+            photos: [],
+            established: '2022',
+            ownerName: 'Chef Ali',
+            aboutTitle: 'About Sangat Cafe',
+            workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
+        };
+
+        data.lobbyDeals = data.lobbyDeals || [];
+        data.deletedOrders = data.deletedOrders || [];
+        data.backupHistory = data.backupHistory || [];
+
+        console.log('📊 Restaurant data loaded successfully');
+        return true;
     } catch (error) {
-        console.error('❌ Error loading data:', error);
-        return false;
+        console.error('❌ Error loading data:', error.message);
+        throw error;
     }
 }
 
+
+let saveQueue = Promise.resolve();
+
 function saveData() {
     try {
-        if (fs.existsSync(DATA_FILE)) {
-            fs.copyFileSync(DATA_FILE, DATA_FILE + '.backup');
-        }
         data.restaurantConfig = RESTAURANT_CONFIG;
+
         data.receiptSettings = {
-            ...data.receiptSettings,
+            ...(data.receiptSettings || {}),
             discountAmount: RESTAURANT_CONFIG.discountAmount,
             discountThreshold: RESTAURANT_CONFIG.discountThreshold,
             address: RESTAURANT_CONFIG.address,
             phone: RESTAURANT_CONFIG.phone,
             established: RESTAURANT_CONFIG.est
         };
+
         data.restaurantStatus = {
             isOpen: RESTAURANT_CONFIG.isOpen,
             openingTime: RESTAURANT_CONFIG.openingTime,
             closingTime: RESTAURANT_CONFIG.closingTime,
             lastUpdated: new Date().toISOString()
         };
+
         data.aboutRestaurant = aboutRestaurant;
         data.lobbyDeals = lobbyDeals;
         data.deletedOrders = deletedOrders;
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-        console.log('💾 Data saved to file');
+
+        // Capture this version immediately so later changes don't alter it.
+        const snapshot = JSON.parse(JSON.stringify(data));
+
+        saveQueue = saveQueue
+            .then(async () => {
+                const { error } = await supabase
+                    .from('restaurant_data')
+                    .upsert(
+                        {
+                            id: 'main',
+                            data: snapshot,
+                            updated_at: new Date().toISOString()
+                        },
+                        { onConflict: 'id' }
+                    );
+
+                if (error) {
+                    throw error;
+                }
+
+                console.log('☁️ Data saved to Supabase');
+            })
+            .catch(error => {
+                console.error('❌ Supabase save failed:', error.message);
+            });
+
         return true;
     } catch (error) {
-        console.error('❌ Error saving data:', error);
+        console.error('❌ Error preparing data for Supabase:', error);
         return false;
     }
 }
@@ -232,8 +336,6 @@ syncAndSave = function() {
     }
     return result;
 };
-
-setInterval(() => saveData(), 30000);
 
 // ============================================
 // ⭐ MIDDLEWARE ⭐
@@ -1387,16 +1489,27 @@ app.get('/api/restaurants/:id', (req, res) => {
 // ============================================
 // MENU ROUTES
 // ============================================
+
 app.get('/api/menu', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
-    res.json(restaurant.menu || getDefaultMenu());
+
+    res.json(
+        Array.isArray(restaurant.menu)
+            ? restaurant.menu
+            : getDefaultMenu()
+    );
 });
 
 app.get('/api/deals', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
-    res.json(restaurant.deals || getDefaultDeals());
+
+    res.json(
+        Array.isArray(restaurant.deals)
+            ? restaurant.deals
+            : getDefaultDeals()
+    );
 });
 
 app.get('/api/restaurant-name', (req, res) => {
@@ -2018,43 +2131,93 @@ app.get('/api/test', (req, res) => {
 // ============================================
 // START SERVER
 // ============================================
-loadData();
-createDefaultRestaurant();
-getOrCreateRestaurant('restaurant-2');
+async function initializeApp() {
+    try {
+        // STEP 1: Load saved data from Supabase.
+        
+        const loaded = await loadData();
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log('========================================');
-    console.log(`🍔 ${RESTAURANT_CONFIG.name} SERVER RUNNING`);
-    console.log('========================================');
-    console.log(`📱 Customer: http://localhost:${PORT}`);
-    console.log(`👑 Admin: http://localhost:${PORT}/admin`);
-    console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
-    console.log('========================================');
-    console.log(`💰 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
-    console.log(`🕐 Restaurant: ${RESTAURANT_CONFIG.isOpen ? 'OPEN' : 'CLOSED'} (${RESTAURANT_CONFIG.openingTime} - ${RESTAURANT_CONFIG.closingTime})`);
-    console.log(`⏱️ Cancellation Time Limit: ${RESTAURANT_CONFIG.cancellationTimeLimit} minutes`);
-    console.log(`📊 Restaurants: ${restaurants.length}`);
-    console.log(`👤 Users: ${users.length}`);
-    console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + r.orders.length, 0)}`);
-    console.log(`🗑️ Deleted Orders: ${deletedOrders.length}`);
-    console.log(`💾 Last Backup: ${data.lastBackup || 'Never'}`);
-    console.log('========================================');
-    console.log('✅ Server is ready!');
-    console.log('========================================');
-});
+        if (!loaded) {
+            throw new Error('Restaurant data could not be loaded.');
+        }
 
-process.on('SIGINT', () => {
-    console.log('🛑 Saving data before shutdown...');
-    createAutoBackup();
-    saveData();
-    process.exit(0);
-});
+        // STEP 2: Normalize loaded data safely.
+        data.users = Array.isArray(data.users) ? data.users : [];
+        data.restaurants = Array.isArray(data.restaurants) ? data.restaurants : [];
+        data.feedbacks = Array.isArray(data.feedbacks) ? data.feedbacks : [];
+        data.supportTickets = Array.isArray(data.supportTickets) ? data.supportTickets : [];
+        data.availableLayers = Array.isArray(data.availableLayers) ? data.availableLayers : [];
+        data.customerLocations = Array.isArray(data.customerLocations) ? data.customerLocations : [];
+        data.orderCounter = Number(data.orderCounter) || 1;
+        data.receiptSettings = { ...(data.receiptSettings || {}) };
+        data.lobbyDeals = Array.isArray(data.lobbyDeals) ? data.lobbyDeals : [];
+        data.deletedOrders = Array.isArray(data.deletedOrders) ? data.deletedOrders : [];
+        data.backupHistory = Array.isArray(data.backupHistory) ? data.backupHistory : [];
 
-process.on('SIGTERM', () => {
-    console.log('🛑 Saving data before shutdown...');
-    createAutoBackup();
-    saveData();
-    process.exit(0);
-});
+        // STEP 3: Restore saved restaurant configuration.
+        RESTAURANT_CONFIG = data.restaurantConfig || RESTAURANT_CONFIG;
 
-module.exports = app;
+        // STEP 4: Reconnect variables to loaded data.
+        users = data.users;
+        restaurants = data.restaurants;
+        feedbacks = data.feedbacks;
+        supportTickets = data.supportTickets;
+        availableLayers = data.availableLayers;
+        customerLocations = data.customerLocations;
+        orderCounter = data.orderCounter;
+        receiptSettings = data.receiptSettings;
+
+        aboutRestaurant = data.aboutRestaurant || {
+            description: 'Welcome to Sangat Cafe!',
+            photos: [],
+            established: '2022',
+            ownerName: 'Chef Ali',
+            aboutTitle: 'About Sangat Cafe',
+            workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
+        };
+
+        lobbyDeals = data.lobbyDeals;
+        deletedOrders = data.deletedOrders;
+        data.aboutRestaurant = aboutRestaurant;
+
+        // STEP 5: Create or restore restaurant records.
+        createDefaultRestaurant();
+        getOrCreateRestaurant('restaurant-2');
+
+        // STEP 6: Start automatic saving only after loading.
+        setInterval(() => {
+            saveData();
+        }, 30000);
+
+        // STEP 7: Print startup information.
+        console.log('========================================');
+        console.log(`🍔 ${RESTAURANT_CONFIG.name} SERVER RUNNING`);
+        console.log('========================================');
+        console.log(`📱 Customer: http://localhost:${PORT}`);
+        console.log(`👑 Admin: http://localhost:${PORT}/admin`);
+        console.log(`👨‍🍳 Staff: http://localhost:${PORT}/staff`);
+        console.log('========================================');
+        console.log(`💰 Discount: ${RESTAURANT_CONFIG.discountAmount} on ${RESTAURANT_CONFIG.discountThreshold}+`);
+        console.log(`🕐 Restaurant: ${RESTAURANT_CONFIG.isOpen ? 'OPEN' : 'CLOSED'} (${RESTAURANT_CONFIG.openingTime} - ${RESTAURANT_CONFIG.closingTime})`);
+        console.log(`⏱️ Cancellation Time Limit: ${RESTAURANT_CONFIG.cancellationTimeLimit} minutes`);
+        console.log(`📊 Restaurants: ${restaurants.length}`);
+        console.log(`👤 Users: ${users.length}`);
+        console.log(`📦 Orders: ${restaurants.reduce((sum, r) => sum + (r.orders || []).length, 0)}`);
+        console.log(`🗑️ Deleted Orders: ${deletedOrders.length}`);
+        console.log(`💾 Last Backup: ${data.lastBackup || 'Never'}`);
+        console.log('========================================');
+        console.log('✅ Server is ready!');
+        console.log('========================================');
+
+        // STEP 8: Start the server exactly once.
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Server listening on port ${PORT}`);
+        });
+
+    } catch (error) {
+        console.error('❌ App initialization failed:', error);
+        process.exit(1);
+    }
+}
+
+initializeApp();

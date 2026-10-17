@@ -4375,43 +4375,131 @@ ${whatsappUrl
         // ============================================================
         // ADMIN MENU
         // ============================================================
-        function renderAdminMenu() {
-            if (menuItems.length === 0) {
-                document.getElementById('adminMenuTable').innerHTML = '<p style="color:#b2bec3; padding:15px;">No menu items</p>';
-                return;
+        
+function renderAdminMenu() {
+    const container = document.getElementById('adminMenuTable');
+
+    if (!Array.isArray(menuItems) || menuItems.length === 0) {
+        container.innerHTML =
+            '<p style="color:#b2bec3; padding:15px;">No menu items</p>';
+        return;
+    }
+
+    const categoryInfo = {
+        burgers:     { title: '🍔 Burgers', aliases: ['burger'] },
+        pizza:       { title: '🍕 Pizza', aliases: ['pizzas'] },
+        fries:       { title: '🍟 Fries', aliases: ['french fries', 'french-fries', 'chips'] },
+        pasta:       { title: '🍝 Pasta', aliases: ['pastas'] },
+        wings:       { title: '🍗 Wings', aliases: ['chicken wings', 'chicken-wings'] },
+        rolls:       { title: '🌯 Rolls', aliases: ['roll', 'paratha rolls', 'paratha-rolls'] },
+        shawarma:    { title: '🌯 Shawarma', aliases: ['shawarmas'] },
+        platters:    { title: '🍱 Platters', aliases: ['platter'] },
+        sandwiches:  { title: '🥪 Sandwiches', aliases: ['sandwich'] },
+        sides:       { title: '🍟 Sides', aliases: ['side'] },
+        drinks:      { title: '🥤 Drinks', aliases: ['drink', 'beverages', 'beverage'] },
+        sauces:      { title: '🥫 Sauces', aliases: ['sauce', 'dips', 'dip'] },
+        salads:      { title: '🥗 Salads', aliases: ['salad'] },
+        appetizers:  { title: '🍽️ Appetizers', aliases: ['appetizer', 'starters', 'starter'] },
+        desserts:    { title: '🍰 Desserts', aliases: ['dessert'] }
+    };
+
+    function normalizeCategory(value) {
+        const category = String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[_]+/g, '-')
+            .replace(/\s+/g, ' ');
+
+        for (const [key, info] of Object.entries(categoryInfo)) {
+            if (category === key || info.aliases.includes(category)) {
+                return key;
             }
-            let html = `<table>
-                <tr>
-                    <th>Icon</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Layers</th>
-                    <th>Actions</th>
+        }
+
+        return category || 'uncategorized';
+    }
+
+    const grouped = {};
+
+    menuItems.forEach(item => {
+        const category = normalizeCategory(item.category);
+        if (!grouped[category]) grouped[category] = [];
+        grouped[category].push(item);
+    });
+
+    const orderedCategories = Object.keys(categoryInfo);
+    const extraCategories = Object.keys(grouped)
+        .filter(category => !orderedCategories.includes(category))
+        .sort();
+
+    const allCategories = [...orderedCategories, ...extraCategories];
+
+    let html = '';
+
+    allCategories.forEach(category => {
+        const items = grouped[category];
+        if (!items || items.length === 0) return;
+
+        const title = categoryInfo[category]
+            ? categoryInfo[category].title
+            : '📂 ' + category.charAt(0).toUpperCase() + category.slice(1);
+
+        html += `
+            <div style="margin:18px 0; border:1px solid #dfe6e9; border-radius:10px; overflow:hidden;">
+                <h3 style="margin:0; padding:12px 15px; background:#f1f2f6;">
+                    ${title} <span style="font-weight:normal;">(${items.length})</span>
+                </h3>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;">
+                        <tr>
+                            <th>Icon</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Layers</th>
+                            <th>Actions</th>
+                        </tr>
+        `;
+
+        items.forEach(item => {
+            const icons = Array.isArray(item.icons)
+                ? item.icons.join(' ')
+                : (item.icon || '🍽️');
+
+            const layers = Array.isArray(item.layers) && item.layers.length
+                ? item.layers.map(layer =>
+                    `<span style="font-size:0.7em; background:#f1f2f6; padding:2px 8px; border-radius:10px; margin:2px; display:inline-block;">${layer}</span>`
+                  ).join('')
+                : '<span style="color:#b2bec3; font-size:0.8em;">-</span>';
+
+            const price = Number(item.price) || 0;
+
+            html += `
+                <tr id="menu-row-${item.id}">
+                    <td style="font-size:1.5em;">${icons}</td>
+                    <td>${item.name}</td>
+                    <td>${item.category || 'uncategorized'}</td>
+                    <td>${currencySymbol} ${price.toFixed(2)}</td>
+                    <td style="font-size:0.75em;">${layers}</td>
+                    <td>
+                        <button class="admin-action-btn btn-edit"
+                            onclick="editMenuItem(${item.id})">✏️ Edit</button>
+                        <button class="admin-action-btn btn-delete"
+                            onclick="deleteMenuItem(${item.id})">🗑️</button>
+                    </td>
                 </tr>
             `;
-            menuItems.forEach(item => {
-                const icons = item.icons ? item.icons.join(' ') : (item.icon || '🍽️');
-                const layers = item.layers && item.layers.length ?
-                    item.layers.map(l => `<span style="font-size:0.7em; background:#f1f2f6; padding:2px 8px; border-radius:10px; margin:2px; display:inline-block;">${l}</span>`).join('') :
-                    '<span style="color:#b2bec3; font-size:0.8em;">-</span>';
-                html += `
-                    <tr id="menu-row-${item.id}">
-                        <td style="font-size:1.5em;">${icons}</td>
-                        <td>${item.name}</td>
-                        <td>${item.category}</td>
-                        <td>${currencySymbol} ${item.price.toFixed(2)}</td>
-                        <td style="font-size:0.75em;">${layers}</td>
-                        <td>
-                            <button class="admin-action-btn btn-edit" onclick="editMenuItem(${item.id})">✏️ Edit</button>
-                            <button class="admin-action-btn btn-delete" onclick="deleteMenuItem(${item.id})">🗑️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            html += `</table>`;
-            document.getElementById('adminMenuTable').innerHTML = html;
-        }
+        });
+
+        html += `
+                    </table>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
 
         function editMenuItem(id) {
             const item = menuItems.find(i => i.id === id);
@@ -4444,18 +4532,26 @@ ${whatsappUrl
                             <input type="text" id="edit-icon-${id}" value="${item.icon || '🍽️'}" style="width:40px; text-align:center; font-size:1.2em; border:1px solid #dfe6e9; border-radius:6px;">
                         </td>
                         <td><input type="text" id="edit-name-${id}" value="${item.name}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
-                        <td>
-                            <select id="edit-category-${id}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;">
-                                <option value="burgers" ${item.category === 'burgers' ? 'selected' : ''}>Burgers</option>
-                                <option value="pizza" ${item.category === 'pizza' ? 'selected' : ''}>Pizza</option>
-                                <option value="sandwiches" ${item.category === 'sandwiches' ? 'selected' : ''}>Sandwiches</option>
-                                <option value="sides" ${item.category === 'sides' ? 'selected' : ''}>Sides</option>
-                                <option value="drinks" ${item.category === 'drinks' ? 'selected' : ''}>Drinks</option>
-                                <option value="salads" ${item.category === 'salads' ? 'selected' : ''}>Salads</option>
-                                <option value="appetizers" ${item.category === 'appetizers' ? 'selected' : ''}>Appetizers</option>
-                                <option value="desserts" ${item.category === 'desserts' ? 'selected' : ''}>Desserts</option>
-                            </select>
-                        </td>
+                        
+<td>
+    <select id="edit-category-${id}" style="width:100%; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;">
+        <option value="burgers" ${item.category === 'burgers' ? 'selected' : ''}>Burgers</option>
+        <option value="pizza" ${item.category === 'pizza' ? 'selected' : ''}>Pizza</option>
+        <option value="fries" ${item.category === 'fries' ? 'selected' : ''}>Fries</option>
+        <option value="pasta" ${item.category === 'pasta' ? 'selected' : ''}>Pasta</option>
+        <option value="wings" ${item.category === 'wings' ? 'selected' : ''}>Wings</option>
+        <option value="rolls" ${item.category === 'rolls' ? 'selected' : ''}>Rolls</option>
+        <option value="shawarma" ${item.category === 'shawarma' ? 'selected' : ''}>Shawarma</option>
+        <option value="platters" ${item.category === 'platters' ? 'selected' : ''}>Platters</option>
+        <option value="sandwiches" ${item.category === 'sandwiches' ? 'selected' : ''}>Sandwiches</option>
+        <option value="sides" ${item.category === 'sides' ? 'selected' : ''}>Sides</option>
+        <option value="drinks" ${item.category === 'drinks' ? 'selected' : ''}>Drinks</option>
+        <option value="sauces" ${item.category === 'sauces' ? 'selected' : ''}>Sauces</option>
+        <option value="salads" ${item.category === 'salads' ? 'selected' : ''}>Salads</option>
+        <option value="appetizers" ${item.category === 'appetizers' ? 'selected' : ''}>Appetizers</option>
+        <option value="desserts" ${item.category === 'desserts' ? 'selected' : ''}>Desserts</option>
+    </select>
+</td>
                         <td><input type="number" id="edit-price-${id}" value="${item.price}" step="0.01" style="width:80px; padding:4px 8px; border:1px solid #dfe6e9; border-radius:6px;"></td>
                         <td>
                             <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
