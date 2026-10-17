@@ -1358,23 +1358,33 @@ function staffSelectOrderType(type) {
             const orderType = document.getElementById('staffOrderType').value;
             const paymentMethod = document.getElementById('staffPaymentMethod').value;
 
-            if (!name || !phone) {
-                showToast('⚠️ Please fill customer name and phone');
-                return;
-            }
+        
+if (orderType === 'dinein') {
+    if (!table.trim()) {
+        showToast('⚠️ Please enter the Table Number');
+        document.getElementById('staffOrderTable')?.focus();
+        return;
+    }
+} else {
+    if (!name.trim() || !phone.trim()) {
+        showToast('⚠️ Please fill customer name and phone');
+        return;
+    }
+}
 
-            let fullAddress = '';
-            if (orderType === 'dinein') {
-                fullAddress = 'Dine-In - Table ' + table;
-            } else if (orderType === 'carService') {
-                fullAddress = 'Car Service - ' + carNumber + ' - ' + carServiceAddress;
-            } else if (orderType === 'takeaway') {
-                fullAddress = 'Takeaway - ' + name;
-            } else if (orderType === 'delivery') {
-                fullAddress = address + ', ' + city;
-            } else if (orderType === 'thirdparty') {
-                fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
-            }
+let fullAddress = '';
+
+if (orderType === 'dinein') {
+    fullAddress = 'Dine-In - Table ' + table;
+} else if (orderType === 'carService') {
+    fullAddress = 'Car Service - ' + carNumber + ' - ' + carServiceAddress;
+} else if (orderType === 'takeaway') {
+    fullAddress = 'Takeaway - ' + name;
+} else if (orderType === 'delivery') {
+    fullAddress = address + ', ' + city;
+} else if (orderType === 'thirdparty') {
+    fullAddress = 'ThirdParty - ' + thirdpartyName + ' (Order: ' + thirdpartyOrderId + ')';
+}
 
             // Collect layers from items
             const allLayers = [];
