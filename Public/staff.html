@@ -981,7 +981,7 @@ function renderMenu() {
                 <div class="item-category">${categoryName}</div>
                 <div class="item-price">${currencySymbol} ${Number(item.price || 0).toFixed(2)}</div>
                 ${hasLayers ? `<div class="layer-badge">🧅 Customizable</div>` : ''}
-                <button class="btn-add-order" onclick="staffAddToCart(${item.id})">
+                <button class="btn-add-order" onclick="staffAddToCart('${String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')">
                     ${qty > 0 ? '+ Add More' : '➕ Add'}
                 </button>
             </div>
@@ -995,26 +995,36 @@ function renderMenu() {
         // ============================================================
         // STAFF CART FUNCTIONS
         // ============================================================
-        function staffAddToCart(itemId) {
-            const item = menuItems.find(i => i.id === itemId);
-            if (!item) return;
+       
+function staffAddToCart(itemId) {
+    const item = menuItems.find(i => String(i.id) === String(itemId));
+    if (!item) {
+        console.error('Menu item not found:', itemId, menuItems);
+        showToast('❌ Item not found. Refresh the staff panel.');
+        return;
+    }
 
-            // Check if item has layers
-            if (item.layers && item.layers.length > 0) {
-                showLayerSelection(item);
-                return;
-            }
+    if (item.layers && item.layers.length > 0) {
+        showLayerSelection(item);
+        return;
+    }
 
-            // Add directly if no layers
-            const existing = staffCart.find(c => c.id === itemId);
-            if (existing) {
-                existing.qty = (existing.qty || 1) + 1;
-            } else {
-                staffCart.push({ ...item, qty: 1, selectedLayers: [] });
-            }
-            updateStaffCartUI();
-            showToast(`✅ ${item.name} added to order!`);
-        }
+    const existing = staffCart.find(c => String(c.id) === String(item.id));
+
+    if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+    } else {
+        staffCart.push({
+            ...item,
+            qty: 1,
+            selectedLayers: []
+        });
+    }
+
+    updateStaffCartUI();
+    renderMenu();
+    showToast(`✅ ${item.name} added to order!`);
+}
 
         function showLayerSelection(item) {
             const container = document.getElementById('staffLayerContainer');
