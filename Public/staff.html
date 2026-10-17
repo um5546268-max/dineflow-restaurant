@@ -1407,37 +1407,52 @@ if (orderType === 'dinein') {
                 restaurantId: RESTAURANT_ID
             };
 
-            fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.message || data.order) {
-                    closeStaffCheckout();
-                    showToast('✅ Order placed successfully!');
-                    staffCart = [];
-                    updateStaffCartUI();
-                    
-                    // Show receipt
-                    const orderObj = data.order || { 
-                        ...orderData, 
-                        id: data.order?.id || Math.floor(Math.random() * 1000), 
-                        status: 'pending', 
-                        date: new Date().toLocaleString() 
-                    };
-                    
-                    showStaffReceipt(orderObj);
-                } else {
-                    showToast('❌ ' + (data.error || 'Order failed'));
-                }
-            })
-            .catch(() => {
-                showToast('❌ Network error');
-            });
-        }
+           
+fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData)
+})
+.then(async response => {
+    const responseText = await response.text();
+    let data = {};
 
+    try {
+        data = responseText ? JSON.parse(responseText) : {};
+    } catch (error) {
+        throw new Error(
+            `Server returned an invalid response (HTTP ${response.status}).`
+        );
+    }
+
+    if (!response.ok) {
+        throw new Error(data.error || `Request failed (HTTP ${response.status}).`);
+    }
+
+    if (data.message || data.order) {
+        closeStaffCheckout();
+        showToast('✅ Order placed successfully!');
+
+        staffCart = [];
+        updateStaffCartUI();
+
+        const orderObj = data.order || {
+            ...orderData,
+            id: data.id || 'N/A',
+            status: 'pending',
+            date: new Date().toLocaleString()
+        };
+
+        showStaffReceipt(orderObj);
+    } else {
+        showToast('❌ ' + (data.error || 'Unexpected server response'));
+    }
+})
+.catch(error => {
+    console.error('Staff order submission error:', error);
+    showToast('❌ ' + (error.message || 'Unable to contact server'));
+});
+}
         // ============================================================
         // STAFF RECEIPT
         // ============================================================
