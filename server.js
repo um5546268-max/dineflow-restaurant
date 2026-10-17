@@ -1542,7 +1542,9 @@ app.post('/api/menu', (req, res) => {
     if (!name || !price || !category) return res.status(400).json({ error: 'Missing required fields' });
     if (!icons || !icons.length) return res.status(400).json({ error: 'Please add at least one icon' });
     const newItem = {
-        id: restaurant.menu.length + 1,
+        id: restaurant.menu.length > 0
+    ? Math.max(...restaurant.menu.map(item => Number(item.id) || 0)) + 1
+    : 1,
         name,
         price: parseFloat(price),
         category,
@@ -2134,7 +2136,7 @@ app.get('/api/test', (req, res) => {
 async function initializeApp() {
     try {
         // STEP 1: Load saved data from Supabase.
-        
+
         const loaded = await loadData();
 
         if (!loaded) {
