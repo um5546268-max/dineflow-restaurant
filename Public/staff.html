@@ -623,8 +623,11 @@
             <div class="popup-subtitle">Enter customer details</div>
             <div class="staff-order-total" id="staffOrderTotal">Total: Rs 0.00</div>
             <form class="staff-order-form" id="staffOrderForm" onsubmit="submitStaffOrder(event)">
-                <input type="text" id="staffOrderName" placeholder="Customer Name" required />
-                <input type="tel" id="staffOrderPhone" placeholder="Phone Number" required />
+                
+<div id="staffCustomerFields">
+    <input type="text" id="staffOrderName" placeholder="Customer Name" />
+    <input type="tel" id="staffOrderPhone" placeholder="Phone Number" />
+</div>
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
                     <button type="button" class="staff-order-type-btn active" id="staffDineinBtn" onclick="staffSelectOrderType('dinein')">🍽️ Dine-In</button>
@@ -1326,6 +1329,12 @@ function staffSelectOrderType(type) {
     const tableInput = document.getElementById('staffOrderTable');
     if (tableInput) {
         tableInput.required = type === 'dinein';
+    }
+
+    const customerFields = document.getElementById('staffCustomerFields');
+
+    if (customerFields) {
+          customerFields.style.display = type === 'dinein' ? 'none' : 'block';
     }
 }
 
