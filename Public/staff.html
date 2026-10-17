@@ -661,7 +661,7 @@
                 <input type="hidden" id="staffOrderItems" />
                 <input type="hidden" id="staffOrderTotal" />
                 <input type="hidden" id="staffOrderType" value="dinein" />
-                <button type="submit" class="staff-order-submit-btn">✅ Place Order</button>
+                <button type="submit" class="staff-order-submit-btn">✅ Confirm Order</button>
             </form>
         </div>
     </div>
@@ -1267,68 +1267,67 @@ function staffAddDealToCart(dealId) {
         // ============================================================
         // STAFF ORDER TYPE SELECTION
         // ============================================================
-        function staffSelectOrderType(type) {
-            staffOrderType = type;
-            const dineinBtn = document.getElementById('staffDineinBtn');
-            const carServiceBtn = document.getElementById('staffCarServiceBtn');
-            const takeawayBtn = document.getElementById('staffTakeawayBtn');
-            const deliveryBtn = document.getElementById('staffDeliveryBtn');
-            const thirdpartyBtn = document.getElementById('staffThirdpartyBtn');
-            const dineinFields = document.getElementById('staffDineinFields');
-            const carServiceFields = document.getElementById('staffCarServiceFields');
-            const deliveryFields = document.getElementById('staffDeliveryFields');
-            const thirdpartyFields = document.getElementById('staffThirdpartyFields');
+       
+function staffSelectOrderType(type) {
+    staffOrderType = type;
 
-            [dineinBtn, carServiceBtn, takeawayBtn, deliveryBtn, thirdpartyBtn].forEach(b => {
-                if (b) {
-                    b.classList.remove('active');
-                    b.style.background = 'white';
-                    b.style.color = '#2d3436';
-                    b.style.borderColor = '#dfe6e9';
-                }
-            });
+    const buttons = {
+        dinein: document.getElementById('staffDineinBtn'),
+        carService: document.getElementById('staffCarServiceBtn'),
+        takeaway: document.getElementById('staffTakeawayBtn'),
+        delivery: document.getElementById('staffDeliveryBtn'),
+        thirdparty: document.getElementById('staffThirdpartyBtn')
+    };
 
-            if (dineinFields) dineinFields.style.display = 'none';
-            if (carServiceFields) carServiceFields.style.display = 'none';
-            if (deliveryFields) deliveryFields.style.display = 'none';
-            if (thirdpartyFields) thirdpartyFields.style.display = 'none';
+    const fields = {
+        dinein: document.getElementById('staffDineinFields'),
+        carService: document.getElementById('staffCarServiceFields'),
+        delivery: document.getElementById('staffDeliveryFields'),
+        thirdparty: document.getElementById('staffThirdpartyFields')
+    };
 
-            if (type === 'dinein') {
-                dineinBtn.classList.add('active');
-                dineinBtn.style.background = '#e74c3c';
-                dineinBtn.style.color = 'white';
-                dineinBtn.style.borderColor = '#e74c3c';
-                if (dineinFields) dineinFields.style.display = 'block';
-                document.getElementById('staffOrderType').value = 'dinein';
-            } else if (type === 'carService') {
-                carServiceBtn.classList.add('active');
-                carServiceBtn.style.background = '#e74c3c';
-                carServiceBtn.style.color = 'white';
-                carServiceBtn.style.borderColor = '#e74c3c';
-                if (carServiceFields) carServiceFields.style.display = 'block';
-                document.getElementById('staffOrderType').value = 'carService';
-            } else if (type === 'takeaway') {
-                takeawayBtn.classList.add('active');
-                takeawayBtn.style.background = '#e74c3c';
-                takeawayBtn.style.color = 'white';
-                takeawayBtn.style.borderColor = '#e74c3c';
-                document.getElementById('staffOrderType').value = 'takeaway';
-            } else if (type === 'delivery') {
-                deliveryBtn.classList.add('active');
-                deliveryBtn.style.background = '#e74c3c';
-                deliveryBtn.style.color = 'white';
-                deliveryBtn.style.borderColor = '#e74c3c';
-                if (deliveryFields) deliveryFields.style.display = 'block';
-                document.getElementById('staffOrderType').value = 'delivery';
-            } else if (type === 'thirdparty') {
-                thirdpartyBtn.classList.add('active');
-                thirdpartyBtn.style.background = '#e74c3c';
-                thirdpartyBtn.style.color = 'white';
-                thirdpartyBtn.style.borderColor = '#e74c3c';
-                if (thirdpartyFields) thirdpartyFields.style.display = 'block';
-                document.getElementById('staffOrderType').value = 'thirdparty';
-            }
-        }
+    // Hide all order-specific fields
+    Object.values(fields).forEach(field => {
+        if (field) field.style.display = 'none';
+    });
+
+    // Reset all order-type buttons
+    Object.values(buttons).forEach(button => {
+        if (!button) return;
+
+        button.classList.remove('active');
+        button.style.background = 'white';
+        button.style.color = '#2d3436';
+        button.style.borderColor = '#dfe6e9';
+    });
+
+    // Highlight the selected button
+    const selectedButton = buttons[type];
+
+    if (selectedButton) {
+        selectedButton.classList.add('active');
+        selectedButton.style.background = '#e74c3c';
+        selectedButton.style.color = 'white';
+        selectedButton.style.borderColor = '#e74c3c';
+    }
+
+    // Show fields for the selected order type
+    if (fields[type]) {
+        fields[type].style.display = 'block';
+    }
+
+    // Update the hidden order type
+    const orderTypeInput = document.getElementById('staffOrderType');
+    if (orderTypeInput) {
+        orderTypeInput.value = type;
+    }
+
+    // Require a table number for Dine-In
+    const tableInput = document.getElementById('staffOrderTable');
+    if (tableInput) {
+        tableInput.required = type === 'dinein';
+    }
+}
 
         // ============================================================
         // SUBMIT STAFF ORDER
