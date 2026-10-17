@@ -288,8 +288,8 @@ app.use((req, res, next) => {
 // ============================================
 // ⭐ DATABASE REFERENCES ⭐
 // ============================================
-const users = data.users;
-const restaurants = data.restaurants;
+let users = data.users || [];
+let restaurants = data.restaurants || [];
 let feedbacks = data.feedbacks;
 let supportTickets = data.supportTickets;
 let availableLayers = data.availableLayers;
@@ -297,11 +297,11 @@ let customerLocations = data.customerLocations;
 let orderCounter = data.orderCounter || 1;
 let receiptSettings = data.receiptSettings;
 let aboutRestaurant = data.aboutRestaurant || {
-    description: 'Welcome to The Heaven Slice! We serve the best burgers, pizzas, and fast food in town. Our ingredients are always fresh and our service is top-notch. Visit us for an unforgettable dining experience!',
+    description: 'Welcome to Sangat Cafe! We serve the best burgers, pizzas, and fast food in town. Our ingredients are always fresh and our service is top-notch. Visit us for an unforgettable dining experience!',
     photos: [],
     established: '2022',
     ownerName: 'Chef Ali',
-    aboutTitle: 'About The Heaven Slice',
+    aboutTitle: 'About Sangat Cafe',
     workingHours: 'Mon-Sun: 9:00 AM - 11:00 PM'
 };
 let lobbyDeals = data.lobbyDeals || [];
