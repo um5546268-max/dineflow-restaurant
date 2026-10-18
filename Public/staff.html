@@ -1005,44 +1005,48 @@ function renderMenu() {
     // PIZZA SUBCATEGORY DETECTION
     // Uses existing item names. Does not change saved menu data.
     // ============================================================
-    function getPizzaSubcategory(item) {
-        const name = String(item.name || '').toLowerCase();
+    
+function getPizzaSubcategory(item) {
+    const name = String(item.name || '').toLowerCase();
 
-        // Check this first so Butter Lazania never gets misclassified.
-        if (
-            name.includes('butter lazania') ||
-            name.includes('butter lasagna') ||
-            name.includes('butter lazagna')
-        ) {
-            return 'butter_lazania';
-        }
+    // Special Pizza: include Crunchy and Behari Kabab
+    if (
+        name.includes('butter lazania') ||
+        name.includes('butter lasagna') ||
+        name.includes('butter lazagna')
+    ) {
+        return 'butter_lazania';
+    }
 
-        // Crust-style pizzas.
-        if (
-            name.includes('crust') ||
-            name.includes('stuffer') ||
-            name.includes('stuffed') ||
-            name.includes('crunchy pizza') ||
-            name.includes('crispy chicken pizza')
-        ) {
-            return 'crust';
-        }
+    if (
+        name.includes('crunchy pizza') ||
+        name.includes('behari kabab pizza') ||
+        name.includes('behari kebab pizza') ||
+        name.includes('creamy pizza') ||
+        name.includes('achari pizza') ||
+        name.includes("sangat's special pizza") ||
+        name.includes('malai boti pizza') ||
+        name.includes('special pizza')
+    ) {
+        return 'special';
+    }
 
-        // Special varieties.
-        if (
-            name.includes('creamy pizza') ||
-            name.includes('achari pizza') ||
-            name.includes("sangat's special") ||
-            name.includes('sangats special') ||
-            name.includes('malai boti pizza') ||
-            name.includes('special pizza')
-        ) {
-            return 'special';
-        }
+    if (
+        name.includes('crust') ||
+        name.includes('stuffer') ||
+        name.includes('stuffed') ||
+        name.includes('crispy chicken pizza')
+    ) {
+        return 'crust';
+    }
 
-        // Remaining pizza varieties go into Traditional Pizza.
+    // Pizza Burger belongs in Traditional Pizza
+    if (name.includes('pizza burger')) {
         return 'traditional';
     }
+
+    return 'traditional';
+}
 
     const pizzaSubcategories = [
         {
