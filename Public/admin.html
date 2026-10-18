@@ -1337,20 +1337,32 @@ font-weight: 500;
 <div class="admin-stat-card">
     <div class="stat-icon">💰</div>
 
-    <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
-        <div class="stat-number" id="statRevenue">Rs ••••••</div>
-
-        <button
-            type="button"
-            id="revenueVisibilityBtn"
-            onclick="toggleRevenueVisibility()"
-            title="Show revenue"
-            aria-label="Show revenue"
-            style="border:none; background:transparent; cursor:pointer; font-size:20px; padding:5px;">
-            👁️
-        </button>
+<div style="display:flex; flex-direction:column; gap:12px; width:100%;">
+    <div>
+        <div style="font-size:12px; color:#b2bec3; margin-bottom:4px;">
+            Today's Revenue (4 PM reset)
+        </div>
+        <div class="stat-number" id="statTodayRevenue">Rs ••••••</div>
     </div>
 
+    <div>
+        <div style="font-size:12px; color:#b2bec3; margin-bottom:4px;">
+            Total Revenue
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="stat-number" id="statRevenue">Rs ••••••</div>
+            <button
+                type="button"
+                id="revenueVisibilityBtn"
+                onclick="toggleRevenueVisibility()"
+                title="Show revenue"
+                aria-label="Show revenue"
+                style="border:none; background:transparent; cursor:pointer; font-size:20px; padding:5px;">
+                👁️
+            </button>
+        </div>
+    </div>
+</div>
     <div class="stat-label">Total Revenue</div>
 </div>
                     <div class="admin-stat-card">
@@ -4315,58 +4327,148 @@ ${whatsappUrl
         // ============================================================
         // ADMIN DASHBOARD
         // ============================================================
-        function renderAdminDashboard() {
-            const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-            const pendingOrders = orders.filter(o => o.status === 'pending').length;
-            const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'ready').length;
+        
+function getPakistanBusinessDayBounds() {
+    const now = new Date();
 
-            updateRevenueDisplay(totalRevenue);
-            document.getElementById('statOrders').textContent = orders.length;
-            document.getElementById('statPending').textContent = pendingOrders;
-            document.getElementById('statCompleted').textContent = completedOrders;
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Karachi',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        hourCycle: 'h23'
+    }).formatToParts(now);
 
-            const container = document.getElementById('adminRecentOrders');
-            if (orders.length === 0) {
-                container.innerHTML = '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
-                return;
-            }
+    const values = {};
+    parts.forEach(part => {
+        if (part.type !== 'literal') values[part.type] = part.value;
+    });
 
-            let html = '';
-            const config = restaurantConfig;
-            orders.slice().reverse().slice(0, 5).forEach(order => {
-                const statusClass = `status-${order.status}`;
-                const orderTypeIcon = order.orderType === 'takeaway' ? '🏪' : order.orderType === 'dinein' ? '🍽️' : '🚚';
-                html += `
-                    <div class="order-receipt-card" style="margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                            <div style="font-weight:700; font-size:12px;">#${order.id} ${orderTypeIcon} ${order.userName || 'Guest'}</div>
-                            <div><span class="receipt-badge ${statusClass}">${order.status.toUpperCase()}</span></div>
-                        </div>
-                        <div style="font-size:10px; color:#636e72;">${order.deviceTime || order.date || 'Today'}</div>
-                        <div style="font-size:12px; font-weight:700; color:#e74c3c;">${config.currency} ${order.total.toFixed(2)}</div>
-                        <button onclick="showReceiptForOrder(${order.id})" style="margin-top:4px; padding:2px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">🖨️ View</button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+    let year = Number(values.year);
+    let month = Number(values.month);
+    let day = Number(values.day);
+
+    // Before 4 PM Pakistan time, the business day started yesterday.
+    if (Number(values.hour) < 16) {
+        const previousDay = new Date(Date.UTC(year, month - 1, day) - 86400000);
+        year = previousDay.getUTCFullYear();
+        month = previousDay.getUTCMonth() + 1;
+        day = previousDay.getUTCDate();
+    }
+
+    // Pakistan is UTC+5: 4 PM Pakistan time = 11 AM UTC.
+    const start = Date.UTC(year, month - 1, day, 11, 0, 0);
+    return {
+        start: start,
+        end: start + 86400000
+    };
+}
+
+function getOrderTimestamp(order) {
+    const timestamp = order.createdAt || order.deviceTimestamp;
+    if (!timestamp) return NaN;
+
+    const parsed = new Date(timestamp).getTime();
+    return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function renderAdminDashboard() {
+    const totalRevenue = orders.reduce(
+        (sum, order) => sum + (Number(order.total) || 0),
+        0
+    );
+
+    const bounds = getPakistanBusinessDayBounds();
+
+    const todayRevenue = orders.reduce((sum, order) => {
+        const timestamp = getOrderTimestamp(order);
+
+        if (
+            Number.isFinite(timestamp) &&
+            timestamp >= bounds.start &&
+            timestamp < bounds.end
+        ) {
+            return sum + (Number(order.total) || 0);
         }
 
+        return sum;
+    }, 0);
+
+    updateRevenueDisplay(totalRevenue, todayRevenue);
+
+    document.getElementById('statOrders').textContent = orders.length;
+
+    const pendingOrders = orders.filter(
+        order => order.status === 'pending'
+    ).length;
+
+    const completedOrders = orders.filter(
+        order => order.status === 'delivered' || order.status === 'ready'
+    ).length;
+
+    document.getElementById('statPending').textContent = pendingOrders;
+    document.getElementById('statCompleted').textContent = completedOrders;
+
+    const container = document.getElementById('adminRecentOrders');
+
+    if (orders.length === 0) {
+        container.innerHTML =
+            '<p style="color:#b2bec3; padding:15px;">No orders yet</p>';
+        return;
+    }
+
+    let html = '';
+    const config = restaurantConfig;
+
+    orders.slice().reverse().slice(0, 5).forEach(order => {
+        const statusClass = `status-${order.status}`;
+        const orderTypeIcon =
+            order.orderType === 'takeaway' ? '🏪' :
+            order.orderType === 'dinein' ? '🍽️' : '🚚';
+
+        html += `
+            <div class="order-receipt-card" style="margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                    <div style="font-weight:700; font-size:12px;">#${order.id} ${orderTypeIcon} ${order.userName || 'Guest'}</div>
+                    <div><span class="receipt-badge ${statusClass}">${String(order.status || '').toUpperCase()}</span></div>
+                </div>
+                <div style="font-size:10px; color:#636e72;">${order.deviceTime || order.date || 'Today'}</div>
+                <div style="font-size:12px; font-weight:700; color:#e74c3c;">${config.currency} ${(Number(order.total) || 0).toFixed(2)}</div>
+                <button onclick="showReceiptForOrder(${order.id})" style="margin-top:4px; padding:2px 12px; border:none; border-radius:12px; background:#f39c12; color:white; font-weight:600; cursor:pointer; font-size:0.7em;">🖨️ View</button>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
         
+
 let adminRevenueVisible = false;
 let adminRevenueAmount = 0;
+let adminTodayRevenueAmount = 0;
 
-
-function updateRevenueDisplay(totalRevenue) {
-    adminRevenueAmount = totalRevenue;
+function updateRevenueDisplay(totalRevenue, todayRevenue) {
+    adminRevenueAmount = Number(totalRevenue) || 0;
+    adminTodayRevenueAmount = Number(todayRevenue) || 0;
 
     const revenueElement = document.getElementById('statRevenue');
-    if (!revenueElement) return;
+    const todayElement = document.getElementById('statTodayRevenue');
+
+    if (revenueElement) {
+        revenueElement.textContent = adminRevenueVisible
+            ? `${currencySymbol} ${adminRevenueAmount.toFixed(2)}`
+            : `${currencySymbol} ••••••`;
+    }
+
+    if (todayElement) {
+        todayElement.textContent = adminRevenueVisible
+            ? `${currencySymbol} ${adminTodayRevenueAmount.toFixed(2)}`
+            : `${currencySymbol} ••••••`;
+    }
 
     const button = document.getElementById('revenueVisibilityBtn');
-
-    revenueElement.textContent = adminRevenueVisible
-        ? `${currencySymbol} ${adminRevenueAmount.toFixed(2)}`
-        : `${currencySymbol} ••••••`;
 
     if (button) {
         button.textContent = adminRevenueVisible ? '🙈' : '👁️';
@@ -4381,7 +4483,7 @@ function updateRevenueDisplay(totalRevenue) {
 function toggleRevenueVisibility() {
     if (adminRevenueVisible) {
         adminRevenueVisible = false;
-        updateRevenueDisplay(adminRevenueAmount);
+        updateRevenueDisplay(adminRevenueAmount, adminTodayRevenueAmount);
         return;
     }
 
@@ -4400,11 +4502,11 @@ function toggleRevenueVisibility() {
             throw new Error(data.error || 'Incorrect password');
         }
         adminRevenueVisible = true;
-        updateRevenueDisplay(adminRevenueAmount);
+        updateRevenueDisplay(adminRevenueAmount, adminTodayRevenueAmount);
     })
     .catch(error => {
         adminRevenueVisible = false;
-        updateRevenueDisplay(adminRevenueAmount);
+        updateRevenueDisplay(adminRevenueAmount, adminTodayRevenueAmount);
         alert(error.message || 'Password verification failed.');
     });
 }
