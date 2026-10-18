@@ -896,8 +896,16 @@
         // ============================================================
         
 
+
 function renderMenu() {
-    // Show deals when the Deals category is selected
+    // Reset the pizza subcategory when another main category is selected.
+    if (currentCategory !== 'pizza') {
+        window.staffPizzaSubcategory = null;
+    }
+
+    // ============================================================
+    // DEALS
+    // ============================================================
     if (currentCategory === 'deals') {
         const deals = Array.isArray(staffDeals) ? staffDeals : [];
 
@@ -926,6 +934,9 @@ function renderMenu() {
             const price = Number(deal.price ?? deal.discountedPrice ?? 0);
             const description = deal.desc || deal.description || '';
             const icon = deal.icon || '🎁';
+            const dealId = String(deal.id ?? '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'");
 
             html += `
                 <div class="staff-menu-item">
@@ -935,9 +946,9 @@ function renderMenu() {
                     ${description ? `<div class="item-category">${description}</div>` : ''}
                     <div class="item-price">${currencySymbol} ${price.toFixed(2)}</div>
                     <button class="btn-add-order"
-    onclick="staffAddDealToCart('${String(deal.id ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')"
-    ➕ Add Deal
-</button>
+                        onclick="staffAddDealToCart('${dealId}')">
+                        ➕ Add Deal
+                    </button>
                 </div>
             `;
         });
@@ -947,6 +958,9 @@ function renderMenu() {
         return;
     }
 
+    // ============================================================
+    // MAIN CATEGORY DETECTION
+    // ============================================================
     function getCorrectCategory(item) {
         const name = String(item.name || '').toLowerCase();
         const saved = String(item.category || '')
@@ -987,11 +1001,136 @@ function renderMenu() {
         return saved.replace(/-/g, '_');
     }
 
-    let filtered = menuItems || [];
+    // ============================================================
+    // PIZZA SUBCATEGORY DETECTION
+    // Uses existing item names. Does not change saved menu data.
+    // ============================================================
+    function getPizzaSubcategory(item) {
+        const name = String(item.name || '').toLowerCase();
+
+        // Check this first so Butter Lazania never gets misclassified.
+        if (
+            name.includes('butter lazania') ||
+            name.includes('butter lasagna') ||
+            name.includes('butter lazagna')
+        ) {
+            return 'butter_lazania';
+        }
+
+        // Crust-style pizzas.
+        if (
+            name.includes('crust') ||
+            name.includes('stuffer') ||
+            name.includes('stuffed') ||
+            name.includes('crunchy pizza') ||
+            name.includes('crispy chicken pizza')
+        ) {
+            return 'crust';
+        }
+
+        // Special varieties.
+        if (
+            name.includes('creamy pizza') ||
+            name.includes('achari pizza') ||
+            name.includes("sangat's special") ||
+            name.includes('sangats special') ||
+            name.includes('malai boti pizza') ||
+            name.includes('special pizza')
+        ) {
+            return 'special';
+        }
+
+        // Remaining pizza varieties go into Traditional Pizza.
+        return 'traditional';
+    }
+
+    const pizzaSubcategories = [
+        {
+            id: 'special',
+            name: 'Special Pizza',
+            icon: '⭐',
+            description: 'Creamy, Achari, Malai Boti and Sangat Special'
+        },
+        {
+            id: 'crust',
+            name: 'Crust Pizza',
+            icon: '🍕',
+            description: 'Crust, stuffed and crunchy varieties'
+        },
+        {
+            id: 'butter_lazania',
+            name: 'Butter Lazania Pizza',
+            icon: '🧀',
+            description: 'All available Butter Lazania sizes'
+        },
+        {
+            id: 'traditional',
+            name: 'Traditional Pizza',
+            icon: '🍕',
+            description: 'Tikka, Fajita, Vegetable and other varieties'
+        }
+    ];
+
+    // Start with the existing menu items.
+    let filtered = Array.isArray(menuItems) ? [...menuItems] : [];
 
     if (currentCategory !== 'all') {
         filtered = filtered.filter(item =>
             getCorrectCategory(item) === currentCategory
+        );
+    }
+
+    // ============================================================
+    // SHOW FOUR PIZZA SUBCATEGORY BUTTONS
+    // ============================================================
+    if (currentCategory === 'pizza' && !window.staffPizzaSubcategory) {
+        const totalPizzas = filtered.length;
+
+        let html = `
+            <div class="staff-section-title">🍕 Pizza Categories</div>
+            <p style="color:#b2bec3; margin:0 0 16px;">
+                Choose a pizza category to view its menu.
+                ${totalPizzas} pizza items available.
+            </p>
+            <div class="staff-menu-grid">
+        `;
+
+        pizzaSubcategories.forEach(subcategory => {
+            const count = filtered.filter(item =>
+                getPizzaSubcategory(item) === subcategory.id
+            ).length;
+
+            html += `
+                <button
+                    type="button"
+                    class="staff-menu-item"
+                    style="cursor:pointer; text-align:center; color:inherit;
+                           font:inherit; width:100%;"
+                    onclick="window.staffPizzaSubcategory='${subcategory.id}'; renderMenu();"
+                >
+                    <span class="item-icons">${subcategory.icon}</span>
+                    <div class="item-name">${subcategory.name}</div>
+                    <div class="item-category">${subcategory.description}</div>
+                    <div class="item-price">${count} items</div>
+                    <span class="btn-add-order"
+                          style="display:inline-block; padding:8px 12px;">
+                        View Pizzas →
+                    </span>
+                </button>
+            `;
+        });
+
+        html += '</div>';
+        menuArea.innerHTML = html;
+        return;
+    }
+
+    // ============================================================
+    // FILTER PIZZAS BY SELECTED SUBCATEGORY
+    // ============================================================
+    if (currentCategory === 'pizza' && window.staffPizzaSubcategory) {
+        filtered = filtered.filter(item =>
+            getPizzaSubcategory(item) === window.staffPizzaSubcategory
         );
     }
 
@@ -1000,35 +1139,71 @@ function renderMenu() {
             <div class="staff-empty-state">
                 <div class="empty-icon">📭</div>
                 <h3>No Items in this Category</h3>
-                <p style="color:#b2bec3;">Select another category or ask admin to add items.</p>
+                <p style="color:#b2bec3;">
+                    Select another category or ask admin to add items.
+                </p>
+                ${currentCategory === 'pizza' ? `
+                    <button class="btn-add-order"
+                        onclick="window.staffPizzaSubcategory=null; renderMenu();">
+                        ← Back to Pizza Categories
+                    </button>
+                ` : ''}
             </div>
         `;
         return;
     }
 
+    // ============================================================
+    // MENU ITEM CARDS
+    // ============================================================
+    const selectedPizzaSubcategory = currentCategory === 'pizza'
+        ? pizzaSubcategories.find(
+            category => category.id === window.staffPizzaSubcategory
+        )
+        : null;
+
     const selectedCategory = categories.find(c => c.id === currentCategory);
 
     let html = `
+        ${currentCategory === 'pizza' ? `
+            <button type="button" class="btn-add-order"
+                style="margin-bottom:12px;"
+                onclick="window.staffPizzaSubcategory=null; renderMenu();">
+                ← Back to Pizza Categories
+            </button>
+        ` : ''}
         <div class="staff-section-title">
-            ${selectedCategory?.icon || '🍽️'} ${selectedCategory?.name || 'All'}
+            ${
+                selectedPizzaSubcategory
+                    ? `${selectedPizzaSubcategory.icon} ${selectedPizzaSubcategory.name}`
+                    : `${selectedCategory?.icon || '🍽️'} ${selectedCategory?.name || 'All'}`
+            }
         </div>
         <div class="staff-menu-grid">
     `;
 
     filtered.forEach(item => {
-        const icons = item.icons
+        const icons = Array.isArray(item.icons)
             ? item.icons.join('')
             : (item.icon || '🍽️');
 
-        const hasLayers = item.layers && item.layers.length > 0;
-        const inCart = staffCart.find(c => c.id === item.id);
+        const hasLayers = Array.isArray(item.layers) && item.layers.length > 0;
+        const inCart = staffCart.find(c => String(c.id) === String(item.id));
         const qty = inCart ? inCart.qty : 0;
 
         const correctCategory = getCorrectCategory(item);
-        const categoryName =
-            categories.find(c => c.id === correctCategory)?.name ||
-            categories.find(c => c.id === item.category)?.name ||
-            '';
+
+        const categoryName = currentCategory === 'pizza'
+            ? selectedPizzaSubcategory?.name || 'Pizza'
+            : (
+                categories.find(c => c.id === correctCategory)?.name ||
+                categories.find(c => c.id === item.category)?.name ||
+                ''
+            );
+
+        const itemId = String(item.id)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'");
 
         html += `
             <div class="staff-menu-item">
@@ -1036,9 +1211,12 @@ function renderMenu() {
                 <span class="item-icons">${icons}</span>
                 <div class="item-name">${item.name}</div>
                 <div class="item-category">${categoryName}</div>
-                <div class="item-price">${currencySymbol} ${Number(item.price || 0).toFixed(2)}</div>
+                <div class="item-price">
+                    ${currencySymbol} ${Number(item.price || 0).toFixed(2)}
+                </div>
                 ${hasLayers ? `<div class="layer-badge">🧅 Customizable</div>` : ''}
-                <button class="btn-add-order" onclick="staffAddToCart('${String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')">
+                <button class="btn-add-order"
+                    onclick="staffAddToCart('${itemId}')">
                     ${qty > 0 ? '+ Add More' : '➕ Add'}
                 </button>
             </div>
