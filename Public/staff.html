@@ -1544,6 +1544,7 @@ fetch('/api/orders', {
     }, 3000);
 }
 
+
 function showStaffReceipt(order) {
     const escapeHtml = value =>
         String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -1555,15 +1556,19 @@ function showStaffReceipt(order) {
         })[char]);
 
     const now = new Date();
+
     const dateStr = now.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
     });
+
     const timeStr = now.toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit'
     });
+
+    const restaurantName = 'Sangat Cafe';
 
     const orderTypeLabel =
         order.orderType === 'takeaway' ? 'Takeaway' :
@@ -1587,7 +1592,7 @@ function showStaffReceipt(order) {
             <div class="item">
                 <div class="item-name">${escapeHtml(item.name)}</div>
                 <div class="item-total">
-                    ${qty} x Rs ${price.toFixed(2)}
+                    <span>${qty} x Rs ${price.toFixed(2)}</span>
                     <span>Rs ${(price * qty).toFixed(2)}</span>
                 </div>
             </div>`;
@@ -1609,11 +1614,13 @@ function showStaffReceipt(order) {
     }
 
     receiptWindow.document.open();
+
     receiptWindow.document.write(`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>Sangat Cafe Receipt</title>
+
 <style>
     @page {
         size: 80mm auto;
@@ -1624,19 +1631,26 @@ function showStaffReceipt(order) {
         box-sizing: border-box;
     }
 
-    html, body {
+    html {
         width: 80mm;
         margin: 0;
         padding: 0;
     }
 
     body {
+        width: 68mm;
+        max-width: 68mm;
+        margin: 0 auto;
+        padding: 2mm;
         font-family: Arial, sans-serif;
-        font-size: 12px;
+        font-size: 13px;
         line-height: 1.35;
         color: #000;
-        padding: 3mm;
+        background: #fff;
         overflow-wrap: anywhere;
+        -webkit-font-smoothing: auto;
+        text-rendering: optimizeLegibility;
+        box-sizing: border-box;
     }
 
     h2 {
@@ -1656,28 +1670,34 @@ function showStaffReceipt(order) {
 
     p {
         margin: 3px 0;
+        overflow-wrap: anywhere;
     }
 
     .item {
         margin: 7px 0;
+        break-inside: avoid;
     }
 
     .item-name {
         font-weight: bold;
     }
 
-    .item-total {
+    .item-total,
+    .grand-total {
         display: flex;
         justify-content: space-between;
         gap: 4px;
     }
 
+    .item-total > *,
+    .grand-total > * {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
     .grand-total {
         font-size: 16px;
         font-weight: bold;
-        display: flex;
-        justify-content: space-between;
-        gap: 4px;
     }
 
     .footer {
@@ -1685,8 +1705,26 @@ function showStaffReceipt(order) {
         margin-top: 12px;
     }
 
+    @media print {
+        html {
+            width: 80mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        body {
+            width: 68mm !important;
+            max-width: 68mm !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding: 2mm !important;
+        }
+    }
 </style>
 </head>
+
 <body>
     <h2>${escapeHtml(restaurantName)}</h2>
     <div class="center">ORDER RECEIPT</div>
@@ -1711,10 +1749,9 @@ function showStaffReceipt(order) {
 
     <div class="line"></div>
     <div class="footer">Thank you for visiting!</div>
-
-    
 </body>
 </html>`);
+
     receiptWindow.document.close();
 
     setTimeout(() => {
