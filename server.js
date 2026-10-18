@@ -2248,6 +2248,79 @@ app.post('/api/admin/verify-balance-password', (req, res) => {
     return res.json({ success: true });
 });
 
+/* ============================================
+   ADMIN REVENUE RESET — PERSISTED IN SUPABASE
+   ============================================ */
+
+// Get revenue totals using the saved reset timestamp.
+app.get('/api/admin/revenue-summary', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required.' });
+    }
+
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+
+    // Initialize the reset point once, if this restaurant has none.
+    if (!restaurant.dailyRevenueResetAt) {
+        restaurant.dailyRevenueResetAt = new Date().toISOString();
+        syncAndSave();
+    }
+
+    const resetTime = new Date(restaurant.dailyRevenueResetAt).getTime();
+
+    const totalRevenue = restaurant.orders.reduce((sum, order) => {
+        return sum + (Number(order.total) || 0);
+    }, 0);
+
+    const todayRevenue = restaurant.orders.reduce((sum, order) => {
+        const rawTimestamp = order.createdAt || order.deviceTimestamp;
+        if (!rawTimestamp) return sum;
+
+        const orderTime = new Date(rawTimestamp).getTime();
+
+        if (Number.isFinite(orderTime) && orderTime >= resetTime) {
+            return sum + (Number(order.total) || 0);
+        }
+
+        return sum;
+    }, 0);
+
+    res.json({
+        success: true,
+        resetAt: restaurant.dailyRevenueResetAt,
+        todayRevenue,
+        totalRevenue
+    });
+});
+
+// Reset Today's Revenue without deleting or modifying orders.
+app.post('/api/admin/reset-todays-revenue', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required.' });
+    }
+
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+
+    restaurant.dailyRevenueResetAt = new Date().toISOString();
+
+    syncAndSave();
+
+    // Wait for the existing Supabase save queue to finish.
+    await saveQueue;
+
+    console.log(
+        `Today's revenue reset for ${restaurantId} at ${restaurant.dailyRevenueResetAt}`
+    );
+
+    res.json({
+        success: true,
+        message: "Today's Revenue has been reset.",
+        resetAt: restaurant.dailyRevenueResetAt
+    });
+});
+
 // ============================================
 // TEST ENDPOINT
 // ============================================

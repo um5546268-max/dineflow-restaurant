@@ -1336,34 +1336,32 @@ font-weight: 500;
                   
 <div class="admin-stat-card">
     <div class="stat-icon">💰</div>
-
-<div style="display:flex; flex-direction:column; gap:12px; width:100%;">
-    <div>
-        <div style="font-size:12px; color:#b2bec3; margin-bottom:4px;">
-            Today's Revenue (4 PM reset)
+    <div style="display:flex; flex-direction:column; gap:12px; width:100%;">
+        <div>
+            <div style="font-size:12px; color:#636e72; margin-bottom:4px;">Today's Revenue</div>
+            <div class="stat-number" id="statTodayRevenue">Rs ••••••</div>
         </div>
-        <div class="stat-number" id="statTodayRevenue">Rs ••••••</div>
-    </div>
-
-    <div>
-        <div style="font-size:12px; color:#b2bec3; margin-bottom:4px;">
-            Total Revenue
-        </div>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div>
+            <div style="font-size:12px; color:#636e72; margin-bottom:4px;">Total Revenue</div>
             <div class="stat-number" id="statRevenue">Rs ••••••</div>
-            <button
-                type="button"
-                id="revenueVisibilityBtn"
-                onclick="toggleRevenueVisibility()"
-                title="Show revenue"
-                aria-label="Show revenue"
-                style="border:none; background:transparent; cursor:pointer; font-size:20px; padding:5px;">
-                👁️
-            </button>
         </div>
+        <button
+            type="button"
+            id="revenueVisibilityBtn"
+            onclick="toggleRevenueVisibility()"
+            title="Show revenue"
+            aria-label="Show revenue"
+            style="border:none; background:transparent; cursor:pointer; font-size:20px; padding:5px;">
+            👁️
+        </button>
+        <button
+            type="button"
+            id="resetTodaysRevenueBtn"
+            onclick="resetTodaysRevenue()"
+            style="border:none; border-radius:6px; background:#e67e22; color:white; padding:8px 12px; cursor:pointer;">
+            Reset Today's Revenue
+        </button>
     </div>
-</div>
-    <div class="stat-label">Total Revenue</div>
 </div>
                     <div class="admin-stat-card">
                         <div class="stat-icon">📦</div>
@@ -4374,28 +4372,9 @@ function getOrderTimestamp(order) {
 }
 
 function renderAdminDashboard() {
-    const totalRevenue = orders.reduce(
-        (sum, order) => sum + (Number(order.total) || 0),
-        0
-    );
-
-    const bounds = getPakistanBusinessDayBounds();
-
-    const todayRevenue = orders.reduce((sum, order) => {
-        const timestamp = getOrderTimestamp(order);
-
-        if (
-            Number.isFinite(timestamp) &&
-            timestamp >= bounds.start &&
-            timestamp < bounds.end
-        ) {
-            return sum + (Number(order.total) || 0);
-        }
-
-        return sum;
-    }, 0);
-
-    updateRevenueDisplay(totalRevenue, todayRevenue);
+    // Revenue comes from the server's persisted reset timestamp in Supabase.
+    // This keeps the dashboard consistent after reloads and Render redeploys.
+    refreshRevenueSummary();
 
     document.getElementById('statOrders').textContent = orders.length;
 
@@ -4469,14 +4448,66 @@ function updateRevenueDisplay(totalRevenue, todayRevenue) {
     }
 
     const button = document.getElementById('revenueVisibilityBtn');
-
     if (button) {
         button.textContent = adminRevenueVisible ? '🙈' : '👁️';
         button.title = adminRevenueVisible ? 'Hide revenue' : 'Show revenue';
-        button.setAttribute(
-            'aria-label',
-            adminRevenueVisible ? 'Hide revenue' : 'Show revenue'
+        button.setAttribute('aria-label', adminRevenueVisible ? 'Hide revenue' : 'Show revenue');
+    }
+}
+
+async function refreshRevenueSummary() {
+    try {
+        const response = await fetch(
+            '/api/admin/revenue-summary?restaurant=' + encodeURIComponent(RESTAURANT_ID),
+            { method: 'GET', credentials: 'include', cache: 'no-store' }
         );
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Could not load revenue summary.');
+        }
+        updateRevenueDisplay(data.totalRevenue, data.todayRevenue);
+    } catch (error) {
+        console.error('Revenue summary error:', error);
+    }
+}
+
+async function resetTodaysRevenue() {
+    const confirmed = confirm(
+        "Reset Today's Revenue to zero from this moment? Historical orders and Total Revenue will remain unchanged."
+    );
+    if (!confirmed) return;
+
+    const button = document.getElementById('resetTodaysRevenueBtn');
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Resetting...';
+    }
+
+    try {
+        const response = await fetch(
+            '/api/admin/reset-todays-revenue?restaurant=' + encodeURIComponent(RESTAURANT_ID),
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({})
+            }
+        );
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Revenue reset failed.');
+        }
+
+        await refreshRevenueSummary();
+        alert("Today's Revenue has been reset. Historical orders and Total Revenue are unchanged.");
+    } catch (error) {
+        console.error('Reset revenue error:', error);
+        alert(error.message || "Could not reset Today's Revenue. Please check the server logs.");
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Reset Today's Revenue";
+        }
     }
 }
 
