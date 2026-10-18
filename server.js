@@ -1359,111 +1359,26 @@ app.delete('/api/orders/today/all', (req, res) => {
     });
 });
 
-// ============================================
-// CONFIRMED-ORDER REVENUE RULE
-// ============================================
-function isRevenueEligible(order) {
-    if (!order || order.status === 'cancelled') {
-        return false;
-    }
-
-    // New orders must have an actual confirmation timestamp.
-    if (
-        Object.prototype.hasOwnProperty.call(
-            order,
-            'revenueConfirmedAt'
-        )
-    ) {
-        return Boolean(order.revenueConfirmedAt);
-    }
-
-    // Preserve revenue for older orders already confirmed
-    // before this feature was introduced.
-    return [
-        'confirmed',
-        'preparing',
-        'ready',
-        'delivered'
-    ].includes(order.status);
-}
-
 app.get('/api/orders/today', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
-
-    try {
-        const restaurantId = req.restaurantId || 'restaurant-1';
-        const restaurant = getOrCreateRestaurant(restaurantId);
-
-        // Sangat Cafe business day: 4:00 PM to 3:59:59 PM
-        // Use Pakistan time regardless of the server's timezone.
-        const now = new Date();
-
-        const pakistanParts = new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Asia/Karachi',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            hourCycle: 'h23'
-        }).formatToParts(now);
-
-        const part = (type) =>
-            pakistanParts.find(p => p.type === type).value;
-
-        let year = Number(part('year'));
-        let month = Number(part('month'));
-        let day = Number(part('day'));
-        const hour = Number(part('hour'));
-
-        // Before 4 PM, today's business day began yesterday at 4 PM.
-        if (hour < 16) {
-            const previousDay = new Date(
-                Date.UTC(year, month - 1, day - 1)
-            );
-
-            year = previousDay.getUTCFullYear();
-            month = previousDay.getUTCMonth() + 1;
-            day = previousDay.getUTCDate();
-        }
-
-        const datePart = [
-            year,
-            String(month).padStart(2, '0'),
-            String(day).padStart(2, '0')
-        ].join('-');
-
-        const businessDayStart = new Date(
-            `${datePart}T16:00:00+05:00`
-        );
-
-        // Count orders from the 4 PM cutoff onward.
-        // Historical orders remain stored and untouched.
-        const todayOrders = (restaurant.orders || []).filter(order => {
-            const orderDate = new Date(order.createdAt || order.date);
-
-            return (
-                !Number.isNaN(orderDate.getTime()) &&
-                orderDate >= businessDayStart &&
-                orderDate <= now
-            );
-        });
-
-        res.json({
-            date: now.toISOString(),
-            businessDayStart: businessDayStart.toISOString(),
-            totalOrders: todayOrders.length,
-            orders: todayOrders,
-            totalRevenue: todayOrders.reduce(
-                (sum, order) => sum + (Number(order.total) || 0),
-                0
-            )
-        });
-    } catch (error) {
-        console.error('Error loading today orders:', error);
-        res.status(500).json({ error: 'Failed to load today orders' });
-    }
+    
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    
+    const today = new Date().toDateString();
+    const todayOrders = restaurant.orders.filter(o => {
+        const orderDate = new Date(o.createdAt || o.date);
+        return orderDate.toDateString() === today;
+    });
+    
+    res.json({
+        date: new Date().toISOString(),
+        totalOrders: todayOrders.length,
+        orders: todayOrders,
+        totalRevenue: todayOrders.reduce((sum, o) => sum + o.total, 0)
+    });
 });
 
 // ============================================
@@ -1787,6 +1702,26 @@ app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
+
+    // Idempotency: a retried checkout must return the order already saved.
+    // This check runs before opening-hours validation so a retry still succeeds
+    // even if the restaurant closes after the original request was accepted.
+    const requestKey = typeof req.body?.idempotencyKey === 'string'
+        ? req.body.idempotencyKey.trim().slice(0, 160)
+        : '';
+    if (requestKey) {
+        const existingOrder = restaurant.orders.find(order =>
+            order.idempotencyKey === requestKey &&
+            String(order.userId) === String(req.user.id)
+        );
+        if (existingOrder) {
+            return res.status(200).json({
+                message: 'Order already placed',
+                order: existingOrder,
+                duplicate: true
+            });
+        }
+    }
     
     const now = new Date();
     const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -1808,7 +1743,7 @@ app.post('/api/orders', (req, res) => {
 const {
     items, total, subtotal, name, phone, address, layers,
     orderType, paymentMethod, lat, lng, table,
-    deviceTime, deviceTimestamp
+    deviceTime, deviceTimestamp, idempotencyKey
 } = req.body;
 
 if (!Array.isArray(items) || items.length === 0) {
@@ -1847,12 +1782,12 @@ layerExtraCharge: layerExtraCharge,
 selectedLayerCount: selectedLayerCount,
 total: finalTotal,
         status: 'pending',
-        revenueConfirmedAt: null,
         orderType: orderType || 'delivery',
         paymentMethod: paymentMethod || 'cash',
         date: new Date().toLocaleString(),
         createdAt: new Date(),
         restaurantId: restaurantId,
+        ...(requestKey ? { idempotencyKey: requestKey } : {}),
         lat: orderType === 'delivery' ? (lat || null) : null,
         lng: orderType === 'delivery' ? (lng || null) : null,
         locationShared: orderType === 'delivery' && !!(lat && lng),
@@ -1889,6 +1824,80 @@ total: finalTotal,
     res.status(201).json({ message: 'Order placed', order: newOrder });
 });
 
+// Admin order editor: update customer/order details without changing the order ID,
+// status, original timestamps, ownership, or revenue-reset metadata.
+app.put('/api/orders/:id/edit', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    const orderId = Number.parseInt(req.params.id, 10);
+    const order = restaurant.orders.find(o => Number(o.id) === orderId);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    try {
+        const body = req.body || {};
+        const name = String(body.userName ?? order.userName ?? '').trim().slice(0, 120);
+        const phone = String(body.phone ?? order.phone ?? '').trim().slice(0, 40);
+        const address = String(body.address ?? order.address ?? '').trim().slice(0, 500);
+        const orderType = String(body.orderType ?? order.orderType ?? 'delivery');
+        const paymentMethod = String(body.paymentMethod ?? order.paymentMethod ?? 'cash').trim().slice(0, 60);
+        const table = String(body.table ?? order.table ?? '').trim().slice(0, 40);
+        const allowedTypes = ['delivery', 'takeaway', 'dinein'];
+        if (!allowedTypes.includes(orderType)) {
+            return res.status(400).json({ error: 'Invalid order type' });
+        }
+        if (!name) return res.status(400).json({ error: 'Customer name is required' });
+        if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 100) {
+            return res.status(400).json({ error: 'An order must contain between 1 and 100 items' });
+        }
+
+        const items = [];
+        for (const raw of body.items) {
+            const itemName = String(raw?.name ?? '').trim().slice(0, 160);
+            const price = Number(raw?.price);
+            const qty = Number(raw?.qty);
+            if (!itemName || !Number.isFinite(price) || price < 0 || price > 10000000 ||
+                !Number.isInteger(qty) || qty < 1 || qty > 999) {
+                return res.status(400).json({ error: 'Each item needs a name, valid price, and quantity from 1 to 999' });
+            }
+            items.push({ ...raw, name: itemName, price, qty });
+        }
+
+        const layers = Array.isArray(body.layers)
+            ? body.layers.map(layer => String(layer).trim()).filter(Boolean).slice(0, 30)
+            : (Array.isArray(order.layers) ? order.layers : []);
+        const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const layerExtraCharge = layers.length * 100;
+        const discountThreshold = Number(RESTAURANT_CONFIG.discountThreshold) || 0;
+        const discountAmount = Number(RESTAURANT_CONFIG.discountAmount) || 0;
+        const discount = subtotal > discountThreshold ? discountAmount : 0;
+        const total = Math.max(0, subtotal + layerExtraCharge - discount);
+
+        order.userName = name;
+        order.phone = phone;
+        order.address = address;
+        order.orderType = orderType;
+        order.paymentMethod = paymentMethod || 'cash';
+        order.table = table || null;
+        order.items = items;
+        order.layers = layers;
+        order.subtotal = subtotal;
+        order.layerExtraCharge = layerExtraCharge;
+        order.selectedLayerCount = layers.length;
+        order.total = total;
+        order.adminEditedAt = new Date().toISOString();
+        order.adminEditedBy = req.user.id || req.user.email || 'admin';
+
+        syncAndSave();
+        broadcastOrderUpdate(order, restaurantId);
+        return res.json({ success: true, message: `Order #${order.id} updated`, order });
+    } catch (error) {
+        console.error('Edit order error:', error);
+        return res.status(500).json({ error: 'Failed to update order' });
+    }
+});
+
 app.get('/api/orders/all', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -1905,86 +1914,22 @@ app.get('/api/orders/myorders', (req, res) => {
 });
 
 app.put('/api/orders/:id/status', (req, res) => {
-    if (!req.user) {
-        return res.status(401).json({
-            error: 'Not logged in'
-        });
-    }
-
+    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
-
-    const order = restaurant.orders.find(
-        o => o.id === parseInt(req.params.id)
-    );
-
-    if (!order) {
-        return res.status(404).json({
-            error: 'Order not found'
-        });
-    }
-
+    const order = restaurant.orders.find(o => o.id === parseInt(req.params.id));
+    if (!order) return res.status(404).json({ error: 'Order not found' });
     const { status } = req.body;
-
-    const validStatuses = [
-        'pending',
-        'confirmed',
-        'preparing',
-        'ready',
-        'delivered',
-        'cancelled'
-    ];
-
+    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
-        return res.status(400).json({
-            error: 'Invalid status'
-        });
+        return res.status(400).json({ error: 'Invalid status' });
     }
-
-    const previousStatus = order.status;
-
-    // Upgrade older orders safely when their status changes.
-    if (
-        !Object.prototype.hasOwnProperty.call(
-            order,
-            'revenueConfirmedAt'
-        )
-    ) {
-        if (
-            [
-                'confirmed',
-                'preparing',
-                'ready',
-                'delivered'
-            ].includes(previousStatus)
-        ) {
-            order.revenueConfirmedAt =
-                order.createdAt ||
-                order.deviceTimestamp ||
-                new Date().toISOString();
-        } else {
-            order.revenueConfirmedAt = null;
-        }
-    }
-
-    // Record the first confirmation only.
-    if (
-        status === 'confirmed' &&
-        !order.revenueConfirmedAt
-    ) {
-        order.revenueConfirmedAt = new Date().toISOString();
-    }
-
     order.status = status;
-
     syncAndSave();
-
+    
     broadcastOrderUpdate(order, restaurantId);
-
-    res.json({
-        success: true,
-        order
-    });
+    
+    res.json({ success: true, order });
 });
 
 // ============================================
@@ -2396,88 +2341,6 @@ app.post('/api/admin/verify-balance-password', (req, res) => {
     }
 
     return res.json({ success: true });
-});
-
-/* ============================================
-   ADMIN REVENUE RESET — PERSISTED IN SUPABASE
-   ============================================ */
-
-// Get revenue totals using the saved reset timestamp.
-app.get('/api/admin/revenue-summary', (req, res) => {
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required.' });
-    }
-
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = getOrCreateRestaurant(restaurantId);
-
-    // Initialize the reset point once, if this restaurant has none.
-    if (!restaurant.dailyRevenueResetAt) {
-        restaurant.dailyRevenueResetAt = new Date().toISOString();
-        syncAndSave();
-    }
-
-    const resetTime = new Date(restaurant.dailyRevenueResetAt).getTime();
-
-    const totalRevenue = restaurant.orders
-    .filter(isRevenueEligible)
-    .reduce(
-        (sum, order) => sum + (Number(order.total) || 0),
-        0
-    );
-
-    const todayRevenue = restaurant.orders.reduce((sum, order) => {
-    if (!isRevenueEligible(order)) {
-        return sum;
-    }
-
-    const rawTimestamp = order.createdAt || order.deviceTimestamp;
-    if (!rawTimestamp) {
-        return sum;
-    }
-
-    const orderTime = new Date(rawTimestamp).getTime();
-
-    if (Number.isFinite(orderTime) && orderTime >= resetTime) {
-        return sum + (Number(order.total) || 0);
-    }
-
-    return sum;
-}, 0);
-
-    res.json({
-        success: true,
-        resetAt: restaurant.dailyRevenueResetAt,
-        todayRevenue,
-        totalRevenue
-    });
-});
-
-// Reset Today's Revenue without deleting or modifying orders.
-app.post('/api/admin/reset-todays-revenue', async (req, res) => {
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required.' });
-    }
-
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = getOrCreateRestaurant(restaurantId);
-
-    restaurant.dailyRevenueResetAt = new Date().toISOString();
-
-    syncAndSave();
-
-    // Wait for the existing Supabase save queue to finish.
-    await saveQueue;
-
-    console.log(
-        `Today's revenue reset for ${restaurantId} at ${restaurant.dailyRevenueResetAt}`
-    );
-
-    res.json({
-        success: true,
-        message: "Today's Revenue has been reset.",
-        resetAt: restaurant.dailyRevenueResetAt
-    });
 });
 
 // ============================================
