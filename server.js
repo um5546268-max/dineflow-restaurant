@@ -216,6 +216,7 @@ async function loadData() {
 
 
 let saveQueue = Promise.resolve();
+let lastSaveError = null;
 
 function saveData() {
     try {
@@ -245,7 +246,9 @@ function saveData() {
         // Capture this version immediately so later changes don't alter it.
         const snapshot = JSON.parse(JSON.stringify(data));
 
+        // Serialize cloud writes, but let each new write continue after an earlier failure.
         saveQueue = saveQueue
+            .catch(() => {})
             .then(async () => {
                 const { error } = await supabase
                     .from('restaurant_data')
@@ -257,18 +260,16 @@ function saveData() {
                         },
                         { onConflict: 'id' }
                     );
-
-                if (error) {
-                    throw error;
-                }
-
+                if (error) throw error;
+                lastSaveError = null;
                 console.log('☁️ Data saved to Supabase');
             })
             .catch(error => {
+                lastSaveError = error;
                 console.error('❌ Supabase save failed:', error.message);
             });
 
-        return true;
+        return saveQueue;
     } catch (error) {
         console.error('❌ Error preparing data for Supabase:', error);
         return false;
@@ -432,7 +433,7 @@ function syncAndSave() {
     data.aboutRestaurant = aboutRestaurant;
     data.lobbyDeals = lobbyDeals;
     data.deletedOrders = deletedOrders;
-    saveData();
+    return saveData();
 }
 
 // ============================================
@@ -1287,14 +1288,38 @@ app.post('/api/orders/:id/cancel', (req, res) => {
     res.json({ success: true, message: 'Order cancelled successfully', order: order });
 });
 
-app.delete('/api/orders/:id', (req, res) => {
+function getPakistanBusinessDayBounds(now = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Karachi', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', hourCycle: 'h23'
+    }).formatToParts(now);
+    const values = {};
+    for (const part of parts) if (part.type !== 'literal') values[part.type] = part.value;
+    let year = Number(values.year), month = Number(values.month), day = Number(values.day);
+    if (Number(values.hour) < 16) {
+        const previous = new Date(Date.UTC(year, month - 1, day) - 86400000);
+        year = previous.getUTCFullYear(); month = previous.getUTCMonth() + 1; day = previous.getUTCDate();
+    }
+    const start = Date.UTC(year, month - 1, day, 11, 0, 0); // 4 PM Pakistan time
+    return { start, end: start + 86400000 };
+}
+
+function getOrderTimestampMs(order) {
+    const value = order && (order.createdAt || order.deviceTimestamp || order.date);
+    if (!value) return NaN;
+    const timestamp = new Date(value).getTime();
+    return Number.isFinite(timestamp) ? timestamp : NaN;
+}
+
+app.delete('/api/orders/:id', async (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
     
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
-    const index = restaurant.orders.findIndex(o => o.id === parseInt(req.params.id));
+    const orderId = Number.parseInt(req.params.id, 10);
+    const index = restaurant.orders.findIndex(o => Number(o.id) === orderId);
     
     if (index === -1) {
         return res.status(404).json({ error: 'Order not found' });
@@ -1308,7 +1333,8 @@ app.delete('/api/orders/:id', (req, res) => {
     deletedOrder.restaurantId = restaurantId;
     deletedOrders.push(deletedOrder);
     
-    syncAndSave();
+    await syncAndSave();
+    if (lastSaveError) return res.status(500).json({ error: 'Order was removed in memory but could not be saved to cloud storage. Check Render logs and Supabase credentials.' });
     
     broadcastOrderUpdate({ ...deletedOrder, status: 'deleted' }, restaurantId);
     
@@ -1319,7 +1345,7 @@ app.delete('/api/orders/:id', (req, res) => {
     });
 });
 
-app.delete('/api/orders/today/all', (req, res) => {
+app.delete('/api/orders/today/all', async (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
@@ -1327,10 +1353,10 @@ app.delete('/api/orders/today/all', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
     
-    const today = new Date().toDateString();
+    const bounds = getPakistanBusinessDayBounds();
     const ordersToDelete = restaurant.orders.filter(o => {
-        const orderDate = new Date(o.createdAt || o.date);
-        return orderDate.toDateString() === today;
+        const timestamp = getOrderTimestampMs(o);
+        return Number.isFinite(timestamp) && timestamp >= bounds.start && timestamp < bounds.end;
     });
     
     if (ordersToDelete.length === 0) {
@@ -1349,11 +1375,12 @@ app.delete('/api/orders/today/all', (req, res) => {
     });
     
     restaurant.orders = restaurant.orders.filter(o => {
-        const orderDate = new Date(o.createdAt || o.date);
-        return orderDate.toDateString() !== today;
+        const timestamp = getOrderTimestampMs(o);
+        return !Number.isFinite(timestamp) || timestamp < bounds.start || timestamp >= bounds.end;
     });
     
-    syncAndSave();
+    await syncAndSave();
+    if (lastSaveError) return res.status(500).json({ error: 'Orders could not be saved to cloud storage.' });
     
     res.json({ 
         success: true, 
@@ -1370,10 +1397,10 @@ app.get('/api/orders/today', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
     
-    const today = new Date().toDateString();
+    const bounds = getPakistanBusinessDayBounds();
     const todayOrders = restaurant.orders.filter(o => {
-        const orderDate = new Date(o.createdAt || o.date);
-        return orderDate.toDateString() === today;
+        const timestamp = getOrderTimestampMs(o);
+        return Number.isFinite(timestamp) && timestamp >= bounds.start && timestamp < bounds.end;
     });
     
     res.json({
@@ -1835,6 +1862,7 @@ app.put('/api/orders/:id/edit', (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
     const orderId = Number.parseInt(req.params.id, 10);
+    if (!Number.isFinite(orderId)) return res.status(400).json({ error: 'Invalid order ID' });
     const order = restaurant.orders.find(o => Number(o.id) === orderId);
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
@@ -1916,7 +1944,7 @@ app.get('/api/orders/myorders', (req, res) => {
     res.json(userOrders);
 });
 
-app.put('/api/orders/:id/status', (req, res) => {
+app.put('/api/orders/:id/status', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
@@ -1932,7 +1960,8 @@ app.put('/api/orders/:id/status', (req, res) => {
 
     order.status = status;
     order.statusUpdatedAt = new Date().toISOString();
-    syncAndSave();
+    await syncAndSave();
+    if (lastSaveError) return res.status(500).json({ error: 'Order status could not be saved to cloud storage. Check Render logs and Supabase credentials.' });
     broadcastOrderUpdate(order, restaurantId);
     return res.json({ success: true, order });
 });

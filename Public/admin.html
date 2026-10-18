@@ -1365,8 +1365,12 @@ font-weight: 500;
 </div>
                     <div class="admin-stat-card">
                         <div class="stat-icon">📦</div>
-                        <div class="stat-number" id="statOrders">0</div>
-                        <div class="stat-label">Total Orders</div>
+                        <div class="stat-number" id="statTodayOrders">0</div>
+                        <div class="stat-label">Today's Orders (from 4 PM)</div>
+                        <div id="totalOrdersPrivateRow" style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:7px; font-size:12px;">
+                            <span>Total Orders: <strong id="statOrders" style="display:none;">0</strong><span id="statOrdersMasked">••••</span></span>
+                            <button type="button" id="ordersVisibilityBtn" onclick="toggleOrdersVisibility()" title="Show total orders" aria-label="Show total orders" style="border:none; background:transparent; cursor:pointer; font-size:16px; padding:0 3px;">👁️</button>
+                        </div>
                     </div>
                     <div class="admin-stat-card">
                         <div class="stat-icon">⏳</div>
@@ -3019,10 +3023,11 @@ let restaurantConfig = {
             .then(data => {
                 if (data.success) {
                     showToast('✅ Order #' + orderId + ' deleted permanently!');
-                    orders = orders.filter(o => o.id !== orderId);
+                    orders = orders.filter(o => Number(o.id) !== Number(orderId));
                     lastOrderCount = orders.length;
                     renderAdminDashboard();
                     renderAdminOrders();
+                    loadTodayOrders();
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to delete order'));
                 }
@@ -3270,8 +3275,8 @@ let restaurantConfig = {
         }
 
         function loadTodayOrders() {
-            fetch('/api/orders/today')
-                .then(r => r.json())
+            fetch('/api/orders/today?restaurant=' + RESTAURANT_ID, { credentials: 'include' })
+                .then(r => { if (!r.ok) throw new Error("Could not load today\'s orders"); return r.json(); })
                 .then(data => {
                     const container = document.getElementById('todayOrdersList');
                     const countEl = document.getElementById('todayOrderCountBackup');
@@ -4369,19 +4374,49 @@ function getPakistanBusinessDayBounds() {
 }
 
 function getOrderTimestamp(order) {
-    const timestamp = order.createdAt || order.deviceTimestamp;
+    const timestamp = order.createdAt || order.deviceTimestamp || order.date;
     if (!timestamp) return NaN;
 
     const parsed = new Date(timestamp).getTime();
     return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+let adminOrdersVisible = false;
+
+function updateOrderCountDisplay() {
+    const totalOrders = Array.isArray(orders) ? orders.length : 0;
+    const bounds = getPakistanBusinessDayBounds();
+    const todayOrders = (Array.isArray(orders) ? orders : []).filter(order => {
+        const timestamp = getOrderTimestamp(order);
+        return Number.isFinite(timestamp) && timestamp >= bounds.start && timestamp < bounds.end;
+    }).length;
+
+    const todayElement = document.getElementById('statTodayOrders');
+    const totalElement = document.getElementById('statOrders');
+    const maskedElement = document.getElementById('statOrdersMasked');
+    const button = document.getElementById('ordersVisibilityBtn');
+
+    if (todayElement) todayElement.textContent = todayOrders;
+    if (totalElement) totalElement.textContent = totalOrders;
+    if (totalElement) totalElement.style.display = adminOrdersVisible ? 'inline' : 'none';
+    if (maskedElement) maskedElement.style.display = adminOrdersVisible ? 'none' : 'inline';
+    if (button) {
+        button.textContent = adminOrdersVisible ? '🙈' : '👁️';
+        button.title = adminOrdersVisible ? 'Hide total orders' : 'Show total orders';
+        button.setAttribute('aria-label', button.title);
+    }
+}
+
+function toggleOrdersVisibility() {
+    adminOrdersVisible = !adminOrdersVisible;
+    updateOrderCountDisplay();
+}
+
 function renderAdminDashboard() {
     // Revenue comes from the server's persisted reset timestamp in Supabase.
     // This keeps the dashboard consistent after reloads and Render redeploys.
     refreshRevenueSummary();
-
-    document.getElementById('statOrders').textContent = orders.length;
+    updateOrderCountDisplay();
 
     const pendingOrders = orders.filter(
         order => order.status === 'pending'
@@ -4573,6 +4608,7 @@ function toggleRevenueVisibility() {
                 if (data.success) {
                     showToast('✅ Order status updated!');
                     loadOrders();
+                    loadTodayOrders();
                 } else {
                     showToast('❌ ' + (data.error || 'Update failed'));
                 }
