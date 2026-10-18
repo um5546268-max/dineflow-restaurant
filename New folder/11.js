@@ -240,6 +240,7 @@ function saveData() {
         data.aboutRestaurant = aboutRestaurant;
         data.lobbyDeals = lobbyDeals;
         data.deletedOrders = deletedOrders;
+        data.revenueResetAtByRestaurant = revenueResetAtByRestaurant;
 
         // Capture this version immediately so later changes don't alter it.
         const snapshot = JSON.parse(JSON.stringify(data));
@@ -409,6 +410,8 @@ let aboutRestaurant = data.aboutRestaurant || {
 };
 let lobbyDeals = data.lobbyDeals || [];
 let deletedOrders = data.deletedOrders || [];
+// Persisted per-restaurant revenue reset timestamps (stored in the Supabase JSON row).
+let revenueResetAtByRestaurant = data.revenueResetAtByRestaurant || {};
 
 function syncAndSave() {
     data.users = users;
@@ -1917,19 +1920,21 @@ app.put('/api/orders/:id/status', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
-    const order = restaurant.orders.find(o => o.id === parseInt(req.params.id));
+    const orderId = Number.parseInt(req.params.id, 10);
+    const order = restaurant.orders.find(o => Number(o.id) === orderId);
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    const { status } = req.body;
+
+    const status = req.body && req.body.status;
     const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
     }
+
     order.status = status;
+    order.statusUpdatedAt = new Date().toISOString();
     syncAndSave();
-    
     broadcastOrderUpdate(order, restaurantId);
-    
-    res.json({ success: true, order });
+    return res.json({ success: true, order });
 });
 
 // ============================================
@@ -2294,6 +2299,69 @@ app.get('/pixelpanel', (req, res) => {
  // ============================================
  // ADMIN REVENUE PASSWORD VERIFICATION
  // ============================================
+// ============================================
+// PERSISTENT ADMIN REVENUE SUMMARY + RESET
+// Today's Revenue includes orders created since the saved reset moment
+// only after they are confirmed; pending/cancelled orders do not count.
+// Total Revenue remains the sum of all historical, non-cancelled orders.
+// ============================================
+function getRevenueOrderTimestamp(order) {
+    const raw = order.createdAt || order.deviceTimestamp || order.date;
+    if (!raw) return NaN;
+    const parsed = new Date(raw).getTime();
+    return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function isRevenueCountedOrder(order) {
+    return !['pending', 'cancelled'].includes(String(order.status || '').toLowerCase());
+}
+
+app.get('/api/admin/revenue-summary', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Admin access required.' });
+    }
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    let resetValue = revenueResetAtByRestaurant[restaurantId];
+    // If no reset marker exists yet, establish a persistent starting point now.
+    // This prevents old orders from suddenly appearing as today's revenue.
+    if (!resetValue) {
+        resetValue = new Date().toISOString();
+        revenueResetAtByRestaurant[restaurantId] = resetValue;
+        data.revenueResetAtByRestaurant = revenueResetAtByRestaurant;
+        syncAndSave();
+    }
+    const resetAt = new Date(resetValue).getTime();
+    // Preserve the existing Total Revenue behavior: all historical orders count.
+    const totalRevenue = restaurant.orders.reduce(
+        (sum, order) => sum + (Number(order.total) || 0),
+        0
+    );
+    const todayRevenue = restaurant.orders.reduce((sum, order) => {
+        const timestamp = getRevenueOrderTimestamp(order);
+        if (!Number.isFinite(timestamp) || timestamp < resetAt || !isRevenueCountedOrder(order)) return sum;
+        return sum + (Number(order.total) || 0);
+    }, 0);
+    return res.json({
+        success: true,
+        restaurantId,
+        resetAt: resetValue || null,
+        totalRevenue,
+        todayRevenue
+    });
+});
+
+app.post('/api/admin/reset-todays-revenue', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Admin access required.' });
+    }
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    revenueResetAtByRestaurant[restaurantId] = new Date().toISOString();
+    data.revenueResetAtByRestaurant = revenueResetAtByRestaurant;
+    syncAndSave();
+    return res.json({ success: true, resetAt: revenueResetAtByRestaurant[restaurantId] });
+});
+
 app.post('/api/admin/verify-balance-password', (req, res) => {
     // Only a logged-in admin may verify the balance password.
     if (!req.user || req.user.role !== 'admin') {
