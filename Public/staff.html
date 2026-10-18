@@ -565,6 +565,61 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        
+/* Horizontal staff category bar */
+.staff-body {
+    flex-direction: column;
+    min-height: 0;
+}
+
+.staff-sidebar {
+    width: 100%;
+    height: auto;
+    min-height: 68px;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    scrollbar-width: thin;
+}
+
+.staff-category-item {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 72px;
+    padding: 8px 12px;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+}
+
+.staff-category-item.active {
+    border-left-color: transparent;
+    border-bottom-color: #e74c3c;
+    background: #fdf2f2;
+}
+
+.staff-category-item .cat-icon {
+    font-size: 1.25em;
+    margin-bottom: 3px;
+}
+
+.staff-category-item .cat-name {
+    font-size: 0.72em;
+}
+
+.staff-menu-area {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
+}
     </style>
 </head>
 <body>
@@ -621,7 +676,9 @@
             <button class="popup-close" onclick="closeStaffCheckout()">✕</button>
             <div class="popup-title">📝 Place Order</div>
             <div class="popup-subtitle">Enter customer details</div>
-            <div class="staff-order-total" id="staffOrderTotal">Total: Rs 0.00</div>
+            <div class="staff-order-total" id="staffOrderTotalDisplay">
+    Total: Rs 0.00
+</div>
             <form class="staff-order-form" id="staffOrderForm" onsubmit="submitStaffOrder(event)">
                 
 <div id="staffCustomerFields">
@@ -878,7 +935,7 @@ function renderMenu() {
                     ${description ? `<div class="item-category">${description}</div>` : ''}
                     <div class="item-price">${currencySymbol} ${price.toFixed(2)}</div>
                     <button class="btn-add-order"
-    onclick="staffAddDealToCart(${Number(deal.id)})">
+    onclick="staffAddDealToCart('${String(deal.id ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')"
     ➕ Add Deal
 </button>
                 </div>
@@ -1114,7 +1171,7 @@ function staffAddToCart(itemId) {
         }
 
         function staffUpdateQty(itemId, change) {
-            const item = staffCart.find(c => c.id === itemId);
+            const item = staffCart.find(c => String(c.id) === String(itemId));
             if (!item) return;
             const newQty = item.qty + change;
             if (newQty <= 0) {
@@ -1196,9 +1253,9 @@ function staffAddToCart(itemId) {
                             </div>
                         </div>
                         <div class="item-actions">
-                            <button class="qty-btn minus" onclick="staffUpdateQty(${item.id}, -1)">−</button>
+                            <button class="qty-btn minus" onclick="staffUpdateQty('${String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}', -1)">−</button>
                             <span class="qty-text">${qty}</span>
-                            <button class="qty-btn plus" onclick="staffUpdateQty(${item.id}, 1)">+</button>
+                            <button class="qty-btn plus" onclick="staffUpdateQty('${String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}', 1)">+</button>
                             <span class="item-total">${currencySymbol} ${total.toFixed(2)}</span>
                         </div>
                     </div>
@@ -1263,7 +1320,8 @@ function staffAddDealToCart(dealId) {
 
             // Reset form
             document.getElementById('staffOrderForm').reset();
-            document.getElementById('staffOrderTotal').textContent = `Total: ${currencySymbol} ${getStaffCartTotal().toFixed(2)}`;
+            document.getElementById('staffOrderTotalDisplay').textContent =
+            `Total: ${currencySymbol} ${getStaffCartTotal().toFixed(2)}`;
             document.getElementById('staffOrderItems').value = JSON.stringify(staffCart);
             document.getElementById('staffOrderTotal').value = getStaffCartTotal();
 
@@ -1474,70 +1532,198 @@ fetch('/api/orders', {
         function showToast(message) {
             const existing = document.querySelector('.toast');
             if (existing) existing.remove();
-function showStaffReceipt(order) {
-    const now = new Date();
+                const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
 
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function showStaffReceipt(order) {
+    const escapeHtml = value =>
+        String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[char]);
+
+    const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
     });
-
-    const timeStr = now.toLocaleTimeString('en-US', {
+    const timeStr = now.toLocaleTimeString('en-GB', {
         hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        minute: '2-digit'
     });
-
-    const orderTime = `${dateStr} ${timeStr}`;
 
     const orderTypeLabel =
         order.orderType === 'takeaway' ? 'Takeaway' :
         order.orderType === 'dinein' ? 'Dine-In' :
         order.orderType === 'carService' ? 'Car Service' :
-        order.orderType === 'thirdparty' ? 'ThirdParty' :
+        order.orderType === 'thirdparty' ? 'Third Party' :
         'Delivery';
 
     const tableNumber =
         order.table ||
         order.tableNumber ||
-        (order.address && order.address.match(/Table\s+([^,\n]+)/i)?.[1]) ||
+        (order.address &&
+            order.address.match(/Table\s+([^,\n]+)/i)?.[1]) ||
         'N/A';
 
-    const itemsHtml = (order.items || []).map(item =>
-        `${item.name} x${item.qty || 1} = ${currencySymbol} ${(item.price * (item.qty || 1)).toFixed(2)}`
-    ).join('\n');
+    const itemsHtml = (order.items || []).map(item => {
+        const qty = Number(item.qty) || 1;
+        const price = Number(item.price) || 0;
+
+        return `
+            <div class="item">
+                <div class="item-name">${escapeHtml(item.name)}</div>
+                <div class="item-total">
+                    ${qty} x Rs ${price.toFixed(2)}
+                    <span>Rs ${(price * qty).toFixed(2)}</span>
+                </div>
+            </div>`;
+    }).join('');
 
     const tableDetails = order.orderType === 'dinein'
-        ? `Table No.: ${tableNumber}\n`
+        ? `<p>Table: ${escapeHtml(tableNumber)}</p>`
         : '';
 
-    alert(
-        `✅ Order Placed!\n\n` +
-        `🍔 ${restaurantName}\n` +
-        `Order #: ${order.id || 'N/A'}\n` +
-        `Time: ${orderTime}\n` +
-        `Customer: ${order.userName || 'Guest'}\n` +
-        `Phone: ${order.phone || 'N/A'}\n` +
-        `Type: ${orderTypeLabel}\n` +
-        tableDetails +
-        `Payment: ${order.paymentMethod || 'Cash'}\n\n` +
-        `Items:\n${itemsHtml}\n\n` +
-        `Total: ${currencySymbol} ${Number(order.total || 0).toFixed(2)}\n\n` +
-        `Thank you! 🎉`
+    const receiptWindow = window.open(
+        '',
+        'SangatStaffReceipt',
+        'width=400,height=700'
     );
-}
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
 
+    if (!receiptWindow) {
+        alert('Receipt window blocked. Allow pop-ups for this site.');
+        return;
+    }
+
+    receiptWindow.document.open();
+    receiptWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sangat Cafe Receipt</title>
+<style>
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 80mm;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.35;
+        color: #000;
+        padding: 3mm;
+        overflow-wrap: anywhere;
+    }
+
+    h2 {
+        font-size: 19px;
+        text-align: center;
+        margin: 0 0 3px;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .line {
+        border-top: 1px dashed #000;
+        margin: 8px 0;
+    }
+
+    p {
+        margin: 3px 0;
+    }
+
+    .item {
+        margin: 7px 0;
+    }
+
+    .item-name {
+        font-weight: bold;
+    }
+
+    .item-total {
+        display: flex;
+        justify-content: space-between;
+        gap: 4px;
+    }
+
+    .grand-total {
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        gap: 4px;
+    }
+
+    .footer {
+        text-align: center;
+        margin-top: 12px;
+    }
+
+</style>
+</head>
+<body>
+    <h2>${escapeHtml(restaurantName)}</h2>
+    <div class="center">ORDER RECEIPT</div>
+    <div class="line"></div>
+
+    <p>Order #: ${escapeHtml(order.id || 'N/A')}</p>
+    <p>Date: ${escapeHtml(dateStr)} ${escapeHtml(timeStr)}</p>
+    <p>Customer: ${escapeHtml(order.userName || order.name || 'Guest')}</p>
+    <p>Phone: ${escapeHtml(order.phone || 'N/A')}</p>
+    <p>Type: ${escapeHtml(orderTypeLabel)}</p>
+    ${tableDetails}
+    <p>Payment: ${escapeHtml(order.paymentMethod || 'Cash')}</p>
+
+    <div class="line"></div>
+    ${itemsHtml}
+    <div class="line"></div>
+
+    <div class="grand-total">
+        <span>TOTAL</span>
+        <span>Rs ${Number(order.total || 0).toFixed(2)}</span>
+    </div>
+
+    <div class="line"></div>
+    <div class="footer">Thank you for visiting!</div>
+
+    
+</body>
+</html>`);
+    receiptWindow.document.close();
+
+    setTimeout(() => {
+        if (!receiptWindow.closed) {
+            receiptWindow.focus();
+            receiptWindow.print();
+        }
+    }, 500);
+}
         // ============================================================
         // INIT
         // ============================================================

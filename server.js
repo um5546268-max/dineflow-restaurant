@@ -7,6 +7,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const crypto = require('crypto');
 
 require('dotenv').config();
 
@@ -1556,6 +1557,67 @@ app.post('/api/menu', (req, res) => {
     res.status(201).json({ success: true, item: newItem });
 });
 
+
+app.post('/api/menu/fix-drink-ids', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+
+    const drink15 = restaurant.menu.find(
+        item => item.name === '1.5 (LTR) Drink' &&
+                item.category === 'drinks'
+    );
+
+    const drink1 = restaurant.menu.find(
+        item => item.name === '1 (LTR) Drink' &&
+                item.category === 'drinks'
+    );
+
+    if (!drink15 || !drink1) {
+        return res.status(404).json({
+            error: 'Could not find both drinks. No changes made.'
+        });
+    }
+
+    if (String(drink15.id) !== String(drink1.id)) {
+        return res.json({
+            success: true,
+            message: 'The two drinks already have different IDs.',
+            drinks: [
+                { id: drink15.id, name: drink15.name },
+                { id: drink1.id, name: drink1.name }
+            ]
+        });
+    }
+
+    const usedIds = new Set(
+        restaurant.menu
+            .filter(item => item !== drink15)
+            .map(item => String(item.id))
+    );
+
+    let newId = 1;
+    while (usedIds.has(String(newId))) {
+        newId++;
+    }
+
+    drink15.id = newId;
+
+    syncAndSave();
+
+    res.json({
+        success: true,
+        message: 'Drink ID corrected. Save was queued.',
+        drinks: [
+            { id: drink15.id, name: drink15.name, price: drink15.price },
+            { id: drink1.id, name: drink1.name, price: drink1.price }
+        ]
+    });
+});
+
 app.delete('/api/menu/:id', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -2108,6 +2170,59 @@ app.get('/pixelpanel', (req, res) => {
         return res.status(404).send('Page Not Found');
     }
     res.sendFile(path.join(__dirname, 'Public', 'pixelpanel.html'));
+});
+
+
+ // ============================================
+ // ADMIN REVENUE PASSWORD VERIFICATION
+ // ============================================
+app.post('/api/admin/verify-balance-password', (req, res) => {
+    // Only a logged-in admin may verify the balance password.
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            error: 'Admin access required.'
+        });
+    }
+
+    const configuredPassword = process.env.BALANCE_PASSWORD;
+    const submittedPassword = req.body && req.body.password;
+
+    // Fail closed if the Render environment variable is missing.
+    if (!configuredPassword) {
+        console.error('BALANCE_PASSWORD is not configured.');
+        return res.status(503).json({
+            success: false,
+            error: 'Balance password is not configured on the server.'
+        });
+    }
+
+    if (typeof submittedPassword !== 'string') {
+        return res.status(400).json({
+            success: false,
+            error: 'Please enter the balance password.'
+        });
+    }
+
+    // Compare fixed-length hashes to avoid a length mismatch error.
+    const expectedHash = crypto
+        .createHash('sha256')
+        .update(configuredPassword, 'utf8')
+        .digest();
+
+    const submittedHash = crypto
+        .createHash('sha256')
+        .update(submittedPassword, 'utf8')
+        .digest();
+
+    if (!crypto.timingSafeEqual(expectedHash, submittedHash)) {
+        return res.status(401).json({
+            success: false,
+            error: 'Incorrect password.'
+        });
+    }
+
+    return res.json({ success: true });
 });
 
 // ============================================
