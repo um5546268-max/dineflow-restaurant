@@ -1359,6 +1359,34 @@ app.delete('/api/orders/today/all', (req, res) => {
     });
 });
 
+// ============================================
+// CONFIRMED-ORDER REVENUE RULE
+// ============================================
+function isRevenueEligible(order) {
+    if (!order || order.status === 'cancelled') {
+        return false;
+    }
+
+    // New orders must have an actual confirmation timestamp.
+    if (
+        Object.prototype.hasOwnProperty.call(
+            order,
+            'revenueConfirmedAt'
+        )
+    ) {
+        return Boolean(order.revenueConfirmedAt);
+    }
+
+    // Preserve revenue for older orders already confirmed
+    // before this feature was introduced.
+    return [
+        'confirmed',
+        'preparing',
+        'ready',
+        'delivered'
+    ].includes(order.status);
+}
+
 app.get('/api/orders/today', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
@@ -1377,7 +1405,9 @@ app.get('/api/orders/today', (req, res) => {
         date: new Date().toISOString(),
         totalOrders: todayOrders.length,
         orders: todayOrders,
-        totalRevenue: todayOrders.reduce((sum, o) => sum + o.total, 0)
+        totalRevenue: todayOrders
+    .filter(isRevenueEligible)
+    .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
     });
 });
 
@@ -1762,6 +1792,7 @@ layerExtraCharge: layerExtraCharge,
 selectedLayerCount: selectedLayerCount,
 total: finalTotal,
         status: 'pending',
+        revenueConfirmedAt: null,
         orderType: orderType || 'delivery',
         paymentMethod: paymentMethod || 'cash',
         date: new Date().toLocaleString(),
@@ -1819,22 +1850,86 @@ app.get('/api/orders/myorders', (req, res) => {
 });
 
 app.put('/api/orders/:id/status', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'Not logged in' });
+    if (!req.user) {
+        return res.status(401).json({
+            error: 'Not logged in'
+        });
+    }
+
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
-    const order = restaurant.orders.find(o => o.id === parseInt(req.params.id));
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    const { status } = req.body;
-    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
+
+    const order = restaurant.orders.find(
+        o => o.id === parseInt(req.params.id)
+    );
+
+    if (!order) {
+        return res.status(404).json({
+            error: 'Order not found'
+        });
     }
+
+    const { status } = req.body;
+
+    const validStatuses = [
+        'pending',
+        'confirmed',
+        'preparing',
+        'ready',
+        'delivered',
+        'cancelled'
+    ];
+
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+            error: 'Invalid status'
+        });
+    }
+
+    const previousStatus = order.status;
+
+    // Upgrade older orders safely when their status changes.
+    if (
+        !Object.prototype.hasOwnProperty.call(
+            order,
+            'revenueConfirmedAt'
+        )
+    ) {
+        if (
+            [
+                'confirmed',
+                'preparing',
+                'ready',
+                'delivered'
+            ].includes(previousStatus)
+        ) {
+            order.revenueConfirmedAt =
+                order.createdAt ||
+                order.deviceTimestamp ||
+                new Date().toISOString();
+        } else {
+            order.revenueConfirmedAt = null;
+        }
+    }
+
+    // Record the first confirmation only.
+    if (
+        status === 'confirmed' &&
+        !order.revenueConfirmedAt
+    ) {
+        order.revenueConfirmedAt = new Date().toISOString();
+    }
+
     order.status = status;
+
     syncAndSave();
-    
+
     broadcastOrderUpdate(order, restaurantId);
-    
-    res.json({ success: true, order });
+
+    res.json({
+        success: true,
+        order
+    });
 });
 
 // ============================================
@@ -2269,22 +2364,31 @@ app.get('/api/admin/revenue-summary', (req, res) => {
 
     const resetTime = new Date(restaurant.dailyRevenueResetAt).getTime();
 
-    const totalRevenue = restaurant.orders.reduce((sum, order) => {
-        return sum + (Number(order.total) || 0);
-    }, 0);
+    const totalRevenue = restaurant.orders
+    .filter(isRevenueEligible)
+    .reduce(
+        (sum, order) => sum + (Number(order.total) || 0),
+        0
+    );
 
     const todayRevenue = restaurant.orders.reduce((sum, order) => {
-        const rawTimestamp = order.createdAt || order.deviceTimestamp;
-        if (!rawTimestamp) return sum;
-
-        const orderTime = new Date(rawTimestamp).getTime();
-
-        if (Number.isFinite(orderTime) && orderTime >= resetTime) {
-            return sum + (Number(order.total) || 0);
-        }
-
+    if (!isRevenueEligible(order)) {
         return sum;
-    }, 0);
+    }
+
+    const rawTimestamp = order.createdAt || order.deviceTimestamp;
+    if (!rawTimestamp) {
+        return sum;
+    }
+
+    const orderTime = new Date(rawTimestamp).getTime();
+
+    if (Number.isFinite(orderTime) && orderTime >= resetTime) {
+        return sum + (Number(order.total) || 0);
+    }
+
+    return sum;
+}, 0);
 
     res.json({
         success: true,
