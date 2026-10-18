@@ -721,7 +721,9 @@
                 <input type="hidden" id="staffOrderItems" />
                 <input type="hidden" id="staffOrderTotal" />
                 <input type="hidden" id="staffOrderType" value="dinein" />
-                <button type="submit" class="staff-order-submit-btn">✅ Confirm Order</button>
+                <button type="submit" id="staffOrderSubmitBtn" class="staff-order-submit-btn">
+    ✅ Confirm Order
+</button>
             </form>
         </div>
     </div>
@@ -768,6 +770,7 @@
         let currencySymbol = 'Rs';
         let restaurantName = 'The Heaven Slice';
         let staffDeals = [];
+        let staffOrderSubmitting = false;
 
         const categories = [
     { id: 'all', name: 'All', icon: '🍽️' },
@@ -961,45 +964,51 @@ function renderMenu() {
     // ============================================================
     // MAIN CATEGORY DETECTION
     // ============================================================
-    function getCorrectCategory(item) {
-        const name = String(item.name || '').toLowerCase();
-        const saved = String(item.category || '')
-            .trim()
-            .toLowerCase()
-            .replace(/[_\s]+/g, '-');
+    
+function getCorrectCategory(item) {
+    const name = String(item.name || '').toLowerCase();
+    const saved = String(item.category || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[_\s]+/g, '-');
 
-        if (saved === 'pizza' || name.includes('pizza')) return 'pizza';
-
-        if (saved === 'burgers' || saved === 'burger' || name.includes('burger')) {
-            return 'burgers';
-        }
-
-        if (name.includes('fries') || name.includes('chips')) return 'fries_sides';
-
-        if (name.includes('pasta') || name.includes('lazania') || name.includes('lasagna')) {
-            return 'pasta';
-        }
-
-        if (name.includes('wings') || name.includes('nuggets') || name.includes('nugget')) {
-            return 'wings_nuggets';
-        }
-
-        if (name.includes('shawarma')) return 'shawarma';
-        if (name.includes('paratha roll')) return 'paratha_rolls';
-        if (name.includes('roll')) return 'rolls';
-        if (name.includes('platter')) return 'platters';
-
-        if (
-            name.includes('dip') ||
-            name.includes('sauce') ||
-            name.includes('ketchup') ||
-            name.includes('mayonnaise')
-        ) {
-            return 'sauces';
-        }
-
-        return saved.replace(/-/g, '_');
+    // Check burgers FIRST so Pizza Burger goes to Burgers.
+    if (
+        saved === 'burgers' ||
+        saved === 'burger' ||
+        name.includes('burger')
+    ) {
+        return 'burgers';
     }
+
+    if (saved === 'pizza' || name.includes('pizza')) return 'pizza';
+
+    if (name.includes('fries') || name.includes('chips')) return 'fries_sides';
+
+    if (name.includes('pasta') || name.includes('lazania') || name.includes('lasagna')) {
+        return 'pasta';
+    }
+
+    if (name.includes('wings') || name.includes('nuggets') || name.includes('nugget')) {
+        return 'wings_nuggets';
+    }
+
+    if (name.includes('shawarma')) return 'shawarma';
+    if (name.includes('paratha roll')) return 'paratha_rolls';
+    if (name.includes('roll')) return 'rolls';
+    if (name.includes('platter')) return 'platters';
+
+    if (
+        name.includes('dip') ||
+        name.includes('sauce') ||
+        name.includes('ketchup') ||
+        name.includes('mayonnaise')
+    ) {
+        return 'sauces';
+    }
+
+    return saved.replace(/-/g, '_');
+}
 
     // ============================================================
     // PIZZA SUBCATEGORY DETECTION
@@ -1592,7 +1601,10 @@ function staffSelectOrderType(type) {
         // SUBMIT STAFF ORDER
         // ============================================================
         function submitStaffOrder(event) {
-            event.preventDefault();
+    event.preventDefault();
+
+    // Prevent the same checkout form from submitting repeatedly.
+    if (staffOrderSubmitting) return;
 
             const name = document.getElementById('staffOrderName').value;
             const phone = document.getElementById('staffOrderPhone').value;
@@ -1657,6 +1669,17 @@ if (orderType === 'dinein') {
                 restaurantId: RESTAURANT_ID
             };
 
+            const submitButton = document.getElementById('staffOrderSubmitBtn');
+
+if (staffOrderSubmitting) return;
+
+staffOrderSubmitting = true;
+
+if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = '⏳ Placing Order...';
+}
+
            
 fetch('/api/orders', {
     method: 'POST',
@@ -1680,6 +1703,12 @@ fetch('/api/orders', {
     }
 
     if (data.message || data.order) {
+        staffOrderSubmitting = false;
+
+    if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = '✅ Confirm Order';
+    }
         closeStaffCheckout();
         showToast('✅ Order placed successfully!');
 
@@ -1699,6 +1728,12 @@ fetch('/api/orders', {
     }
 })
 .catch(error => {
+staffOrderSubmitting = false;
+
+if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = '✅ Confirm Order';
+}
     console.error('Staff order submission error:', error);
     showToast('❌ ' + (error.message || 'Unable to contact server'));
 });

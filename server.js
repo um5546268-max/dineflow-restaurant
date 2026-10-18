@@ -1391,24 +1391,79 @@ app.get('/api/orders/today', (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Not logged in' });
     }
-    
-    const restaurantId = req.restaurantId || 'restaurant-1';
-    const restaurant = getOrCreateRestaurant(restaurantId);
-    
-    const today = new Date().toDateString();
-    const todayOrders = restaurant.orders.filter(o => {
-        const orderDate = new Date(o.createdAt || o.date);
-        return orderDate.toDateString() === today;
-    });
-    
-    res.json({
-        date: new Date().toISOString(),
-        totalOrders: todayOrders.length,
-        orders: todayOrders,
-        totalRevenue: todayOrders
-    .filter(isRevenueEligible)
-    .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
-    });
+
+    try {
+        const restaurantId = req.restaurantId || 'restaurant-1';
+        const restaurant = getOrCreateRestaurant(restaurantId);
+
+        // Sangat Cafe business day: 4:00 PM to 3:59:59 PM
+        // Use Pakistan time regardless of the server's timezone.
+        const now = new Date();
+
+        const pakistanParts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Karachi',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            hourCycle: 'h23'
+        }).formatToParts(now);
+
+        const part = (type) =>
+            pakistanParts.find(p => p.type === type).value;
+
+        let year = Number(part('year'));
+        let month = Number(part('month'));
+        let day = Number(part('day'));
+        const hour = Number(part('hour'));
+
+        // Before 4 PM, today's business day began yesterday at 4 PM.
+        if (hour < 16) {
+            const previousDay = new Date(
+                Date.UTC(year, month - 1, day - 1)
+            );
+
+            year = previousDay.getUTCFullYear();
+            month = previousDay.getUTCMonth() + 1;
+            day = previousDay.getUTCDate();
+        }
+
+        const datePart = [
+            year,
+            String(month).padStart(2, '0'),
+            String(day).padStart(2, '0')
+        ].join('-');
+
+        const businessDayStart = new Date(
+            `${datePart}T16:00:00+05:00`
+        );
+
+        // Count orders from the 4 PM cutoff onward.
+        // Historical orders remain stored and untouched.
+        const todayOrders = (restaurant.orders || []).filter(order => {
+            const orderDate = new Date(order.createdAt || order.date);
+
+            return (
+                !Number.isNaN(orderDate.getTime()) &&
+                orderDate >= businessDayStart &&
+                orderDate <= now
+            );
+        });
+
+        res.json({
+            date: now.toISOString(),
+            businessDayStart: businessDayStart.toISOString(),
+            totalOrders: todayOrders.length,
+            orders: todayOrders,
+            totalRevenue: todayOrders.reduce(
+                (sum, order) => sum + (Number(order.total) || 0),
+                0
+            )
+        });
+    } catch (error) {
+        console.error('Error loading today orders:', error);
+        res.status(500).json({ error: 'Failed to load today orders' });
+    }
 });
 
 // ============================================
