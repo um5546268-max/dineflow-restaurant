@@ -2036,6 +2036,24 @@ passport.use(new GoogleStrategy({
   },
   function(req, accessToken, refreshToken, profile, done) {
     let user = users.find(u => u.googleId === profile.id);
+    const secondAdminEmail = (
+    process.env.SECOND_ADMIN_EMAIL || ''
+).trim().toLowerCase();
+
+const loginEmail = (
+    profile.emails && profile.emails[0]
+        ? profile.emails[0].value
+        : ''
+).trim().toLowerCase();
+
+if (user && secondAdminEmail && loginEmail === secondAdminEmail) {
+    if (user.role !== 'admin') {
+        user.role = 'admin';
+        user.email = loginEmail;
+        syncAndSave();
+        console.log('Second admin authorized.');
+    }
+}
     if (!user) {
         user = {
             id: users.length + 1,
@@ -2043,7 +2061,12 @@ passport.use(new GoogleStrategy({
             displayName: profile.displayName || 'User',
             email: profile.emails && profile.emails[0] ? profile.emails[0].value : '',
             photo: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
-            role: users.length === 0 ? 'admin' : 'customer'
+            role: (
+    users.length === 0 ||
+    (profile.emails && profile.emails[0] &&
+     profile.emails[0].value.trim().toLowerCase() ===
+     (process.env.SECOND_ADMIN_EMAIL || '').trim().toLowerCase())
+) ? 'admin' : 'customer'
         };
         users.push(user);
         syncAndSave();
