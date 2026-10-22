@@ -1314,6 +1314,7 @@ font-weight: 500;
         <div class="admin-sidebar">
             <a class="admin-nav-item active" data-admin="dashboard" onclick="showAdminSection('dashboard')">📊 Dashboard</a>
             <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
+            <a class="admin-nav-item" data-admin="customers" onclick="showAdminSection('customers')">👥 Customers</a>
             <a class="admin-nav-item" data-admin="menu" onclick="showAdminSection('menu')">🍽️ Menu</a>
             <a class="admin-nav-item" data-admin="deals" onclick="showAdminSection('deals')">🔥 Deals</a>
             <a class="admin-nav-item" data-admin="about" onclick="showAdminSection('about')">🏪 About</a>
@@ -1478,6 +1479,19 @@ font-weight: 500;
                 <h3 style="margin-bottom:15px;">📦 All Orders</h3>
                 <div id="adminAllOrders">
                     <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
+                </div>
+            </div>
+
+            <div class="admin-section" id="adminCustomers">
+                <h3 style="margin-bottom:8px;">👥 Customers</h3>
+                <p style="color:#777;margin:0 0 14px;">Customer details are saved automatically whenever an order is placed. Records remain here even if an order is later deleted.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+                    <input id="adminCustomerSearch" type="search" placeholder="Search name, phone, address or email..." oninput="filterAdminCustomers()" style="flex:1;min-width:220px;padding:11px;border:1px solid #ddd;border-radius:8px;">
+                    <button class="admin-add-btn" type="button" onclick="loadAdminCustomers()" style="margin:0;">↻ Refresh</button>
+                    <span id="adminCustomerCount" style="font-weight:700;">0 customers</span>
+                </div>
+                <div id="adminCustomersList" style="overflow-x:auto;">
+                    <p style="padding:15px;color:#888;">Loading customers...</p>
                 </div>
             </div>
 
@@ -5448,6 +5462,65 @@ function renderAdminMenu() {
         }
 
         // ============================================================
+        // CUSTOMER DIRECTORY — automatically populated from orders
+        // ============================================================
+        let adminCustomerRecords = [];
+
+        function escapeCustomerHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        async function loadAdminCustomers() {
+            const container = document.getElementById('adminCustomersList');
+            if (container) container.innerHTML = '<p style="padding:15px;color:#888;">Loading customers...</p>';
+            try {
+                const response = await fetch('/api/admin/customers?restaurant=' + encodeURIComponent(RESTAURANT_ID), {
+                    credentials: 'include'
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.error || 'Could not load customers');
+                adminCustomerRecords = Array.isArray(payload.customers) ? payload.customers : [];
+                filterAdminCustomers();
+            } catch (error) {
+                console.error('Load customers error:', error);
+                if (container) container.innerHTML = '<p style="padding:15px;color:#c0392b;">Could not load customers: ' + escapeCustomerHtml(error.message) + '</p>';
+            }
+        }
+
+        function filterAdminCustomers() {
+            const container = document.getElementById('adminCustomersList');
+            if (!container) return;
+            const search = String(document.getElementById('adminCustomerSearch')?.value || '').trim().toLowerCase();
+            const filtered = adminCustomerRecords.filter(customer =>
+                [customer.name, customer.phone, customer.address, customer.email].some(value => String(value || '').toLowerCase().includes(search))
+            );
+            const count = document.getElementById('adminCustomerCount');
+            if (count) count.textContent = filtered.length + ' customer' + (filtered.length === 1 ? '' : 's');
+            if (!filtered.length) {
+                container.innerHTML = '<p style="padding:18px;color:#888;">No customers found yet. New customers are added automatically when orders are placed.</p>';
+                return;
+            }
+            container.innerHTML = '<table style="width:100%;border-collapse:collapse;min-width:760px;font-size:13px;">' +
+                '<thead><tr style="background:#f4f5f7;text-align:left;">' +
+                ['Name','Phone','Address','Email','Orders','Order Total','Last Order'].map(label => '<th style="padding:11px 9px;border-bottom:1px solid #ddd;">' + label + '</th>').join('') +
+                '</tr></thead><tbody>' + filtered.map(customer => {
+                    const date = customer.lastOrderAt ? new Date(customer.lastOrderAt).toLocaleString() : '—';
+                    const amount = Number(customer.totalSpent || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+                    return '<tr>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;font-weight:600;">' + escapeCustomerHtml(customer.name || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;white-space:nowrap;">' + escapeCustomerHtml(customer.phone || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;">' + escapeCustomerHtml(customer.address || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;">' + escapeCustomerHtml(customer.email || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;text-align:center;">' + Number(customer.totalOrders || 0) + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;white-space:nowrap;">Rs ' + amount + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;white-space:nowrap;">' + escapeCustomerHtml(date) + '</td>' +
+                    '</tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        // ============================================================
         // ADMIN NAVIGATION
         // ============================================================
         function showAdminSection(section) {
@@ -5460,6 +5533,7 @@ function renderAdminMenu() {
             const sectionMap = {
                 dashboard: 'adminDashboard',
                 orders: 'adminOrders',
+                customers: 'adminCustomers',
                 menu: 'adminMenu',
                 deals: 'adminDeals',
                 about: 'adminAbout',
@@ -5478,6 +5552,7 @@ function renderAdminMenu() {
             
             if (section === 'dashboard') renderAdminDashboard();
             if (section === 'orders') renderAdminOrders();
+            if (section === 'customers') loadAdminCustomers();
             if (section === 'menu') renderAdminMenu();
             if (section === 'deals') renderAdminDeals();
             if (section === 'about') { loadAboutData(); }
