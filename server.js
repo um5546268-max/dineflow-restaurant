@@ -264,10 +264,12 @@ function saveData() {
                 if (error) throw error;
                 lastSaveError = null;
                 console.log('☁️ Data saved to Supabase');
+                return true;
             })
             .catch(error => {
                 lastSaveError = error;
                 console.error('❌ Supabase save failed:', error.message);
+                return false;
             });
 
         return saveQueue;
@@ -478,6 +480,60 @@ function getDefaultDeals() {
 // ============================================
 // ⭐ CREATE OR GET RESTAURANT ⭐
 // ============================================
+function getNextOrderId(restaurantId) {
+    const restaurant = restaurants.find(r => r.restaurantId === restaurantId);
+    const activeIds = (restaurant && Array.isArray(restaurant.orders) ? restaurant.orders : [])
+        .map(order => Number(order.id)).filter(Number.isFinite);
+    const deletedIds = deletedOrders
+        .filter(order => String(order.restaurantId || 'restaurant-1') === String(restaurantId))
+        .map(order => Number(order.id)).filter(Number.isFinite);
+    return Math.max(0, ...activeIds, ...deletedIds) + 1;
+}
+
+// Repair duplicate IDs left by older versions that reused orders.length + 1.
+// Active orders keep their IDs where possible; duplicates and deleted-order collisions get fresh IDs.
+function repairDuplicateOrderIds() {
+    const usedByRestaurant = new Map();
+    const maxByRestaurant = new Map();
+    const activeRefs = [];
+    const deletedRefs = [];
+
+    for (const restaurant of restaurants) {
+        const restaurantId = String(restaurant.restaurantId || 'restaurant-1');
+        restaurant.orders = Array.isArray(restaurant.orders) ? restaurant.orders : [];
+        for (const order of restaurant.orders) {
+            order.restaurantId = restaurantId;
+            activeRefs.push({ order, restaurantId });
+        }
+    }
+    for (const order of deletedOrders) {
+        const restaurantId = String(order.restaurantId || 'restaurant-1');
+        order.restaurantId = restaurantId;
+        deletedRefs.push({ order, restaurantId });
+    }
+    for (const ref of [...activeRefs, ...deletedRefs]) {
+        const id = Number(ref.order.id);
+        if (Number.isFinite(id)) maxByRestaurant.set(ref.restaurantId, Math.max(maxByRestaurant.get(ref.restaurantId) || 0, id));
+    }
+
+    let changed = false;
+    for (const ref of [...activeRefs, ...deletedRefs]) {
+        let used = usedByRestaurant.get(ref.restaurantId);
+        if (!used) { used = new Set(); usedByRestaurant.set(ref.restaurantId, used); }
+        const id = Number(ref.order.id);
+        if (Number.isFinite(id) && !used.has(id)) {
+            used.add(id);
+            continue;
+        }
+        const next = (maxByRestaurant.get(ref.restaurantId) || 0) + 1;
+        maxByRestaurant.set(ref.restaurantId, next);
+        ref.order.id = next;
+        used.add(next);
+        changed = true;
+    }
+    return changed;
+}
+
 function getOrCreateRestaurant(restaurantId) {
     let restaurant = restaurants.find(r => r.restaurantId === restaurantId);
     if (!restaurant) {
@@ -1911,7 +1967,7 @@ if (!Number.isFinite(baseTotal) || baseTotal <= 0) {
 const finalTotal = baseTotal + layerExtraCharge;
     
     const newOrder = {
-        id: restaurant.orders.length + 1,
+        id: getNextOrderId(restaurantId),
         userId: req.user.id,
         userName: name || req.user.displayName,
         email: req.user.email || '',
@@ -2062,7 +2118,10 @@ app.put('/api/orders/:id/status', async (req, res) => {
     const restaurantId = req.restaurantId || 'restaurant-1';
     const restaurant = getOrCreateRestaurant(restaurantId);
     const orderId = Number.parseInt(req.params.id, 10);
-    const order = restaurant.orders.find(o => Number(o.id) === orderId);
+    if (!Number.isSafeInteger(orderId) || orderId < 1) return res.status(400).json({ error: 'Invalid order ID' });
+    const matches = restaurant.orders.filter(o => Number(o.id) === orderId);
+    if (matches.length > 1) return res.status(409).json({ error: 'Duplicate order ID detected. Refresh the admin page after the server repairs order IDs.' });
+    const order = matches[0];
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
     const status = req.body && req.body.status;
@@ -2071,10 +2130,18 @@ app.put('/api/orders/:id/status', async (req, res) => {
         return res.status(400).json({ error: 'Invalid status' });
     }
 
+    const previousStatus = order.status;
+    const previousStatusUpdatedAt = order.statusUpdatedAt;
     order.status = status;
     order.statusUpdatedAt = new Date().toISOString();
-    await syncAndSave();
-    if (lastSaveError) return res.status(500).json({ error: 'Order status could not be saved to cloud storage. Check Render logs and Supabase credentials.' });
+    const saved = await syncAndSave();
+    if (saved !== true) {
+        order.status = previousStatus;
+        if (previousStatusUpdatedAt === undefined) delete order.statusUpdatedAt;
+        else order.statusUpdatedAt = previousStatusUpdatedAt;
+        await syncAndSave(); // Best-effort persistence of the rollback.
+        return res.status(500).json({ error: 'Order status was not saved. Please try again; check Render logs if it continues.' });
+    }
     broadcastOrderUpdate(order, restaurantId);
     return res.json({ success: true, order });
 });
@@ -2705,6 +2772,13 @@ async function initializeApp() {
         deletedOrders = data.deletedOrders;
         customers = data.customers;
         data.aboutRestaurant = aboutRestaurant;
+
+        // Repair old duplicate order IDs so every status/edit/delete action targets one order.
+        const repairedOrderIds = repairDuplicateOrderIds();
+        if (repairedOrderIds) {
+            console.warn('⚠️ Repaired duplicate order IDs from older orders.');
+            await syncAndSave();
+        }
 
         // STEP 5: Create or restore restaurant records.
         createDefaultRestaurant();
