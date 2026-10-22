@@ -1314,6 +1314,7 @@ font-weight: 500;
         <div class="admin-sidebar">
             <a class="admin-nav-item active" data-admin="dashboard" onclick="showAdminSection('dashboard')">📊 Dashboard</a>
             <a class="admin-nav-item" data-admin="orders" onclick="showAdminSection('orders')">📦 Orders</a>
+            <a class="admin-nav-item" data-admin="customers" onclick="showAdminSection('customers')">👥 Customers</a>
             <a class="admin-nav-item" data-admin="menu" onclick="showAdminSection('menu')">🍽️ Menu</a>
             <a class="admin-nav-item" data-admin="deals" onclick="showAdminSection('deals')">🔥 Deals</a>
             <a class="admin-nav-item" data-admin="about" onclick="showAdminSection('about')">🏪 About</a>
@@ -1365,8 +1366,12 @@ font-weight: 500;
 </div>
                     <div class="admin-stat-card">
                         <div class="stat-icon">📦</div>
-                        <div class="stat-number" id="statOrders">0</div>
-                        <div class="stat-label">Total Orders</div>
+                        <div class="stat-number" id="statTodayOrders">0</div>
+                        <div class="stat-label">Today's Orders (from 4 PM)</div>
+                        <div id="totalOrdersPrivateRow" style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:7px; font-size:12px;">
+                            <span>Total Orders: <strong id="statOrders" style="display:none;">0</strong><span id="statOrdersMasked">••••</span></span>
+                            <button type="button" id="ordersVisibilityBtn" onclick="toggleOrdersVisibility()" title="Show total orders" aria-label="Show total orders" style="border:none; background:transparent; cursor:pointer; font-size:16px; padding:0 3px;">👁️</button>
+                        </div>
                     </div>
                     <div class="admin-stat-card">
                         <div class="stat-icon">⏳</div>
@@ -1474,6 +1479,19 @@ font-weight: 500;
                 <h3 style="margin-bottom:15px;">📦 All Orders</h3>
                 <div id="adminAllOrders">
                     <p style="color:#b2bec3; padding:15px;">Loading orders...</p>
+                </div>
+            </div>
+
+            <div class="admin-section" id="adminCustomers">
+                <h3 style="margin-bottom:8px;">👥 Customers</h3>
+                <p style="color:#777;margin:0 0 14px;">Customer details are saved automatically whenever an order is placed. Records remain here even if an order is later deleted.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+                    <input id="adminCustomerSearch" type="search" placeholder="Search name, phone, address or email..." oninput="filterAdminCustomers()" style="flex:1;min-width:220px;padding:11px;border:1px solid #ddd;border-radius:8px;">
+                    <button class="admin-add-btn" type="button" onclick="loadAdminCustomers()" style="margin:0;">↻ Refresh</button>
+                    <span id="adminCustomerCount" style="font-weight:700;">0 customers</span>
+                </div>
+                <div id="adminCustomersList" style="overflow-x:auto;">
+                    <p style="padding:15px;color:#888;">Loading customers...</p>
                 </div>
             </div>
 
@@ -3019,10 +3037,11 @@ let restaurantConfig = {
             .then(data => {
                 if (data.success) {
                     showToast('✅ Order #' + orderId + ' deleted permanently!');
-                    orders = orders.filter(o => o.id !== orderId);
+                    orders = orders.filter(o => Number(o.id) !== Number(orderId));
                     lastOrderCount = orders.length;
                     renderAdminDashboard();
                     renderAdminOrders();
+                    loadTodayOrders();
                 } else {
                     showToast('❌ ' + (data.error || 'Failed to delete order'));
                 }
@@ -3270,8 +3289,8 @@ let restaurantConfig = {
         }
 
         function loadTodayOrders() {
-            fetch('/api/orders/today')
-                .then(r => r.json())
+            fetch('/api/orders/today?restaurant=' + RESTAURANT_ID, { credentials: 'include' })
+                .then(r => { if (!r.ok) throw new Error("Could not load today\'s orders"); return r.json(); })
                 .then(data => {
                     const container = document.getElementById('todayOrdersList');
                     const countEl = document.getElementById('todayOrderCountBackup');
@@ -3371,7 +3390,11 @@ let restaurantConfig = {
                     
                     printContent += `
                             <p style="text-align:center; margin-top:20px; color:#b2bec3;">Printed: ${new Date().toLocaleString()}</p>
-                        </body>
+                        
+
+
+
+</body>
                         </html>
                     `;
                     
@@ -4289,6 +4312,7 @@ ${layerExtraCharge > 0 ? `
 </div>
 
                         <div class="receipt-actions">
+                            <button type="button" onclick="openOrderEditor(${order.id})" style="padding:4px 12px; border:none; border-radius:15px; font-size:0.75em; font-weight:700; cursor:pointer; background:#2980b9; color:white;">✏️ Edit Order</button>
                             <select class="btn-status" onchange="updateOrderStatus(${order.id}, this.value)">
                                 <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                                 <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
@@ -4364,19 +4388,49 @@ function getPakistanBusinessDayBounds() {
 }
 
 function getOrderTimestamp(order) {
-    const timestamp = order.createdAt || order.deviceTimestamp;
+    const timestamp = order.createdAt || order.deviceTimestamp || order.date;
     if (!timestamp) return NaN;
 
     const parsed = new Date(timestamp).getTime();
     return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+let adminOrdersVisible = false;
+
+function updateOrderCountDisplay() {
+    const totalOrders = Array.isArray(orders) ? orders.length : 0;
+    const bounds = getPakistanBusinessDayBounds();
+    const todayOrders = (Array.isArray(orders) ? orders : []).filter(order => {
+        const timestamp = getOrderTimestamp(order);
+        return Number.isFinite(timestamp) && timestamp >= bounds.start && timestamp < bounds.end;
+    }).length;
+
+    const todayElement = document.getElementById('statTodayOrders');
+    const totalElement = document.getElementById('statOrders');
+    const maskedElement = document.getElementById('statOrdersMasked');
+    const button = document.getElementById('ordersVisibilityBtn');
+
+    if (todayElement) todayElement.textContent = todayOrders;
+    if (totalElement) totalElement.textContent = totalOrders;
+    if (totalElement) totalElement.style.display = adminOrdersVisible ? 'inline' : 'none';
+    if (maskedElement) maskedElement.style.display = adminOrdersVisible ? 'none' : 'inline';
+    if (button) {
+        button.textContent = adminOrdersVisible ? '🙈' : '👁️';
+        button.title = adminOrdersVisible ? 'Hide total orders' : 'Show total orders';
+        button.setAttribute('aria-label', button.title);
+    }
+}
+
+function toggleOrdersVisibility() {
+    adminOrdersVisible = !adminOrdersVisible;
+    updateOrderCountDisplay();
+}
+
 function renderAdminDashboard() {
     // Revenue comes from the server's persisted reset timestamp in Supabase.
     // This keeps the dashboard consistent after reloads and Render redeploys.
     refreshRevenueSummary();
-
-    document.getElementById('statOrders').textContent = orders.length;
+    updateOrderCountDisplay();
 
     const pendingOrders = orders.filter(
         order => order.status === 'pending'
@@ -4568,6 +4622,7 @@ function toggleRevenueVisibility() {
                 if (data.success) {
                     showToast('✅ Order status updated!');
                     loadOrders();
+                    loadTodayOrders();
                 } else {
                     showToast('❌ ' + (data.error || 'Update failed'));
                 }
@@ -5407,6 +5462,65 @@ function renderAdminMenu() {
         }
 
         // ============================================================
+        // CUSTOMER DIRECTORY — automatically populated from orders
+        // ============================================================
+        let adminCustomerRecords = [];
+
+        function escapeCustomerHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        async function loadAdminCustomers() {
+            const container = document.getElementById('adminCustomersList');
+            if (container) container.innerHTML = '<p style="padding:15px;color:#888;">Loading customers...</p>';
+            try {
+                const response = await fetch('/api/admin/customers?restaurant=' + encodeURIComponent(RESTAURANT_ID), {
+                    credentials: 'include'
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.error || 'Could not load customers');
+                adminCustomerRecords = Array.isArray(payload.customers) ? payload.customers : [];
+                filterAdminCustomers();
+            } catch (error) {
+                console.error('Load customers error:', error);
+                if (container) container.innerHTML = '<p style="padding:15px;color:#c0392b;">Could not load customers: ' + escapeCustomerHtml(error.message) + '</p>';
+            }
+        }
+
+        function filterAdminCustomers() {
+            const container = document.getElementById('adminCustomersList');
+            if (!container) return;
+            const search = String(document.getElementById('adminCustomerSearch')?.value || '').trim().toLowerCase();
+            const filtered = adminCustomerRecords.filter(customer =>
+                [customer.name, customer.phone, customer.address, customer.email].some(value => String(value || '').toLowerCase().includes(search))
+            );
+            const count = document.getElementById('adminCustomerCount');
+            if (count) count.textContent = filtered.length + ' customer' + (filtered.length === 1 ? '' : 's');
+            if (!filtered.length) {
+                container.innerHTML = '<p style="padding:18px;color:#888;">No customers found yet. New customers are added automatically when orders are placed.</p>';
+                return;
+            }
+            container.innerHTML = '<table style="width:100%;border-collapse:collapse;min-width:760px;font-size:13px;">' +
+                '<thead><tr style="background:#f4f5f7;text-align:left;">' +
+                ['Name','Phone','Address','Email','Orders','Order Total','Last Order'].map(label => '<th style="padding:11px 9px;border-bottom:1px solid #ddd;">' + label + '</th>').join('') +
+                '</tr></thead><tbody>' + filtered.map(customer => {
+                    const date = customer.lastOrderAt ? new Date(customer.lastOrderAt).toLocaleString() : '—';
+                    const amount = Number(customer.totalSpent || 0).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+                    return '<tr>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;font-weight:600;">' + escapeCustomerHtml(customer.name || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;white-space:nowrap;">' + escapeCustomerHtml(customer.phone || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;">' + escapeCustomerHtml(customer.address || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;">' + escapeCustomerHtml(customer.email || '—') + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;text-align:center;">' + Number(customer.totalOrders || 0) + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;white-space:nowrap;">Rs ' + amount + '</td>' +
+                        '<td style="padding:10px 9px;border-bottom:1px solid #eee;white-space:nowrap;">' + escapeCustomerHtml(date) + '</td>' +
+                    '</tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        // ============================================================
         // ADMIN NAVIGATION
         // ============================================================
         function showAdminSection(section) {
@@ -5419,6 +5533,7 @@ function renderAdminMenu() {
             const sectionMap = {
                 dashboard: 'adminDashboard',
                 orders: 'adminOrders',
+                customers: 'adminCustomers',
                 menu: 'adminMenu',
                 deals: 'adminDeals',
                 about: 'adminAbout',
@@ -5437,6 +5552,7 @@ function renderAdminMenu() {
             
             if (section === 'dashboard') renderAdminDashboard();
             if (section === 'orders') renderAdminOrders();
+            if (section === 'customers') loadAdminCustomers();
             if (section === 'menu') renderAdminMenu();
             if (section === 'deals') renderAdminDeals();
             if (section === 'about') { loadAboutData(); }
@@ -5840,6 +5956,174 @@ async function generateOrderCard(orderId) {
         );
     }
 }
+    </script>
+    <!-- Admin Edit Order Modal -->
+    <div id="orderEditorModal" role="dialog" aria-modal="true" aria-labelledby="orderEditorTitle" style="display:none; position:fixed; inset:0; z-index:10050; background:rgba(0,0,0,.68); padding:18px; overflow:auto;">
+      <div style="max-width:820px; margin:25px auto; background:var(--admin-card-bg, #fff); color:var(--admin-text, #222); border-radius:14px; padding:22px; box-shadow:0 18px 60px rgba(0,0,0,.3);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <h2 id="orderEditorTitle" style="margin:0;">✏️ Edit Order</h2>
+          <button type="button" onclick="closeOrderEditor()" aria-label="Close editor" style="border:0; border-radius:8px; padding:8px 12px; cursor:pointer;">✖ Close</button>
+        </div>
+        <p id="orderEditorMessage" style="color:#636e72; margin:8px 0 16px;">Edit customer details and items. The order number and status will remain unchanged.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;">
+          <label>Customer name<input id="editOrderName" maxlength="120" style="display:block; width:100%; box-sizing:border-box; padding:10px; margin-top:5px;"></label>
+          <label>Phone number<input id="editOrderPhone" maxlength="40" style="display:block; width:100%; box-sizing:border-box; padding:10px; margin-top:5px;"></label>
+          <label style="grid-column:1/-1;">Address<input id="editOrderAddress" maxlength="500" style="display:block; width:100%; box-sizing:border-box; padding:10px; margin-top:5px;"></label>
+          <label>Order type<select id="editOrderType" style="display:block; width:100%; padding:10px; margin-top:5px;"><option value="delivery">Delivery</option><option value="takeaway">Takeaway</option><option value="dinein">Dine-In</option></select></label>
+          <label>Payment method<input id="editOrderPayment" maxlength="60" style="display:block; width:100%; box-sizing:border-box; padding:10px; margin-top:5px;"></label>
+          <label>Table number (if applicable)<input id="editOrderTable" maxlength="40" style="display:block; width:100%; box-sizing:border-box; padding:10px; margin-top:5px;"></label>
+          <label>Extra layers (comma-separated)<input id="editOrderLayers" placeholder="e.g. Cheese, Olives" style="display:block; width:100%; box-sizing:border-box; padding:10px; margin-top:5px;"></label>
+        </div>
+        <hr style="margin:18px 0; border:0; border-top:1px solid #ddd;">
+        <h3 style="margin:0 0 10px;">Order items</h3>
+        <div id="editOrderItems"></div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0;">
+          <select id="editOrderAddMenuItem" style="flex:1; min-width:220px; padding:10px;"><option value="">Choose a menu item to add</option></select>
+          <button type="button" onclick="addOrderEditorItem()" style="padding:10px 14px; border:0; border-radius:8px; background:#2980b9; color:white; font-weight:700; cursor:pointer;">＋ Add item</button>
+        </div>
+        <div id="editOrderTotals" style="text-align:right; font-size:1.05em; line-height:1.8; padding:12px; background:#f4f6f8; border-radius:8px;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:16px;">
+          <button type="button" onclick="closeOrderEditor()" style="padding:11px 16px; border:1px solid #aaa; border-radius:8px; background:transparent; cursor:pointer;">Cancel</button>
+          <button id="saveOrderEditorBtn" type="button" onclick="saveOrderEditor()" style="padding:11px 18px; border:0; border-radius:8px; background:#27ae60; color:white; font-weight:700; cursor:pointer;">💾 Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // Order editor state is kept only while the modal is open; saved data goes to server.
+    let orderEditorId = null;
+    let orderEditorItems = [];
+    const orderEditorEscape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+    function openOrderEditor(orderId) {
+      const order = orders.find(o => String(o.id) === String(orderId));
+      if (!order) { showToast('❌ Order not found. Please refresh the Orders section.'); return; }
+      orderEditorId = order.id;
+      orderEditorItems = (Array.isArray(order.items) ? order.items : []).map(item => ({name:String(item.name || ''), price:Number(item.price) || 0, qty:Math.max(1, Number.parseInt(item.qty, 10) || 1)}));
+      document.getElementById('orderEditorTitle').textContent = `✏️ Edit Order #${order.id}`;
+      document.getElementById('editOrderName').value = order.userName || '';
+      document.getElementById('editOrderPhone').value = order.phone || '';
+      document.getElementById('editOrderAddress').value = order.address || '';
+      document.getElementById('editOrderType').value = ['delivery','takeaway','dinein'].includes(order.orderType) ? order.orderType : 'delivery';
+      document.getElementById('editOrderPayment').value = order.paymentMethod || 'cash';
+      document.getElementById('editOrderTable').value = order.table || '';
+      document.getElementById('editOrderLayers').value = Array.isArray(order.layers) ? order.layers.join(', ') : '';
+      const menuSelect = document.getElementById('editOrderAddMenuItem');
+      menuSelect.innerHTML = '<option value="">Choose a menu item to add</option>';
+      (Array.isArray(menuItems) ? menuItems : []).forEach((item, index) => {
+        const name = String(item.name || item.title || 'Menu item');
+        const price = Number(item.price ?? item.sellingPrice ?? item.amount);
+        if (!Number.isFinite(price) || price < 0) return;
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = `${name} — ${currencySymbol} ${price.toFixed(2)}`;
+        menuSelect.appendChild(option);
+      });
+      renderOrderEditorItems();
+      document.getElementById('orderEditorModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOrderEditor() {
+      document.getElementById('orderEditorModal').style.display = 'none';
+      document.body.style.overflow = '';
+      orderEditorId = null;
+      orderEditorItems = [];
+    }
+
+    function renderOrderEditorItems() {
+      const container = document.getElementById('editOrderItems');
+      if (!orderEditorItems.length) {
+        container.innerHTML = '<p style="padding:12px; background:#fff4e5; border-radius:8px;">No items yet. Add at least one menu item before saving.</p>';
+      } else {
+        container.innerHTML = orderEditorItems.map((item, index) => `
+          <div style="display:grid; grid-template-columns:minmax(130px,2fr) minmax(85px,1fr) 85px 42px; gap:8px; align-items:end; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+            <label style="font-size:.85em;">Item name<input value="${orderEditorEscape(item.name)}" oninput="updateOrderEditorItem(${index},'name',this.value)" maxlength="160" style="display:block; width:100%; box-sizing:border-box; padding:8px; margin-top:4px;"></label>
+            <label style="font-size:.85em;">Price<input type="number" min="0" max="10000000" step="0.01" value="${Number(item.price)||0}" oninput="updateOrderEditorItem(${index},'price',this.value)" style="display:block; width:100%; box-sizing:border-box; padding:8px; margin-top:4px;"></label>
+            <label style="font-size:.85em;">Qty<input type="number" min="1" max="999" step="1" value="${Number(item.qty)||1}" oninput="updateOrderEditorItem(${index},'qty',this.value)" style="display:block; width:100%; box-sizing:border-box; padding:8px; margin-top:4px;"></label>
+            <button type="button" title="Remove item" onclick="removeOrderEditorItem(${index})" style="height:36px; border:0; border-radius:8px; background:#e74c3c; color:white; cursor:pointer;">✕</button>
+          </div>`).join('');
+      }
+      renderOrderEditorTotals();
+    }
+
+    function renderOrderEditorTotals() {
+      const subtotal = orderEditorItems.reduce((sum, item) => sum + (Number(item.price)||0) * (Number(item.qty)||0), 0);
+      const layers = document.getElementById('editOrderLayers').value.split(',').map(v => v.trim()).filter(Boolean);
+      const layerCharge = layers.length * 100;
+      const threshold = Number(restaurantConfig.discountThreshold) || 0;
+      const discount = subtotal > threshold ? (Number(restaurantConfig.discountAmount)||0) : 0;
+      const total = Math.max(0, subtotal + layerCharge - discount);
+      document.getElementById('editOrderTotals').innerHTML = `Subtotal: <strong>${orderEditorEscape(currencySymbol)} ${subtotal.toFixed(2)}</strong><br>Extra layers: <strong>${orderEditorEscape(currencySymbol)} ${layerCharge.toFixed(2)}</strong>${discount > 0 ? `<br>Discount: <strong>−${orderEditorEscape(currencySymbol)} ${discount.toFixed(2)}</strong>` : ''}<br><strong style="font-size:1.2em;">New total: ${orderEditorEscape(currencySymbol)} ${total.toFixed(2)}</strong>`;
+    }
+
+    function updateOrderEditorItem(index, field, value) {
+      if (!orderEditorItems[index]) return;
+      if (field === 'name') orderEditorItems[index].name = value;
+      if (field === 'price') orderEditorItems[index].price = value === '' ? 0 : Number(value);
+      if (field === 'qty') orderEditorItems[index].qty = value === '' ? 1 : Number(value);
+      renderOrderEditorTotals();
+    }
+
+    function removeOrderEditorItem(index) {
+      orderEditorItems.splice(index, 1);
+      renderOrderEditorItems();
+    }
+
+    function addOrderEditorItem() {
+      const select = document.getElementById('editOrderAddMenuItem');
+      if (select.value === '') { showToast('Choose a menu item first.'); return; }
+      const item = menuItems[Number(select.value)];
+      if (!item) return;
+      const price = Number(item.price ?? item.sellingPrice ?? item.amount);
+      orderEditorItems.push({name:String(item.name || item.title || 'Menu item'), price, qty:1});
+      select.value = '';
+      renderOrderEditorItems();
+    }
+
+    async function saveOrderEditor() {
+      if (orderEditorId === null) return;
+      const name = document.getElementById('editOrderName').value.trim();
+      if (!name) { showToast('Customer name is required.'); return; }
+      if (!orderEditorItems.length) { showToast('An order must have at least one item.'); return; }
+      const items = orderEditorItems.map(item => ({name:String(item.name).trim(), price:Number(item.price), qty:Number(item.qty)}));
+      if (items.some(item => !item.name || !Number.isFinite(item.price) || item.price < 0 || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 999)) {
+        showToast('Please check every item name, price, and quantity.'); return;
+      }
+      const button = document.getElementById('saveOrderEditorBtn');
+      button.disabled = true; button.textContent = 'Saving...';
+      const payload = {
+        userName:name,
+        phone:document.getElementById('editOrderPhone').value.trim(),
+        address:document.getElementById('editOrderAddress').value.trim(),
+        orderType:document.getElementById('editOrderType').value,
+        paymentMethod:document.getElementById('editOrderPayment').value.trim() || 'cash',
+        table:document.getElementById('editOrderTable').value.trim(),
+        layers:document.getElementById('editOrderLayers').value.split(',').map(v=>v.trim()).filter(Boolean),
+        items
+      };
+      try {
+        const response = await fetch('/api/orders/' + encodeURIComponent(orderEditorId) + '/edit?restaurant=' + encodeURIComponent(RESTAURANT_ID), {
+          method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Could not save order');
+        showToast(`✅ Order #${data.order.id} updated and saved.`);
+        closeOrderEditor();
+        loadOrders();
+      } catch (error) {
+        console.error('Save edited order error:', error);
+        showToast('❌ ' + (error.message || 'Failed to save order'));
+      } finally {
+        button.disabled = false; button.textContent = '💾 Save Changes';
+      }
+    }
+
+    document.getElementById('orderEditorModal').addEventListener('click', event => {
+      if (event.target.id === 'orderEditorModal') closeOrderEditor();
+    });
+    document.getElementById('editOrderLayers').addEventListener('input', renderOrderEditorTotals);
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeOrderEditor(); });
     </script>
 </body>
 </html>

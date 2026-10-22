@@ -204,6 +204,7 @@ async function loadData() {
 
         data.lobbyDeals = data.lobbyDeals || [];
         data.deletedOrders = data.deletedOrders || [];
+        data.customers = Array.isArray(data.customers) ? data.customers : [];
         data.backupHistory = data.backupHistory || [];
 
         console.log('📊 Restaurant data loaded successfully');
@@ -351,7 +352,7 @@ app.use(cors({
     credentials: true 
 }));
 
-app.use(express.static(path.join(__dirname, 'Public')));
+app.use(express.static(path.join(__dirname, 'Public'), { index: false }));
 
 // ============================================
 // ⭐ SESSION ⭐
@@ -411,6 +412,8 @@ let aboutRestaurant = data.aboutRestaurant || {
 };
 let lobbyDeals = data.lobbyDeals || [];
 let deletedOrders = data.deletedOrders || [];
+// Persistent customer directory; records are kept even if an order is later deleted.
+let customers = Array.isArray(data.customers) ? data.customers : [];
 // Persisted per-restaurant revenue reset timestamps (stored in the Supabase JSON row).
 let revenueResetAtByRestaurant = data.revenueResetAtByRestaurant || {};
 
@@ -433,6 +436,7 @@ function syncAndSave() {
     data.aboutRestaurant = aboutRestaurant;
     data.lobbyDeals = lobbyDeals;
     data.deletedOrders = deletedOrders;
+    data.customers = customers;
     return saveData();
 }
 
@@ -1728,6 +1732,113 @@ app.delete('/api/deals/:id', (req, res) => {
 // ============================================
 // ⭐ ORDER ROUTES WITH BROADCAST ⭐
 // ============================================
+// ============================================
+// CUSTOMER MEMORY / DIRECTORY
+// ============================================
+function normalizeCustomerPhone(value) {
+    return String(value || '').replace(/\D/g, '');
+}
+
+function upsertCustomerFromOrder(restaurantId, order) {
+    const name = String(order.userName || order.name || '').trim();
+    const phone = String(order.phone || '').trim();
+    const address = String(order.address || '').trim();
+    if (!name && !phone) return;
+
+    const phoneKey = normalizeCustomerPhone(phone);
+    const nameKey = name.toLocaleLowerCase();
+    let customer = customers.find(c =>
+        String(c.restaurantId || 'restaurant-1') === String(restaurantId) &&
+        ((phoneKey && normalizeCustomerPhone(c.phone) === phoneKey) ||
+         (!phoneKey && nameKey && String(c.name || '').trim().toLocaleLowerCase() === nameKey))
+    );
+
+    if (!customer) {
+        customer = {
+            id: `cust_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            restaurantId,
+            name,
+            phone,
+            address,
+            email: String(order.email || '').trim(),
+            userId: order.userId || null,
+            orderIds: [],
+            totalOrders: 0,
+            totalSpent: 0,
+            firstOrderAt: order.createdAt || order.deviceTimestamp || new Date().toISOString(),
+            lastOrderAt: order.createdAt || order.deviceTimestamp || new Date().toISOString(),
+            lastOrderType: order.orderType || '',
+            notes: ''
+        };
+        customers.push(customer);
+    }
+
+    // Update details when the customer provides newer information.
+    if (name) customer.name = name;
+    if (phone) customer.phone = phone;
+    if (address && address !== 'In-store pickup') customer.address = address;
+    if (order.email) customer.email = String(order.email).trim();
+    if (order.userId) customer.userId = order.userId;
+    customer.lastOrderAt = order.createdAt || order.deviceTimestamp || new Date().toISOString();
+    customer.lastOrderType = order.orderType || customer.lastOrderType || '';
+    customer.orderIds = Array.isArray(customer.orderIds) ? customer.orderIds : [];
+    const orderKey = `${restaurantId}:${String(order.id)}:${String(order.createdAt || order.deviceTimestamp || order.date || '')}`;
+    if (!customer.orderIds.includes(orderKey)) {
+        customer.orderIds.push(orderKey);
+        customer.totalOrders = customer.orderIds.length;
+        customer.totalSpent = Number(customer.totalSpent || 0) + Number(order.total || 0);
+    }
+}
+
+function backfillCustomersFromOrders(restaurantId, restaurant) {
+    customers = Array.isArray(customers) ? customers : [];
+    const history = [
+        ...(Array.isArray(restaurant.orders) ? restaurant.orders : []),
+        ...(Array.isArray(deletedOrders) ? deletedOrders : []).filter(o =>
+            String(o.restaurantId || 'restaurant-1') === String(restaurantId)
+        )
+    ];
+    history.forEach(order => upsertCustomerFromOrder(restaurantId, order));
+}
+
+app.get('/api/customers/suggest', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Login required for saved customer suggestions' });
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    backfillCustomersFromOrders(restaurantId, restaurant);
+    const q = String(req.query.q || '').trim().toLocaleLowerCase();
+    const digits = normalizeCustomerPhone(q);
+    if (!q) return res.json([]);
+
+    // Admin/staff can use the directory at the POS. Customers only see their own saved details.
+    const visible = ['admin', 'staff'].includes(String(req.user.role || '').toLowerCase())
+        ? customers.filter(c => String(c.restaurantId) === String(restaurantId))
+        : customers.filter(c => String(c.restaurantId) === String(restaurantId) && String(c.userId) === String(req.user.id));
+    const matches = visible.filter(c =>
+        String(c.name || '').toLocaleLowerCase().includes(q) ||
+        String(c.phone || '').toLocaleLowerCase().includes(q) ||
+        (digits && normalizeCustomerPhone(c.phone).includes(digits))
+    ).sort((a, b) => String(b.lastOrderAt || '').localeCompare(String(a.lastOrderAt || ''))).slice(0, 8);
+    res.json(matches.map(c => ({ name: c.name || '', phone: c.phone || '', address: c.address || '', email: c.email || '' })));
+});
+
+app.get('/api/admin/customers', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    const restaurantId = req.restaurantId || 'restaurant-1';
+    const restaurant = getOrCreateRestaurant(restaurantId);
+    backfillCustomersFromOrders(restaurantId, restaurant);
+    syncAndSave();
+    const result = customers.filter(c => String(c.restaurantId) === String(restaurantId))
+        .sort((a, b) => String(b.lastOrderAt || '').localeCompare(String(a.lastOrderAt || '')))
+        .map(c => ({
+            id: c.id, name: c.name || '', phone: c.phone || '', address: c.address || '',
+            email: c.email || '', totalOrders: Number(c.totalOrders || 0),
+            totalSpent: Number(c.totalSpent || 0), firstOrderAt: c.firstOrderAt || '',
+            lastOrderAt: c.lastOrderAt || '', lastOrderType: c.lastOrderType || '', notes: c.notes || ''
+        }));
+    res.json({ customers: result, count: result.length });
+});
+
 app.post('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Please login first' });
     const restaurantId = req.restaurantId || 'restaurant-1';
@@ -1803,6 +1914,7 @@ const finalTotal = baseTotal + layerExtraCharge;
         id: restaurant.orders.length + 1,
         userId: req.user.id,
         userName: name || req.user.displayName,
+        email: req.user.email || '',
         phone: phone || '',
         address: address || 'In-store pickup',
         items: items,
@@ -1829,6 +1941,7 @@ total: finalTotal,
     };
     
     restaurant.orders.push(newOrder);
+    upsertCustomerFromOrder(restaurantId, newOrder);
     syncAndSave();
     
     broadcastNewOrder(newOrder, restaurantId);
@@ -2288,21 +2401,100 @@ app.get('/logout', (req, res) => {
 // SERVE HTML PAGES
 // ============================================
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Public', 'index.html'));
+    const customerPage = path.join(__dirname, 'Public', 'index.html');
+    fs.readFile(customerPage, 'utf8', (error, html) => {
+        if (error) return res.status(500).send('Could not load customer page.');
+        const customerMemoryScript = `
+<script id="sangat-customer-memory-script">
+(function () {
+  if (window.__sangatCustomerMemoryLoaded) return;
+  window.__sangatCustomerMemoryLoaded = true;
+  let timer;
+  let activeInput = null;
+  let popup = null;
+  function fields(anchor) {
+    const scope = anchor && anchor.closest('form') ? anchor.closest('form') : document;
+    const inputs = Array.from(scope.querySelectorAll('input, textarea'));
+    const descriptor = el => [el.id, el.name, el.placeholder, el.getAttribute('aria-label') || ''].join(' ').toLowerCase();
+    const find = pattern => inputs.find(el => pattern.test(descriptor(el)));
+    return {
+      name: find(/customer.?name|user.?name|full.?name|your.?name/) || find(/(^|\\s)name($|\\s)/),
+      phone: find(/phone|mobile|contact|telephone|number/),
+      address: find(/address|delivery.?location/),
+      email: find(/email/)
+    };
+  }
+  function ensurePopup() {
+    if (popup) return popup;
+    popup = document.createElement('div');
+    popup.id = 'sangatCustomerMemoryPopup';
+    popup.style.cssText = 'position:absolute;z-index:999999;display:none;max-height:240px;overflow:auto;background:#fff;color:#222;border:1px solid #ddd;border-radius:10px;box-shadow:0 8px 25px #0002;min-width:240px;font:14px Arial,sans-serif;';
+    document.body.appendChild(popup);
+    document.addEventListener('click', e => { if (popup && !popup.contains(e.target) && e.target !== activeInput) popup.style.display = 'none'; });
+    return popup;
+  }
+  function placePopup(input) {
+    const p = ensurePopup(); const r = input.getBoundingClientRect();
+    p.style.left = (r.left + window.scrollX) + 'px';
+    p.style.top = (r.bottom + window.scrollY + 4) + 'px';
+    p.style.minWidth = Math.max(240, r.width) + 'px';
+  }
+  async function search(input) {
+    const query = input.value.trim();
+    const p = ensurePopup(); activeInput = input;
+    if (query.length < 2) { p.style.display = 'none'; return; }
+    try {
+      const url = '/api/customers/suggest?restaurant=' + encodeURIComponent(new URLSearchParams(location.search).get('restaurant') || 'restaurant-1') + '&q=' + encodeURIComponent(query);
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) { p.style.display = 'none'; return; }
+      const result = await response.json();
+      p.replaceChildren();
+      if (!result.length) { p.style.display = 'none'; return; }
+      result.forEach(customer => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #eee;background:#fff;color:#222;cursor:pointer;';
+        item.innerHTML = '';
+        const title = document.createElement('div'); title.textContent = customer.name || customer.phone || 'Saved customer'; title.style.fontWeight = '700';
+        const detail = document.createElement('div'); detail.textContent = [customer.phone, customer.address].filter(Boolean).join(' • '); detail.style.cssText = 'font-size:12px;color:#666;margin-top:3px;';
+        item.append(title, detail);
+        item.addEventListener('mousedown', e => {
+          e.preventDefault(); const f = fields();
+          if (f.name) f.name.value = customer.name || '';
+          if (f.phone) f.phone.value = customer.phone || '';
+          if (f.address) f.address.value = customer.address || '';
+          if (f.email && customer.email) f.email.value = customer.email;
+          [f.name, f.phone, f.address, f.email].filter(Boolean).forEach(el => el.dispatchEvent(new Event('input', {bubbles:true})));
+          p.style.display = 'none';
+        });
+        p.appendChild(item);
+      });
+      placePopup(input); p.style.display = 'block';
+    } catch (e) { console.debug('Customer suggestions unavailable', e); }
+  }
+  function attach() {
+    document.querySelectorAll('input, textarea').forEach(input => {
+      if (input.dataset.sangatMemoryBound) return;
+      const descriptor = [input.id, input.name, input.placeholder, input.getAttribute('aria-label') || ''].join(' ').toLowerCase();
+      if (!/(customer.?name|user.?name|full.?name|your.?name|phone|mobile|contact|telephone|number)/.test(descriptor) && !/(^|\\s)name($|\\s)/.test(descriptor)) return;
+      input.dataset.sangatMemoryBound = '1';
+      input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => search(input), 220); });
+      input.addEventListener('focus', () => { if (input.value.trim().length >= 2) search(input); });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach); else attach();
+  new MutationObserver(attach).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>`;
+        if (html.includes('</body>')) html = html.replace('</body>', customerMemoryScript + '\n</body>');
+        else html += customerMemoryScript;
+        res.type('html').send(html);
+    });
 });
-
-
- // ============================================
- // SERVE HTML PAGES
- // ============================================
 
 // Sangat Cafe Android App Download Page
 app.get('/download', (req, res) => {
     res.sendFile(path.join(__dirname, 'Public', 'download.html'));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Public', 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
@@ -2484,6 +2676,7 @@ async function initializeApp() {
         data.receiptSettings = { ...(data.receiptSettings || {}) };
         data.lobbyDeals = Array.isArray(data.lobbyDeals) ? data.lobbyDeals : [];
         data.deletedOrders = Array.isArray(data.deletedOrders) ? data.deletedOrders : [];
+        data.customers = Array.isArray(data.customers) ? data.customers : [];
         data.backupHistory = Array.isArray(data.backupHistory) ? data.backupHistory : [];
 
         // STEP 3: Restore saved restaurant configuration.
@@ -2510,6 +2703,7 @@ async function initializeApp() {
 
         lobbyDeals = data.lobbyDeals;
         deletedOrders = data.deletedOrders;
+        customers = data.customers;
         data.aboutRestaurant = aboutRestaurant;
 
         // STEP 5: Create or restore restaurant records.
